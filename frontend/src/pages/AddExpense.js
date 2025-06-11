@@ -224,7 +224,7 @@ const AddExpense = () => {
               return (
                 <div key={split.userId} className="split-item">
                   <span className="member-name">
-                    Member {index + 1}
+                    {member ? member.userName || member.user : `Member ${index + 1}`}
                   </span>
                   <input
                     type="number"
