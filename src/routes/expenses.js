@@ -25,7 +25,9 @@ const populateUserNames = async (expenses) => {
     const populatedSplits = [];
     for (const split of expenseData.splits) {
       try {
-        const user = await User.findById(split.user);
+        // Handle both 'user' and 'userId' field names for backward compatibility
+        const userId = split.user || split.userId;
+        const user = await User.findById(userId);
         populatedSplits.push({
           ...split,
           userName: user ? user.name : 'Unknown User'
