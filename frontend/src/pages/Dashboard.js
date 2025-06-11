@@ -9,6 +9,27 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [lastRefresh, setLastRefresh] = useState(null);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [groupsResponse, balancesResponse] = await Promise.all([
+        api.get('/api/groups'),
+        api.get('/api/balances')
+      ]);
+      
+      setGroups(groupsResponse.data);
+      setBalances(balancesResponse.data);
+      setError('');
+      setLastRefresh(new Date());
+    } catch (err) {
+      setError('Failed to load dashboard data');
+      console.error('Dashboard fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Check for success message from navigation state
@@ -18,24 +39,49 @@ const Dashboard = () => {
       setTimeout(() => setSuccessMessage(''), 5000);
     }
 
-    const fetchData = async () => {
-      try {
-        const [groupsResponse, balancesResponse] = await Promise.all([
-          api.get('/api/groups'),
-          api.get('/api/balances')
-        ]);
-        
-        setGroups(groupsResponse.data);
-        setBalances(balancesResponse.data);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load dashboard data');
-        setLoading(false);
+    fetchData();
+  }, [location.state?.message]);
+
+  // Refresh data when navigating back to dashboard
+  useEffect(() => {
+    const handlePopState = () => {
+      console.log('Navigation detected, refreshing dashboard...');
+      fetchData();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
+  // Add event listener to refresh data when user returns to the tab/window
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('Dashboard focused, refreshing data...');
+      fetchData();
+    };
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Dashboard visible, refreshing data...');
+        fetchData();
       }
     };
 
-    fetchData();
+    // Refresh when window gains focus
+    window.addEventListener('focus', handleFocus);
+    // Refresh when tab becomes visible
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
+
+  // Add a manual refresh function
+  const handleRefresh = () => {
+    fetchData();
+  };
 
   if (loading) {
     return <div className="loading">Loading your dashboard...</div>;
@@ -57,14 +103,30 @@ const Dashboard = () => {
         </div>
       )}
       
+      {lastRefresh && (
+        <div className="last-refresh">
+          <small>Last updated: {lastRefresh.toLocaleTimeString()}</small>
+        </div>
+      )}
+      
       <div className="dashboard-header">
         <div>
           <h1>💰 Welcome to ExpenseSplitter</h1>
           <p className="mb-0">Manage your shared expenses with ease</p>
         </div>
-        <Link to="/groups/create" className="button primary large">
-          ➕ Create New Group
-        </Link>
+        <div className="header-actions">
+          <button 
+            onClick={handleRefresh} 
+            className="button secondary"
+            disabled={loading}
+            title="Refresh dashboard data"
+          >
+            🔄 {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
+          <Link to="/groups/create" className="button primary large">
+            ➕ Create New Group
+          </Link>
+        </div>
       </div>
 
       <div className="dashboard-summary">

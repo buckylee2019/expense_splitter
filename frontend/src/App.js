@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import Navbar from './components/Navbar';
 import Login from './pages/Login';
@@ -15,6 +15,57 @@ const PrivateRoute = ({ children }) => {
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
+const AppRoutes = () => {
+  const location = useLocation();
+  
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route
+        path="/"
+        element={
+          <PrivateRoute>
+            <Dashboard key={location.pathname + location.search} />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/groups/create"
+        element={
+          <PrivateRoute>
+            <CreateGroup />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/groups/:groupId"
+        element={
+          <PrivateRoute>
+            <GroupDetails />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/groups/:groupId/expenses/add"
+        element={
+          <PrivateRoute>
+            <AddExpense />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/settlements"
+        element={
+          <PrivateRoute>
+            <Settlements />
+          </PrivateRoute>
+        }
+      />
+    </Routes>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
@@ -22,50 +73,7 @@ function App() {
         <div className="app">
           <Navbar />
           <div className="container">
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route
-                path="/"
-                element={
-                  <PrivateRoute>
-                    <Dashboard />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/groups/create"
-                element={
-                  <PrivateRoute>
-                    <CreateGroup />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/groups/:groupId"
-                element={
-                  <PrivateRoute>
-                    <GroupDetails />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/groups/:groupId/expenses/add"
-                element={
-                  <PrivateRoute>
-                    <AddExpense />
-                  </PrivateRoute>
-                }
-              />
-              <Route
-                path="/settlements"
-                element={
-                  <PrivateRoute>
-                    <Settlements />
-                  </PrivateRoute>
-                }
-              />
-            </Routes>
+            <AppRoutes />
           </div>
         </div>
       </Router>
