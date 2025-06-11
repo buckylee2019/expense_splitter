@@ -64,8 +64,30 @@ const AddExpense = () => {
     fetchData();
   }, [groupId]);
 
+  const handlePayerChange = (e) => {
+    const selectedPayer = e.target.value;
+    console.log('Payer changed to:', selectedPayer); // Debug log
+    
+    setFormData(prev => {
+      const updated = {
+        ...prev,
+        paidBy: selectedPayer
+      };
+      console.log('Updated formData:', updated); // Debug log
+      return updated;
+    });
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    console.log('Form field changed:', name, value); // Debug log
+    
+    // Handle payer change separately for better debugging
+    if (name === 'paidBy') {
+      handlePayerChange(e);
+      return;
+    }
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -127,12 +149,16 @@ const AddExpense = () => {
     setError('');
 
     try {
-      await api.post('/api/expenses', {
+      const expenseData = {
         ...formData,
         amount: parseFloat(formData.amount),
         groupId,
         splits
-      });
+      };
+      
+      console.log('Submitting expense data:', expenseData); // Debug log
+      
+      await api.post('/api/expenses', expenseData);
 
       navigate(`/groups/${groupId}`);
     } catch (err) {
@@ -228,18 +254,31 @@ const AddExpense = () => {
             <select
               id="paidBy"
               name="paidBy"
-              value={formData.paidBy}
+              value={formData.paidBy || ''}
               onChange={handleChange}
               required
             >
               <option value="">Select who paid</option>
-              {group?.members.map(member => (
-                <option key={member.user} value={member.user}>
-                  {member.userName || member.user}
-                  {member.user === currentUser?.id && ' (You)'}
-                </option>
-              ))}
+              {group?.members?.map(member => {
+                const isCurrentUser = member.user === currentUser?.id;
+                const displayName = member.userName || member.user;
+                return (
+                  <option key={member.user} value={member.user}>
+                    {displayName}{isCurrentUser ? ' (You)' : ''}
+                  </option>
+                );
+              })}
             </select>
+            {/* Debug display */}
+            <small style={{color: '#666', fontSize: '0.8rem', display: 'block', marginTop: '4px'}}>
+              Current payer: {formData.paidBy || 'None selected'}
+              {formData.paidBy && group?.members && (
+                <span>
+                  {' - '}
+                  {group.members.find(m => m.user === formData.paidBy)?.userName || 'Unknown'}
+                </span>
+              )}
+            </small>
           </div>
         </div>
 

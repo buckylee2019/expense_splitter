@@ -87,7 +87,8 @@ router.post('/', authMiddleware, async (req, res) => {
       group,
       groupId,
       splitType,
-      splits
+      splits,
+      paidBy
     } = req.body;
 
     // Accept both 'group' and 'groupId' for backward compatibility
@@ -99,7 +100,18 @@ router.post('/', authMiddleware, async (req, res) => {
       if (!group) {
         return res.status(404).json({ error: 'Group not found or user not a member' });
       }
+      
+      // Validate that the selected payer is a member of the group
+      if (paidBy) {
+        const payerIsMember = group.members.some(member => member.user === paidBy);
+        if (!payerIsMember) {
+          return res.status(400).json({ error: 'Selected payer is not a member of this group' });
+        }
+      }
     }
+
+    // Use provided paidBy or default to current user
+    const expensePaidBy = paidBy || req.user.id;
 
     // Validate splits total
     const totalSplit = splits.reduce((sum, split) => sum + split.amount, 0);
@@ -112,7 +124,7 @@ router.post('/', authMiddleware, async (req, res) => {
       amount,
       currency,
       category,
-      paidBy: req.user.id,
+      paidBy: expensePaidBy,
       group: expenseGroupId,
       splitType,
       splits,
