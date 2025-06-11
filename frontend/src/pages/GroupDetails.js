@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
@@ -11,32 +11,70 @@ const GroupDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+  const [lastRefresh, setLastRefresh] = useState(null);
+
+  const fetchGroupData = useCallback(async () => {
+    try {
+      setLoading(true);
+      // Get current user info
+      const userRes = await api.get('/api/users/profile');
+      setCurrentUser(userRes.data);
+
+      const [groupRes, expensesRes, balancesRes] = await Promise.all([
+        api.get(`/api/groups/${groupId}`),
+        api.get(`/api/expenses?groupId=${groupId}`),
+        api.get(`/api/balances?groupId=${groupId}`)
+      ]);
+
+      setGroup(groupRes.data);
+      setExpenses(expensesRes.data);
+      setBalances(balancesRes.data.balances);
+      setError('');
+      setLastRefresh(new Date());
+    } catch (err) {
+      setError('Failed to load group data');
+      console.error('Group details fetch error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [groupId]);
 
   useEffect(() => {
-    const fetchGroupData = async () => {
-      try {
-        // Get current user info
-        const userRes = await api.get('/api/users/profile');
-        setCurrentUser(userRes.data);
+    fetchGroupData();
+  }, [fetchGroupData]);
 
-        const [groupRes, expensesRes, balancesRes] = await Promise.all([
-          api.get(`/api/groups/${groupId}`),
-          api.get(`/api/expenses?groupId=${groupId}`),
-          api.get(`/api/balances?groupId=${groupId}`)
-        ]);
+  // Add event listeners for automatic refresh
+  useEffect(() => {
+    const handleFocus = () => {
+      console.log('Group details focused, refreshing data...');
+      fetchGroupData();
+    };
 
-        setGroup(groupRes.data);
-        setExpenses(expensesRes.data);
-        setBalances(balancesRes.data.balances);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load group data');
-        setLoading(false);
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('Group details visible, refreshing data...');
+        fetchGroupData();
       }
     };
 
-    fetchGroupData();
-  }, [groupId]);
+    const handlePopState = () => {
+      console.log('Navigation detected in group details, refreshing...');
+      fetchGroupData();
+    };
+
+    // Refresh when window gains focus
+    window.addEventListener('focus', handleFocus);
+    // Refresh when tab becomes visible
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    // Refresh on navigation
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [fetchGroupData]);
 
   const handleDeleteExpense = async (expenseId) => {
     if (!window.confirm('Are you sure you want to delete this expense?')) {
@@ -46,17 +84,16 @@ const GroupDetails = () => {
     try {
       await api.delete(`/api/expenses/${expenseId}`);
       
-      // Refresh expenses and balances
-      const [expensesRes, balancesRes] = await Promise.all([
-        api.get(`/api/expenses?groupId=${groupId}`),
-        api.get(`/api/balances?groupId=${groupId}`)
-      ]);
-      
-      setExpenses(expensesRes.data);
-      setBalances(balancesRes.data.balances);
+      // Refresh all data after deletion
+      await fetchGroupData();
     } catch (err) {
       setError('Failed to delete expense: ' + (err.response?.data?.error || err.message));
     }
+  };
+
+  // Add manual refresh function
+  const handleRefresh = () => {
+    fetchGroupData();
   };
 
   const handleDeleteGroup = async () => {
@@ -101,9 +138,23 @@ const GroupDetails = () => {
 
   return (
     <div className="group-details">
+      {lastRefresh && (
+        <div className="last-refresh">
+          <small>Last updated: {lastRefresh.toLocaleTimeString()}</small>
+        </div>
+      )}
+      
       <div className="page-header">
         <h1>{group.name}</h1>
         <div className="header-actions">
+          <button 
+            onClick={handleRefresh} 
+            className="button secondary"
+            disabled={loading}
+            title="Refresh group data"
+          >
+            🔄 {loading ? 'Refreshing...' : 'Refresh'}
+          </button>
           <Link 
             to={`/groups/${groupId}/expenses/add`}
             className="button primary"

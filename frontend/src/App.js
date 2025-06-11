@@ -42,7 +42,7 @@ const AppRoutes = () => {
         path="/groups/:groupId"
         element={
           <PrivateRoute>
-            <GroupDetails />
+            <GroupDetails key={location.pathname + location.search} />
           </PrivateRoute>
         }
       />
