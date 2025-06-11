@@ -7,12 +7,14 @@ const AddExpense = () => {
   const navigate = useNavigate();
   
   const [group, setGroup] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
     currency: 'USD',
     category: 'General',
-    splitType: 'equal'
+    splitType: 'equal',
+    paidBy: ''
   });
   const [splits, setSplits] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,11 +27,25 @@ const AddExpense = () => {
   ];
 
   useEffect(() => {
-    const fetchGroup = async () => {
+    const fetchData = async () => {
       try {
-        const response = await api.get(`/api/groups/${groupId}`);
-        const groupData = response.data;
+        // Get current user and group data
+        const [userResponse, groupResponse] = await Promise.all([
+          api.get('/api/users/profile'),
+          api.get(`/api/groups/${groupId}`)
+        ]);
+        
+        const userData = userResponse.data;
+        const groupData = groupResponse.data;
+        
+        setCurrentUser(userData);
         setGroup(groupData);
+        
+        // Set default payer to current user
+        setFormData(prev => ({
+          ...prev,
+          paidBy: userData.id
+        }));
         
         // Initialize equal splits
         const equalAmount = 0;
@@ -45,7 +61,7 @@ const AddExpense = () => {
       }
     };
 
-    fetchGroup();
+    fetchData();
   }, [groupId]);
 
   const handleChange = (e) => {
@@ -96,6 +112,11 @@ const AddExpense = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    if (!formData.paidBy) {
+      setError('Please select who paid for this expense');
+      return;
+    }
     
     if (!validateSplits()) {
       setError('Split amounts must equal the total amount');
@@ -199,6 +220,25 @@ const AddExpense = () => {
               <option value="USD">USD</option>
               <option value="EUR">EUR</option>
               <option value="GBP">GBP</option>
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="paidBy">Paid By</label>
+            <select
+              id="paidBy"
+              name="paidBy"
+              value={formData.paidBy}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Select who paid</option>
+              {group?.members.map(member => (
+                <option key={member.user} value={member.user}>
+                  {member.userName || member.user}
+                  {member.user === currentUser?.id && ' (You)'}
+                </option>
+              ))}
             </select>
           </div>
         </div>

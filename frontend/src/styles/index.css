@@ -1753,3 +1753,23 @@ p {
     grid-template-columns: 1fr;
   }
 }
+/* Payer Selection Styles */
+.form-group select[name="paidBy"] {
+  font-weight: 500;
+}
+
+.form-group select[name="paidBy"] option {
+  padding: 8px;
+}
+
+.form-group select[name="paidBy"] option:first-child {
+  color: #666;
+  font-style: italic;
+}
+
+/* Add a small indicator for the current user */
+.form-group select[name="paidBy"] option[selected]:after {
+  content: " (You)";
+  color: #007bff;
+  font-weight: bold;
+}
