@@ -149,4 +149,37 @@ router.get('/:id/expenses', authMiddleware, async (req, res) => {
   }
 });
 
+// Delete group
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const group = await Group.findByUserIdAndGroupId(req.user.id, req.params.id);
+
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found or user not a member' });
+    }
+
+    // Check if user is admin of the group
+    if (!group.isAdmin(req.user.id)) {
+      return res.status(403).json({ error: 'Only group admins can delete the group' });
+    }
+
+    // Check if group has expenses
+    const expenses = await Expense.findByGroupId(req.params.id);
+    if (expenses.length > 0) {
+      return res.status(400).json({ 
+        error: 'Cannot delete group with existing expenses. Please delete all expenses first.',
+        expenseCount: expenses.length
+      });
+    }
+
+    // Delete the group
+    await Group.delete(req.params.id);
+
+    res.json({ message: 'Group deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting group:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
 module.exports = router;

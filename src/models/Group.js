@@ -1,5 +1,5 @@
 const { docClient } = require('../config/dynamodb');
-const { PutCommand, GetCommand, QueryCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
+const { PutCommand, GetCommand, QueryCommand, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 const { v4: uuidv4 } = require('uuid');
 
 const TABLE_NAME = process.env.GROUPS_TABLE_NAME || 'ExpenseSplitter-Groups';
@@ -111,6 +111,15 @@ class Group {
       typeof member === 'object' ? member.user === userId : member === userId
     );
     return member && member.role === 'admin';
+  }
+
+  static async delete(id) {
+    const params = {
+      TableName: TABLE_NAME,
+      Key: { id }
+    };
+
+    await docClient.send(new DeleteCommand(params));
   }
 }
 

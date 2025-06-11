@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 
 const GroupDetails = () => {
   const { groupId } = useParams();
+  const navigate = useNavigate();
   const [group, setGroup] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [balances, setBalances] = useState([]);
@@ -58,6 +59,38 @@ const GroupDetails = () => {
     }
   };
 
+  const handleDeleteGroup = async () => {
+    if (!window.confirm(`Are you sure you want to delete the group "${group.name}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/api/groups/${groupId}`);
+      
+      // Navigate back to dashboard after successful deletion
+      navigate('/', { 
+        state: { 
+          message: `Group "${group.name}" has been deleted successfully.` 
+        }
+      });
+    } catch (err) {
+      const errorMessage = err.response?.data?.error || err.message;
+      setError('Failed to delete group: ' + errorMessage);
+      
+      // If there are expenses, show a more helpful message
+      if (err.response?.data?.expenseCount) {
+        setError(`Cannot delete group: There are ${err.response.data.expenseCount} expenses in this group. Please delete all expenses first.`);
+      }
+    }
+  };
+
+  // Check if current user is admin of the group
+  const isGroupAdmin = () => {
+    if (!currentUser || !group) return false;
+    const member = group.members.find(m => m.user === currentUser.id);
+    return member && member.role === 'admin';
+  };
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
@@ -70,12 +103,23 @@ const GroupDetails = () => {
     <div className="group-details">
       <div className="page-header">
         <h1>{group.name}</h1>
-        <Link 
-          to={`/groups/${groupId}/expenses/add`}
-          className="button primary"
-        >
-          Add Expense
-        </Link>
+        <div className="header-actions">
+          <Link 
+            to={`/groups/${groupId}/expenses/add`}
+            className="button primary"
+          >
+            Add Expense
+          </Link>
+          {isGroupAdmin() && (
+            <button 
+              onClick={handleDeleteGroup}
+              className="button danger"
+              title="Delete group"
+            >
+              🗑️ Delete Group
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="group-info card">

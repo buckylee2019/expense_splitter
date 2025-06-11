@@ -1,14 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 
 const Dashboard = () => {
+  const location = useLocation();
   const [groups, setGroups] = useState([]);
   const [balances, setBalances] = useState({ balances: [], summary: {} });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
+    // Check for success message from navigation state
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the message after 5 seconds
+      setTimeout(() => setSuccessMessage(''), 5000);
+    }
+
     const fetchData = async () => {
       try {
         const [groupsResponse, balancesResponse] = await Promise.all([
@@ -42,6 +51,12 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
+      {successMessage && (
+        <div className="success-message">
+          ✅ {successMessage}
+        </div>
+      )}
+      
       <div className="dashboard-header">
         <div>
           <h1>💰 Welcome to ExpenseSplitter</h1>

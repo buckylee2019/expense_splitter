@@ -82,7 +82,7 @@ router.post('/', authMiddleware, async (req, res) => {
       amount,
       currency,
       category,
-      groupId,
+      group: groupId,
       splitType,
       splits
     } = req.body;
