@@ -9,10 +9,15 @@ const GroupDetails = () => {
   const [balances, setBalances] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const fetchGroupData = async () => {
       try {
+        // Get current user info
+        const userRes = await api.get('/api/users/profile');
+        setCurrentUser(userRes.data);
+
         const [groupRes, expensesRes, balancesRes] = await Promise.all([
           api.get(`/api/groups/${groupId}`),
           api.get(`/api/expenses?groupId=${groupId}`),
@@ -31,6 +36,27 @@ const GroupDetails = () => {
 
     fetchGroupData();
   }, [groupId]);
+
+  const handleDeleteExpense = async (expenseId) => {
+    if (!window.confirm('Are you sure you want to delete this expense?')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/api/expenses/${expenseId}`);
+      
+      // Refresh expenses and balances
+      const [expensesRes, balancesRes] = await Promise.all([
+        api.get(`/api/expenses?groupId=${groupId}`),
+        api.get(`/api/balances?groupId=${groupId}`)
+      ]);
+      
+      setExpenses(expensesRes.data);
+      setBalances(balancesRes.data.balances);
+    } catch (err) {
+      setError('Failed to delete expense: ' + (err.response?.data?.error || err.message));
+    }
+  };
 
   if (loading) {
     return <div className="loading">Loading...</div>;
@@ -60,7 +86,7 @@ const GroupDetails = () => {
           <ul>
             {group.members.map(member => (
               <li key={member.user}>
-                {member.user}
+                {member.userName || member.user}
                 {member.role === 'admin' && (
                   <span className="admin-badge">Admin</span>
                 )}
@@ -82,9 +108,20 @@ const GroupDetails = () => {
               <div key={expense.id} className="expense-card card">
                 <div className="expense-header">
                   <h3>{expense.description}</h3>
-                  <span className="amount">
-                    {expense.currency} {expense.amount.toFixed(2)}
-                  </span>
+                  <div className="expense-actions">
+                    <span className="amount">
+                      {expense.currency} {expense.amount.toFixed(2)}
+                    </span>
+                    {currentUser && expense.paidBy === currentUser.id && (
+                      <button 
+                        onClick={() => handleDeleteExpense(expense.id)}
+                        className="delete-button"
+                        title="Delete expense"
+                      >
+                        🗑️
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="expense-details">
                   <span className="category">{expense.category}</span>
@@ -92,13 +129,14 @@ const GroupDetails = () => {
                     {new Date(expense.date).toLocaleDateString()}
                   </span>
                   <span className="paid-by">
-                    Paid by: {expense.paidBy}
+                    Paid by: {expense.paidByName || 'Unknown User'}
                   </span>
                 </div>
                 <div className="splits">
+                  <h4>Split Details:</h4>
                   {expense.splits.map((split, index) => (
                     <div key={index} className="split-item">
-                      <span>{split.userId}</span>
+                      <span>{split.userName || 'Unknown User'}</span>
                       <span>{expense.currency} {split.amount.toFixed(2)}</span>
                     </div>
                   ))}
@@ -117,11 +155,11 @@ const GroupDetails = () => {
               <div key={index} className={`balance-card card ${balance.type}`}>
                 <span className="user">
                   {balance.type === 'owes_you' ? 
-                    `${balance.userName} owes you` : 
-                    `You owe ${balance.userName}`}
+                    `${balance.user.name} owes you` : 
+                    `You owe ${balance.user.name}`}
                 </span>
                 <span className="amount">
-                  {balance.currency} {balance.amount.toFixed(2)}
+                  ${balance.amount.toFixed(2)}
                 </span>
               </div>
             ))}

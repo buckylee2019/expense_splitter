@@ -1,5 +1,5 @@
 const { docClient } = require('../config/dynamodb');
-const { PutCommand, GetCommand, QueryCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
+const { PutCommand, GetCommand, QueryCommand, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 const { v4: uuidv4 } = require('uuid');
 
 const TABLE_NAME = process.env.EXPENSES_TABLE_NAME || 'ExpenseSplitter-Expenses';
@@ -51,17 +51,22 @@ class Expense {
   }
 
   static async findByUserId(userId) {
+    // DynamoDB doesn't support complex filtering on nested arrays easily
+    // So we'll scan all expenses and filter in application code
     const params = {
-      TableName: TABLE_NAME,
-      FilterExpression: 'paidBy = :userId OR contains(splits, :userId)',
-      ExpressionAttributeValues: {
-        ':userId': userId
-      }
+      TableName: TABLE_NAME
     };
 
     try {
       const result = await docClient.send(new ScanCommand(params));
-      return result.Items ? result.Items.map(item => new Expense(item)) : [];
+      const allExpenses = result.Items ? result.Items.map(item => new Expense(item)) : [];
+      
+      // Filter expenses where user is either the payer or in the splits
+      return allExpenses.filter(expense => {
+        const isPayer = expense.paidBy === userId;
+        const isInSplits = expense.splits.some(split => split.user === userId);
+        return isPayer || isInSplits;
+      });
     } catch (error) {
       throw error;
     }
@@ -140,6 +145,15 @@ class Expense {
     });
 
     await Promise.all(updatePromises);
+  }
+
+  static async delete(id) {
+    const params = {
+      TableName: TABLE_NAME,
+      Key: { id }
+    };
+
+    await docClient.send(new DeleteCommand(params));
   }
 }
 

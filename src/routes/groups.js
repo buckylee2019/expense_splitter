@@ -6,6 +6,32 @@ const { authMiddleware } = require('../utils/auth');
 
 const router = express.Router();
 
+// Helper function to populate member names in groups
+const populateMemberNames = async (group) => {
+  const groupData = group.toJSON ? group.toJSON() : group;
+  
+  const populatedMembers = [];
+  for (const member of groupData.members) {
+    try {
+      const user = await User.findById(member.user);
+      populatedMembers.push({
+        ...member,
+        userName: user ? user.name : 'Unknown User'
+      });
+    } catch (error) {
+      populatedMembers.push({
+        ...member,
+        userName: 'Unknown User'
+      });
+    }
+  }
+  
+  return {
+    ...groupData,
+    members: populatedMembers
+  };
+};
+
 // Get user's groups
 router.get('/', authMiddleware, async (req, res) => {
   try {
@@ -50,7 +76,10 @@ router.get('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Group not found' });
     }
 
-    res.json(group);
+    // Populate member names
+    const populatedGroup = await populateMemberNames(group);
+
+    res.json(populatedGroup);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

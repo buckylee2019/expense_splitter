@@ -5,7 +5,7 @@ const User = require('../models/User');
 // Calculate balances between users
 const calculateBalances = async (userId, groupId = null) => {
   try {
-    // Get all expenses for the user
+    // Get all expenses where the user is involved (either as payer or in splits)
     const expenses = await Expense.findByUserId(userId);
     
     // Filter by group if specified
@@ -15,39 +15,35 @@ const calculateBalances = async (userId, groupId = null) => {
 
     const balances = {};
 
-    // Calculate what user owes and is owed
+    // Calculate what user owes and is owed based on expenses
     filteredExpenses.forEach(expense => {
-      const paidByUser = expense.paidBy === userId;
+      const userPaid = expense.paidBy === userId;
       
-      expense.splits.forEach(split => {
-        const splitUserId = split.user;
-        
-        if (splitUserId !== userId) {
-          if (!balances[splitUserId]) {
-            balances[splitUserId] = {
-              userId: splitUserId,
-              balance: 0 // positive means they owe you, negative means you owe them
-            };
+      // Find the user's split in this expense
+      const userSplit = expense.splits.find(split => split.user === userId);
+      const userOwes = userSplit ? userSplit.amount : 0;
+      
+      if (userPaid) {
+        // User paid for this expense, so others owe them
+        expense.splits.forEach(split => {
+          if (split.user !== userId) {
+            const otherUserId = split.user;
+            if (!balances[otherUserId]) {
+              balances[otherUserId] = { userId: otherUserId, balance: 0 };
+            }
+            // Other user owes this amount to current user
+            balances[otherUserId].balance += split.amount;
           }
-
-          if (paidByUser) {
-            // User paid, so split user owes them
-            balances[splitUserId].balance += split.amount;
-          }
-        } else if (!paidByUser) {
-          // User owes money for this expense
-          const paidById = expense.paidBy;
-          
-          if (!balances[paidById]) {
-            balances[paidById] = {
-              userId: paidById,
-              balance: 0
-            };
-          }
-          
-          balances[paidById].balance -= split.amount;
+        });
+      } else {
+        // Someone else paid, user owes their share
+        const payerId = expense.paidBy;
+        if (!balances[payerId]) {
+          balances[payerId] = { userId: payerId, balance: 0 };
         }
-      });
+        // User owes this amount to the payer
+        balances[payerId].balance -= userOwes;
+      }
     });
 
     // Subtract settlements
