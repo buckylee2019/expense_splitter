@@ -66,23 +66,16 @@ const AddExpense = () => {
 
   const handlePayerChange = (e) => {
     const selectedPayer = e.target.value;
-    console.log('Payer changed to:', selectedPayer); // Debug log
-    
-    setFormData(prev => {
-      const updated = {
-        ...prev,
-        paidBy: selectedPayer
-      };
-      console.log('Updated formData:', updated); // Debug log
-      return updated;
-    });
+    setFormData(prev => ({
+      ...prev,
+      paidBy: selectedPayer
+    }));
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    console.log('Form field changed:', name, value); // Debug log
     
-    // Handle payer change separately for better debugging
+    // Handle payer change separately for better control
     if (name === 'paidBy') {
       handlePayerChange(e);
       return;
@@ -155,8 +148,6 @@ const AddExpense = () => {
         groupId,
         splits
       };
-      
-      console.log('Submitting expense data:', expenseData); // Debug log
       
       await api.post('/api/expenses', expenseData);
 
@@ -269,16 +260,6 @@ const AddExpense = () => {
                 );
               })}
             </select>
-            {/* Debug display */}
-            <small style={{color: '#666', fontSize: '0.8rem', display: 'block', marginTop: '4px'}}>
-              Current payer: {formData.paidBy || 'None selected'}
-              {formData.paidBy && group?.members && (
-                <span>
-                  {' - '}
-                  {group.members.find(m => m.user === formData.paidBy)?.userName || 'Unknown'}
-                </span>
-              )}
-            </small>
           </div>
         </div>
 
