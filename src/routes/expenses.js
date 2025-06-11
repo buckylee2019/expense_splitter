@@ -82,14 +82,18 @@ router.post('/', authMiddleware, async (req, res) => {
       amount,
       currency,
       category,
-      group: groupId,
+      group,
+      groupId,
       splitType,
       splits
     } = req.body;
 
+    // Accept both 'group' and 'groupId' for backward compatibility
+    const expenseGroupId = group || groupId;
+
     // Validate group membership if group expense
-    if (groupId) {
-      const group = await Group.findByUserIdAndGroupId(req.user.id, groupId);
+    if (expenseGroupId) {
+      const group = await Group.findByUserIdAndGroupId(req.user.id, expenseGroupId);
       if (!group) {
         return res.status(404).json({ error: 'Group not found or user not a member' });
       }
@@ -107,7 +111,7 @@ router.post('/', authMiddleware, async (req, res) => {
       currency,
       category,
       paidBy: req.user.id,
-      group: groupId,
+      group: expenseGroupId,
       splitType,
       splits,
       date: new Date().toISOString()

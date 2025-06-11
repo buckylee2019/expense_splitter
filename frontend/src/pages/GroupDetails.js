@@ -193,6 +193,7 @@ const GroupDetails = () => {
 
       <div className="expenses-section">
         <h2>Expenses</h2>
+        
         {expenses.length === 0 ? (
           <p className="no-expenses">
             No expenses yet. Add one to get started!

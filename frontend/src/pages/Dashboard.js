@@ -206,8 +206,8 @@ const Dashboard = () => {
                   <div className="balance-info">
                     <span className="user">
                       {balance.type === 'owes_you' ? 
-                        `💚 ${balance.userName} owes you` : 
-                        `💸 You owe ${balance.userName}`}
+                        `💚 ${balance.user.name} owes you` : 
+                        `💸 You owe ${balance.user.name}`}
                     </span>
                     <small className="balance-note">
                       {balance.type === 'owes_you' ? 
