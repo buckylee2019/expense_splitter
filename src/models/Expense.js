@@ -62,9 +62,12 @@ class Expense {
       const allExpenses = result.Items ? result.Items.map(item => new Expense(item)) : [];
       
       // Filter expenses where user is either the payer or in the splits
+      // Handle both 'user' and 'userId' fields in splits for backward compatibility
       return allExpenses.filter(expense => {
         const isPayer = expense.paidBy === userId;
-        const isInSplits = expense.splits.some(split => split.user === userId);
+        const isInSplits = expense.splits.some(split => 
+          split.user === userId || split.userId === userId
+        );
         return isPayer || isInSplits;
       });
     } catch (error) {
