@@ -19,15 +19,18 @@ const calculateBalances = async (userId, groupId = null) => {
     filteredExpenses.forEach(expense => {
       const userPaid = expense.paidBy === userId;
       
-      // Find the user's split in this expense
-      const userSplit = expense.splits.find(split => split.user === userId);
+      // Find the user's split in this expense (handle both 'user' and 'userId' fields)
+      const userSplit = expense.splits.find(split => 
+        split.user === userId || split.userId === userId
+      );
       const userOwes = userSplit ? userSplit.amount : 0;
       
       if (userPaid) {
         // User paid for this expense, so others owe them
         expense.splits.forEach(split => {
-          if (split.user !== userId) {
-            const otherUserId = split.user;
+          const splitUserId = split.user || split.userId;
+          if (splitUserId !== userId) {
+            const otherUserId = splitUserId;
             if (!balances[otherUserId]) {
               balances[otherUserId] = { userId: otherUserId, balance: 0 };
             }
