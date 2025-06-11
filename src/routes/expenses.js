@@ -8,7 +8,23 @@ const router = express.Router();
 // Get user's expenses
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const expenses = await Expense.findByUserId(req.user.id);
+    const { groupId } = req.query;
+    
+    let expenses;
+    if (groupId) {
+      // First verify user has access to this group
+      const group = await Group.findByUserIdAndGroupId(req.user.id, groupId);
+      if (!group) {
+        return res.status(404).json({ error: 'Group not found or user not a member' });
+      }
+      
+      // Get expenses for specific group
+      expenses = await Expense.findByGroupId(groupId);
+    } else {
+      // Get all user's expenses
+      expenses = await Expense.findByUserId(req.user.id);
+    }
+    
     res.json(expenses);
   } catch (error) {
     res.status(400).json({ error: error.message });
