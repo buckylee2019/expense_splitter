@@ -123,7 +123,7 @@ const ExpenseDetails = () => {
               <div key={index} className="split-detail-item">
                 <div className="split-user">
                   <span className="user-name">{split.userName || 'Unknown User'}</span>
-                  {split.user === expense.paidBy && (
+                  {(split.user === expense.paidBy || split.userId === expense.paidBy) && (
                     <span className="payer-badge">Payer</span>
                   )}
                 </div>
