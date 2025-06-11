@@ -173,22 +173,54 @@ const GroupDetails = () => {
         </div>
       </div>
 
-      <div className="group-info card">
-        <h3>Group Information</h3>
-        <p>{group.description}</p>
-        <div className="members-list">
-          <h4>Members</h4>
-          <ul>
-            {group.members.map(member => (
-              <li key={member.user}>
+      <div className="group-info-compact">
+        <div className="group-summary card">
+          <div className="group-basic-info">
+            <p className="group-description">{group.description}</p>
+            <div className="group-stats">
+              <span className="stat">
+                <strong>{group.members.length}</strong> members
+              </span>
+              <span className="stat">
+                <strong>{expenses.length}</strong> expenses
+              </span>
+            </div>
+          </div>
+          
+          <div className="members-compact">
+            <strong>Members: </strong>
+            {group.members.map((member, index) => (
+              <span key={member.user} className="member-tag">
                 {member.userName || member.user}
-                {member.role === 'admin' && (
-                  <span className="admin-badge">Admin</span>
-                )}
-              </li>
+                {member.role === 'admin' && <span className="admin-indicator">★</span>}
+                {index < group.members.length - 1 && ', '}
+              </span>
             ))}
-          </ul>
+          </div>
         </div>
+
+        {balances.length > 0 && (
+          <div className="balances-compact card">
+            <h4>Quick Balances</h4>
+            <div className="balances-summary">
+              {balances.slice(0, 3).map((balance, index) => (
+                <div key={index} className={`balance-item ${balance.type}`}>
+                  <span className="balance-text">
+                    {balance.type === 'owes_you' ? 
+                      `${balance.user.name} owes you` : 
+                      `You owe ${balance.user.name}`}
+                  </span>
+                  <span className="balance-amount">${balance.amount.toFixed(2)}</span>
+                </div>
+              ))}
+              {balances.length > 3 && (
+                <div className="more-balances">
+                  +{balances.length - 3} more...
+                </div>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="expenses-section">
@@ -201,67 +233,51 @@ const GroupDetails = () => {
         ) : (
           <div className="expenses-list">
             {expenses.map(expense => (
-              <div key={expense.id} className="expense-card card">
-                <div className="expense-header">
-                  <h3>{expense.description}</h3>
-                  <div className="expense-actions">
-                    <span className="amount">
-                      {expense.currency} {expense.amount.toFixed(2)}
-                    </span>
-                    {currentUser && expense.paidBy === currentUser.id && (
-                      <button 
-                        onClick={() => handleDeleteExpense(expense.id)}
-                        className="delete-button"
-                        title="Delete expense"
-                      >
-                        🗑️
-                      </button>
-                    )}
+              <div key={expense.id} className="expense-card-compact card">
+                <div className="expense-main">
+                  <div className="expense-info">
+                    <h4 className="expense-title">{expense.description}</h4>
+                    <div className="expense-meta">
+                      <span className="expense-date">
+                        {new Date(expense.date).toLocaleDateString()}
+                      </span>
+                      <span className="expense-payer">
+                        by {expense.paidByName || 'Unknown'}
+                      </span>
+                      {expense.category && (
+                        <span className="expense-category">{expense.category}</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="expense-amount">
+                    <span className="currency">{expense.currency}</span>
+                    <span className="amount">{expense.amount.toFixed(2)}</span>
                   </div>
                 </div>
-                <div className="expense-details">
-                  <span className="category">{expense.category}</span>
-                  <span className="date">
-                    {new Date(expense.date).toLocaleDateString()}
-                  </span>
-                  <span className="paid-by">
-                    Paid by: {expense.paidByName || 'Unknown User'}
-                  </span>
-                </div>
-                <div className="splits">
-                  <h4>Split Details:</h4>
-                  {expense.splits.map((split, index) => (
-                    <div key={index} className="split-item">
-                      <span>{split.userName || 'Unknown User'}</span>
-                      <span>{expense.currency} {split.amount.toFixed(2)}</span>
-                    </div>
-                  ))}
+                
+                <div className="expense-actions">
+                  <Link 
+                    to={`/groups/${groupId}/expenses/${expense.id}`}
+                    className="view-details-btn"
+                  >
+                    View Details
+                  </Link>
+                  {currentUser && expense.paidBy === currentUser.id && (
+                    <button 
+                      onClick={() => handleDeleteExpense(expense.id)}
+                      className="delete-button-small"
+                      title="Delete expense"
+                    >
+                      🗑️
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
-
-      {balances.length > 0 && (
-        <div className="balances-section">
-          <h2>Current Balances</h2>
-          <div className="balances-list">
-            {balances.map((balance, index) => (
-              <div key={index} className={`balance-card card ${balance.type}`}>
-                <span className="user">
-                  {balance.type === 'owes_you' ? 
-                    `${balance.user.name} owes you` : 
-                    `You owe ${balance.user.name}`}
-                </span>
-                <span className="amount">
-                  ${balance.amount.toFixed(2)}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import GroupDetails from './pages/GroupDetails';
+import ExpenseDetails from './pages/ExpenseDetails';
 import CreateGroup from './pages/CreateGroup';
 import AddExpense from './pages/AddExpense';
 import Settlements from './pages/Settlements';
@@ -43,6 +44,14 @@ const AppRoutes = () => {
         element={
           <PrivateRoute>
             <GroupDetails key={location.pathname + location.search} />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/groups/:groupId/expenses/:expenseId"
+        element={
+          <PrivateRoute>
+            <ExpenseDetails />
           </PrivateRoute>
         }
       />
