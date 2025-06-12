@@ -230,7 +230,7 @@ const Dashboard = () => {
                   <div key={settlement.id || index} className="settlement-item-compact">
                     <div className="settlement-info">
                       <div className="settlement-amount">
-                        {settlement.currency} {settlement.amount.toFixed(2)}
+                        {settlement.currency} {parseFloat(settlement.amount).toFixed(2)}
                       </div>
                       <div className="settlement-users">
                         <span className="from-user">From: {settlement.from}</span>

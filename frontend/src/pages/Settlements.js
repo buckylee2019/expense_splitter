@@ -116,7 +116,7 @@ const Settlements = () => {
                 <div key={settlement.id} className="settlement-item">
                   <div className="settlement-header">
                     <span className="amount">
-                      {settlement.currency} {settlement.amount.toFixed(2)}
+                      {settlement.currency} {parseFloat(settlement.amount).toFixed(2)}
                     </span>
                     <span className="date">
                       {new Date(settlement.settledAt).toLocaleDateString()}
