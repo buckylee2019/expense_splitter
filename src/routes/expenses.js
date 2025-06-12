@@ -177,9 +177,10 @@ router.put('/:id', authMiddleware, async (req, res) => {
     }
 
     // Only allow the person who paid for the expense to edit it
-    if (existingExpense.paidBy !== req.user.id) {
+    // Temporarily commenting out this restriction to allow any group member to edit expenses
+    /*if (existingExpense.paidBy !== req.user.id) {
       return res.status(403).json({ error: 'Only the person who paid can edit this expense' });
-    }
+    }*/
 
     // Validate that the selected payer is a member of the group (if paidBy is provided)
     if (paidBy && existingExpense.group) {
