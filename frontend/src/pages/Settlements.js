@@ -112,29 +112,32 @@ const Settlements = () => {
             <p className="no-settlements">No settlements yet</p>
           ) : (
             <div className="settlements-items">
-              {settlements.map(settlement => (
-                <div key={settlement.id} className="settlement-item">
-                  <div className="settlement-header">
-                    <span className="amount">
-                      {settlement.currency} {parseFloat(settlement.amount).toFixed(2)}
-                    </span>
-                    <span className="date">
-                      {new Date(settlement.settledAt).toLocaleDateString()}
-                    </span>
+              {settlements.map(settlement => {
+                console.log('Settlement data:', settlement);
+                return (
+                  <div key={settlement.id || Math.random()} className="settlement-item">
+                    <div className="settlement-header">
+                      <span className="amount">
+                        {settlement.currency} {typeof settlement.amount === 'number' ? settlement.amount.toFixed(2) : parseFloat(settlement.amount || 0).toFixed(2)}
+                      </span>
+                      <span className="date">
+                        {new Date(settlement.settledAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="settlement-details">
+                      <p>
+                        <strong>From:</strong> {settlement.from}
+                        <br />
+                        <strong>To:</strong> {settlement.to}
+                      </p>
+                      {settlement.notes && (
+                        <p className="notes">{settlement.notes}</p>
+                      )}
+                      <span className="method">{settlement.method}</span>
+                    </div>
                   </div>
-                  <div className="settlement-details">
-                    <p>
-                      <strong>From:</strong> {settlement.from}
-                      <br />
-                      <strong>To:</strong> {settlement.to}
-                    </p>
-                    {settlement.notes && (
-                      <p className="notes">{settlement.notes}</p>
-                    )}
-                    <span className="method">{settlement.method}</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
