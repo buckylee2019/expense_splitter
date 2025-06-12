@@ -6,6 +6,7 @@ const Dashboard = () => {
   const location = useLocation();
   const [groups, setGroups] = useState([]);
   const [balances, setBalances] = useState({ balances: [], summary: {} });
+  const [settlements, setSettlements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -14,13 +15,15 @@ const Dashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [groupsResponse, balancesResponse] = await Promise.all([
+      const [groupsResponse, balancesResponse, settlementsResponse] = await Promise.all([
         api.get('/api/groups'),
-        api.get('/api/balances')
+        api.get('/api/balances'),
+        api.get('/api/settlements')
       ]);
       
       setGroups(groupsResponse.data);
       setBalances(balancesResponse.data);
+      setSettlements(settlementsResponse.data);
       setError('');
       setLastRefresh(new Date());
     } catch (err) {
@@ -95,6 +98,9 @@ const Dashboard = () => {
   const totalOwing = balances.summary.totalOwing || 0;
   const netBalance = totalOwed - totalOwing;
 
+  // Get recent settlements (last 5)
+  const recentSettlements = settlements.slice(0, 5);
+
   return (
     <div className="dashboard">
       {successMessage && (
@@ -159,38 +165,85 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="groups-section">
-        <div className="card-header">
-          <h2>🏠 Your Groups</h2>
-          <span className="card-subtitle">{groups.length} groups</span>
-        </div>
-        
-        {groups.length === 0 ? (
-          <div className="no-groups">
-            <h3>🎯 Ready to start splitting expenses?</h3>
-            <p>Create your first group to begin tracking shared expenses with friends, family, or roommates.</p>
-            <Link to="/groups/create" className="button primary large mt-lg">
-              🚀 Create Your First Group
-            </Link>
+      <div className="dashboard-grid">
+        <div className="groups-section">
+          <div className="card-header">
+            <h2>🏠 Your Groups</h2>
+            <span className="card-subtitle">{groups.length} groups</span>
           </div>
-        ) : (
-          <div className="groups-grid">
-            {groups.map(group => (
-              <Link 
-                to={`/groups/${group.id}`} 
-                key={group.id} 
-                className="group-card"
-              >
-                <h3>🏠 {group.name}</h3>
-                <p>{group.description || 'No description provided'}</p>
-                <div className="group-meta">
-                  <span>👥 {group.members.length} members</span>
-                  {group.isActive && <span className="active-badge">✅ Active</span>}
-                </div>
+          
+          {groups.length === 0 ? (
+            <div className="no-groups">
+              <h3>🎯 Ready to start splitting expenses?</h3>
+              <p>Create your first group to begin tracking shared expenses with friends, family, or roommates.</p>
+              <Link to="/groups/create" className="button primary large mt-lg">
+                🚀 Create Your First Group
               </Link>
-            ))}
+            </div>
+          ) : (
+            <div className="groups-grid">
+              {groups.map(group => (
+                <Link 
+                  to={`/groups/${group.id}`} 
+                  key={group.id} 
+                  className="group-card"
+                >
+                  <h3>🏠 {group.name}</h3>
+                  <p>{group.description || 'No description provided'}</p>
+                  <div className="group-meta">
+                    <span>👥 {group.members.length} members</span>
+                    {group.isActive && <span className="active-badge">✅ Active</span>}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="settlements-section">
+          <div className="card">
+            <div className="card-header">
+              <h2>💵 Recent Settlements</h2>
+              <Link to="/settlements" className="view-all-link">View All</Link>
+            </div>
+            
+            {recentSettlements.length === 0 ? (
+              <div className="no-settlements">
+                <p>No settlements recorded yet.</p>
+                <Link to="/settlements" className="button secondary">
+                  Record a Settlement
+                </Link>
+              </div>
+            ) : (
+              <div className="settlements-list">
+                {recentSettlements.map((settlement, index) => (
+                  <div key={settlement.id || index} className="settlement-item-compact">
+                    <div className="settlement-info">
+                      <div className="settlement-amount">
+                        {settlement.currency} {settlement.amount.toFixed(2)}
+                      </div>
+                      <div className="settlement-users">
+                        <span className="from-user">From: {settlement.from}</span>
+                        <span className="to-user">To: {settlement.to}</span>
+                      </div>
+                    </div>
+                    <div className="settlement-meta">
+                      <span className="settlement-date">
+                        {new Date(settlement.settledAt).toLocaleDateString()}
+                      </span>
+                      <span className="settlement-method">{settlement.method}</span>
+                    </div>
+                  </div>
+                ))}
+                <div className="view-all-settlements">
+                  <Link to="/settlements" className="button secondary">
+                    View All Settlements
+                  </Link>
+                </div>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
 
       {balances.balances.length > 0 && (
@@ -219,6 +272,9 @@ const Dashboard = () => {
                     <span className="amount">
                       ${balance.amount.toFixed(2)}
                     </span>
+                    <Link to="/settlements" className="settle-button">
+                      Settle
+                    </Link>
                   </div>
                 </div>
               ))}
@@ -240,8 +296,8 @@ const Dashboard = () => {
             </Link>
             <Link to="/settlements" className="action-card">
               <div className="action-icon">💰</div>
-              <h4>View Settlements</h4>
-              <p>Check payment history</p>
+              <h4>Record Settlement</h4>
+              <p>Mark a debt as paid</p>
             </Link>
             <div className="action-card disabled">
               <div className="action-icon">📊</div>
