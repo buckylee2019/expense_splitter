@@ -7,13 +7,15 @@ const Settlements = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [formData, setFormData] = useState({
+    fromUserId: '', // Added for two-way settlement
     toUserId: '',
     amount: '',
     currency: 'USD',
     groupId: '',
     method: 'cash',
     notes: '',
-    expenseIds: []
+    expenseIds: [],
+    isThirdPartySettlement: false // Flag for third-party settlements
   });
 
   const [groups, setGroups] = useState([]);
@@ -21,6 +23,7 @@ const Settlements = () => {
   const [unsettledExpenses, setUnsettledExpenses] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
   const [balances, setBalances] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     fetchData();
@@ -31,18 +34,21 @@ const Settlements = () => {
       setLoading(true);
       console.log('Fetching settlements data...');
       
-      const [settlementsRes, groupsRes, balancesRes] = await Promise.all([
+      const [settlementsRes, groupsRes, balancesRes, userRes] = await Promise.all([
         api.get('/api/settlements'),
         api.get('/api/groups'),
-        api.get('/api/balances')
+        api.get('/api/balances'),
+        api.get('/api/users/profile')
       ]);
       
       console.log('Settlements data:', settlementsRes.data);
       console.log('Balances data:', balancesRes.data);
+      console.log('Current user:', userRes.data);
       
       setSettlements(settlementsRes.data);
       setGroups(groupsRes.data);
       setBalances(balancesRes.data.balances || []);
+      setCurrentUser(userRes.data);
       setError('');
     } catch (err) {
       console.error('Error fetching settlements:', err);
@@ -68,13 +74,15 @@ const Settlements = () => {
       
       // Reset form data
       setFormData({
+        fromUserId: currentUser?.id || '',
         toUserId: '',
         amount: '',
         currency: 'USD',
         groupId,
         method: 'cash',
         notes: '',
-        expenseIds: []
+        expenseIds: [],
+        isThirdPartySettlement: false
       });
       
       // If there are balances, suggest the first one
@@ -99,25 +107,47 @@ const Settlements = () => {
     }
   };
 
-  const handleUserChange = (userId) => {
-    // Find the balance with this user
-    const userBalance = balances.find(b => b.user.id === userId);
-    
-    if (userBalance) {
-      // Auto-fill the amount based on the balance
+  const handleUserChange = (userId, field) => {
+    if (field === 'toUserId') {
+      // Find the balance with this user
+      const userBalance = balances.find(b => b.user.id === userId);
+      
+      if (userBalance) {
+        // Auto-fill the amount based on the balance
+        setFormData(prev => ({
+          ...prev,
+          toUserId: userId,
+          amount: userBalance.amount.toFixed(2),
+          notes: `Settling balance with ${userBalance.user.name}`
+        }));
+      } else {
+        // Just update the user ID if no balance found
+        setFormData(prev => ({
+          ...prev,
+          toUserId: userId
+        }));
+      }
+    } else if (field === 'fromUserId') {
+      // Update the from user ID
       setFormData(prev => ({
         ...prev,
-        toUserId: userId,
-        amount: userBalance.amount.toFixed(2),
-        notes: `Settling balance with ${userBalance.user.name}`
-      }));
-    } else {
-      // Just update the user ID if no balance found
-      setFormData(prev => ({
-        ...prev,
-        toUserId: userId
+        fromUserId: userId
       }));
     }
+  };
+
+  const toggleThirdPartySettlement = () => {
+    setFormData(prev => {
+      const isThirdParty = !prev.isThirdPartySettlement;
+      
+      // If switching to third-party mode, set fromUserId to empty
+      // If switching back to normal mode, set fromUserId to current user
+      return {
+        ...prev,
+        isThirdPartySettlement: isThirdParty,
+        fromUserId: isThirdParty ? '' : (currentUser?.id || '')
+      };
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -127,14 +157,28 @@ const Settlements = () => {
     setLoading(true);
 
     try {
-      // Convert amount to number before sending to API
-      const formDataWithNumberAmount = {
+      // Prepare data for API call
+      const settlementData = {
         ...formData,
         amount: parseFloat(formData.amount)
       };
       
-      console.log('Submitting settlement:', formDataWithNumberAmount);
-      const response = await api.post('/api/settlements', formDataWithNumberAmount);
+      // If it's a third-party settlement, include fromUserId
+      // Otherwise, the backend will use the current user's ID
+      if (formData.isThirdPartySettlement) {
+        if (!formData.fromUserId) {
+          throw new Error('Please select who is paying');
+        }
+      } else {
+        // For regular settlements, remove fromUserId as the backend will use the current user
+        delete settlementData.fromUserId;
+      }
+      
+      // Remove the flag as it's not needed by the API
+      delete settlementData.isThirdPartySettlement;
+      
+      console.log('Submitting settlement:', settlementData);
+      const response = await api.post('/api/settlements', settlementData);
       console.log('Settlement response:', response.data);
       
       // Show success message
@@ -145,19 +189,21 @@ const Settlements = () => {
       
       // Reset form
       setFormData({
+        fromUserId: currentUser?.id || '',
         toUserId: '',
         amount: '',
         currency: 'USD',
         groupId: '',
         method: 'cash',
         notes: '',
-        expenseIds: []
+        expenseIds: [],
+        isThirdPartySettlement: false
       });
       setSelectedGroup(null);
       setUnsettledExpenses([]);
     } catch (err) {
       console.error('Settlement error:', err);
-      setError(err.response?.data?.error || 'Failed to create settlement');
+      setError(err.response?.data?.error || err.message || 'Failed to create settlement');
     } finally {
       setLoading(false);
     }
@@ -233,12 +279,44 @@ const Settlements = () => {
 
             {selectedGroup && (
               <>
+                <div className="form-group settlement-type-toggle">
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={formData.isThirdPartySettlement}
+                      onChange={toggleThirdPartySettlement}
+                      disabled={loading}
+                    />
+                    Record settlement for other group members
+                  </label>
+                </div>
+
+                {formData.isThirdPartySettlement && (
+                  <div className="form-group">
+                    <label htmlFor="fromUserId">From (Who is paying)</label>
+                    <select
+                      id="fromUserId"
+                      value={formData.fromUserId}
+                      onChange={(e) => handleUserChange(e.target.value, 'fromUserId')}
+                      required
+                      disabled={loading}
+                    >
+                      <option value="">Select who is paying</option>
+                      {selectedGroup.members.map(member => (
+                        <option key={member.user} value={member.user}>
+                          {member.userName || member.user}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
                 <div className="form-group">
                   <label htmlFor="toUserId">Pay To</label>
                   <select
                     id="toUserId"
                     value={formData.toUserId}
-                    onChange={(e) => handleUserChange(e.target.value)}
+                    onChange={(e) => handleUserChange(e.target.value, 'toUserId')}
                     required
                     disabled={loading}
                   >
@@ -351,7 +429,8 @@ const Settlements = () => {
             <button 
               type="submit" 
               className="button primary"
-              disabled={!formData.groupId || !formData.toUserId || !formData.amount || loading}
+              disabled={!formData.groupId || !formData.toUserId || !formData.amount || 
+                (formData.isThirdPartySettlement && !formData.fromUserId) || loading}
             >
               {loading ? 'Processing...' : 'Record Settlement'}
             </button>

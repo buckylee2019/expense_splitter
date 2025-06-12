@@ -18,6 +18,7 @@ class Settlement {
     this.settledAt = data.settledAt || new Date().toISOString();
     this.createdAt = data.createdAt || new Date().toISOString();
     this.updatedAt = data.updatedAt || new Date().toISOString();
+    this.recordedBy = data.recordedBy; // Track who recorded the settlement
   }
 
   static async create(settlementData) {
@@ -52,10 +53,11 @@ class Settlement {
   static async findByUserId(userId) {
     const params = {
       TableName: TABLE_NAME,
-      FilterExpression: '#from = :userId OR #to = :userId',
+      FilterExpression: '#from = :userId OR #to = :userId OR #recordedBy = :userId',
       ExpressionAttributeNames: {
         '#from': 'from',
-        '#to': 'to'
+        '#to': 'to',
+        '#recordedBy': 'recordedBy'
       },
       ExpressionAttributeValues: {
         ':userId': userId
