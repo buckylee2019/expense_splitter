@@ -68,11 +68,31 @@ class Settlement {
       console.log(`Found ${result.Items ? result.Items.length : 0} settlements`);
       
       // Add user-friendly names for display
-      const settlements = result.Items ? result.Items.map(item => {
+      const settlements = result.Items ? await Promise.all(result.Items.map(async item => {
         const settlement = new Settlement(item);
-        // Add any additional processing here if needed
+        
+        // Get user names for from and to fields
+        const User = require('./User');
+        try {
+          if (settlement.from) {
+            const fromUser = await User.findById(settlement.from);
+            if (fromUser) {
+              settlement.fromName = fromUser.name || fromUser.email;
+            }
+          }
+          
+          if (settlement.to) {
+            const toUser = await User.findById(settlement.to);
+            if (toUser) {
+              settlement.toName = toUser.name || toUser.email;
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching user details for settlement:', err);
+        }
+        
         return settlement;
-      }) : [];
+      })) : [];
       
       return settlements;
     } catch (error) {

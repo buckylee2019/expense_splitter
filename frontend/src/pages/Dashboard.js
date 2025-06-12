@@ -230,11 +230,11 @@ const Dashboard = () => {
                   <div key={settlement.id || index} className="settlement-item-compact">
                     <div className="settlement-info">
                       <div className="settlement-amount">
-                        {settlement.currency} {parseFloat(settlement.amount).toFixed(2)}
+                        {settlement.currency} {typeof settlement.amount === 'number' ? settlement.amount.toFixed(2) : parseFloat(settlement.amount || 0).toFixed(2)}
                       </div>
                       <div className="settlement-users">
-                        <span className="from-user">From: {settlement.from}</span>
-                        <span className="to-user">To: {settlement.to}</span>
+                        <span className="from-user">From: {settlement.fromName || settlement.from}</span>
+                        <span className="to-user">To: {settlement.toName || settlement.to}</span>
                       </div>
                     </div>
                     <div className="settlement-meta">

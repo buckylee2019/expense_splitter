@@ -49,9 +49,14 @@ const Settlements = () => {
 
   const handleGroupChange = async (groupId) => {
     try {
+      // Get unsettled expenses for the group
       const response = await api.get(`/api/expenses?groupId=${groupId}&settled=false`);
       setUnsettledExpenses(response.data);
-      setSelectedGroup(groups.find(g => g.id === groupId));
+      
+      // Get group details with member names
+      const groupResponse = await api.get(`/api/groups/${groupId}`);
+      setSelectedGroup(groupResponse.data);
+      
       setFormData(prev => ({ ...prev, groupId }));
     } catch (err) {
       setError('Failed to load group expenses');
@@ -65,8 +70,14 @@ const Settlements = () => {
     setLoading(true);
 
     try {
-      console.log('Submitting settlement:', formData);
-      const response = await api.post('/api/settlements', formData);
+      // Convert amount to number before sending to API
+      const formDataWithNumberAmount = {
+        ...formData,
+        amount: parseFloat(formData.amount)
+      };
+      
+      console.log('Submitting settlement:', formDataWithNumberAmount);
+      const response = await api.post('/api/settlements', formDataWithNumberAmount);
       console.log('Settlement response:', response.data);
       
       // Show success message
@@ -126,9 +137,9 @@ const Settlements = () => {
                     </div>
                     <div className="settlement-details">
                       <p>
-                        <strong>From:</strong> {settlement.from}
+                        <strong>From:</strong> {settlement.fromName || settlement.from}
                         <br />
-                        <strong>To:</strong> {settlement.to}
+                        <strong>To:</strong> {settlement.toName || settlement.to}
                       </p>
                       {settlement.notes && (
                         <p className="notes">{settlement.notes}</p>
