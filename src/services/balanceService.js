@@ -49,7 +49,7 @@ const calculateBalances = async (userId, groupId = null) => {
       }
     });
 
-    // Subtract settlements
+    // Apply settlements to adjust balances
     const settlements = await Settlement.findByUserId(userId);
     const filteredSettlements = groupId
       ? settlements.filter(settlement => settlement.group === groupId)
@@ -60,15 +60,21 @@ const calculateBalances = async (userId, groupId = null) => {
       const toUser = settlement.to;
       
       if (fromUser === userId) {
-        // User paid someone
-        if (balances[toUser]) {
-          balances[toUser].balance -= settlement.amount;
+        // Current user paid someone else
+        // This reduces what the current user owes to that person
+        // OR increases what that person owes to the current user
+        if (!balances[toUser]) {
+          balances[toUser] = { userId: toUser, balance: 0 };
         }
-      } else {
-        // Someone paid user
-        if (balances[fromUser]) {
-          balances[fromUser].balance += settlement.amount;
+        balances[toUser].balance += settlement.amount;
+      } else if (toUser === userId) {
+        // Someone else paid the current user
+        // This reduces what that person owes to the current user
+        // OR increases what the current user owes to that person
+        if (!balances[fromUser]) {
+          balances[fromUser] = { userId: fromUser, balance: 0 };
         }
+        balances[fromUser].balance -= settlement.amount;
       }
     });
 
@@ -89,6 +95,7 @@ const calculateBalances = async (userId, groupId = null) => {
 
     return result;
   } catch (error) {
+    console.error('Error calculating balances:', error);
     throw error;
   }
 };
