@@ -1,5 +1,5 @@
 const { docClient } = require('../config/dynamodb');
-const { PutCommand, GetCommand, QueryCommand, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
+const { PutCommand, GetCommand, QueryCommand, ScanCommand, DeleteCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
 const { v4: uuidv4 } = require('uuid');
 
 const TABLE_NAME = process.env.EXPENSES_TABLE_NAME || 'ExpenseSplitter-Expenses';
@@ -79,8 +79,12 @@ class Expense {
     const expense = await Expense.findById(expenseId);
     if (!expense) return null;
 
+    // Check if user is related to this expense (either as payer or in splits)
+    // Handle both 'user' and 'userId' fields for backward compatibility
     const isRelated = expense.paidBy === userId || 
-                     expense.splits.some(split => split.user === userId);
+                     expense.splits.some(split => 
+                       split.user === userId || split.userId === userId
+                     );
 
     return isRelated ? expense : null;
   }
@@ -148,6 +152,36 @@ class Expense {
     });
 
     await Promise.all(updatePromises);
+  }
+
+  static async update(id, updateData) {
+    const params = {
+      TableName: TABLE_NAME,
+      Key: { id },
+      UpdateExpression: 'SET',
+      ExpressionAttributeNames: {},
+      ExpressionAttributeValues: {},
+      ReturnValues: 'ALL_NEW'
+    };
+
+    const updates = [];
+    Object.keys(updateData).forEach((key, index) => {
+      const attrName = `#attr${index}`;
+      const attrValue = `:val${index}`;
+      
+      params.ExpressionAttributeNames[attrName] = key;
+      params.ExpressionAttributeValues[attrValue] = updateData[key];
+      updates.push(`${attrName} = ${attrValue}`);
+    });
+
+    params.UpdateExpression += ' ' + updates.join(', ');
+
+    try {
+      const result = await docClient.send(new UpdateCommand(params));
+      return new Expense(result.Attributes);
+    } catch (error) {
+      throw error;
+    }
   }
 
   static async delete(id) {

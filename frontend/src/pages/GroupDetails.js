@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import AddMember from '../components/AddMember';
 
 const GroupDetails = () => {
   const { groupId } = useParams();
@@ -12,6 +13,7 @@ const GroupDetails = () => {
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
+  const [showAddMember, setShowAddMember] = useState(false);
 
   const fetchGroupData = useCallback(async () => {
     try {
@@ -122,6 +124,13 @@ const GroupDetails = () => {
   };
 
   // Check if current user is admin of the group
+  const handleMemberAdded = (updatedGroup) => {
+    setGroup(updatedGroup);
+    setShowAddMember(false);
+    // Refresh all data to ensure consistency
+    fetchGroupData();
+  };
+
   const isGroupAdmin = () => {
     if (!currentUser || !group) return false;
     const member = group.members.find(m => m.user === currentUser.id);
@@ -188,14 +197,27 @@ const GroupDetails = () => {
           </div>
           
           <div className="members-compact">
-            <strong>Members: </strong>
-            {group.members.map((member, index) => (
-              <span key={member.user} className="member-tag">
-                {member.userName || member.user}
-                {member.role === 'admin' && <span className="admin-indicator">★</span>}
-                {index < group.members.length - 1 && ', '}
-              </span>
-            ))}
+            <div className="members-header">
+              <strong>Members: </strong>
+              {isGroupAdmin() && (
+                <button 
+                  onClick={() => setShowAddMember(true)}
+                  className="btn btn-small btn-primary"
+                  title="Add new member"
+                >
+                  + Add Member
+                </button>
+              )}
+            </div>
+            <div className="members-list">
+              {group.members.map((member, index) => (
+                <span key={member.user} className="member-tag">
+                  {member.userName || member.user}
+                  {member.role === 'admin' && <span className="admin-indicator">★</span>}
+                  {index < group.members.length - 1 && ', '}
+                </span>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -278,6 +300,19 @@ const GroupDetails = () => {
           </div>
         )}
       </div>
+
+      {/* Add Member Modal */}
+      {showAddMember && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <AddMember 
+              groupId={groupId}
+              onMemberAdded={handleMemberAdded}
+              onCancel={() => setShowAddMember(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

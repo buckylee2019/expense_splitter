@@ -149,6 +149,58 @@ router.get('/:id/expenses', authMiddleware, async (req, res) => {
   }
 });
 
+// Add member to group
+router.post('/:id/members', authMiddleware, async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    // Find the group
+    const group = await Group.findByUserIdAndGroupId(req.user.id, req.params.id);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found or user not a member' });
+    }
+
+    // Check if user is admin of the group
+    if (!group.isAdmin(req.user.id)) {
+      return res.status(403).json({ error: 'Only group admins can add members' });
+    }
+
+    // Find the user to add
+    const userToAdd = await User.findByEmail(email);
+    if (!userToAdd) {
+      return res.status(404).json({ error: 'User not found with this email' });
+    }
+
+    // Check if user is already a member
+    const isAlreadyMember = group.members.some(member => member.user === userToAdd.id);
+    if (isAlreadyMember) {
+      return res.status(400).json({ error: 'User is already a member of this group' });
+    }
+
+    // Add the user to the group
+    const updatedGroup = await Group.addMember(req.params.id, {
+      user: userToAdd.id,
+      role: 'member',
+      joinedAt: new Date().toISOString()
+    });
+
+    // Populate member names
+    const populatedGroup = await populateMemberNames(updatedGroup);
+
+    res.json({
+      message: 'Member added successfully',
+      group: populatedGroup
+    });
+  } catch (error) {
+    console.error('Error adding member to group:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Delete group
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {

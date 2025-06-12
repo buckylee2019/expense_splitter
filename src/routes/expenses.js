@@ -158,6 +158,71 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Update expense
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const {
+      description,
+      amount,
+      currency,
+      category,
+      splits,
+      paidBy
+    } = req.body;
+
+    // Find the existing expense
+    const existingExpense = await Expense.findByUserIdAndExpenseId(req.user.id, req.params.id);
+    if (!existingExpense) {
+      return res.status(404).json({ error: 'Expense not found' });
+    }
+
+    // Only allow the person who paid for the expense to edit it
+    if (existingExpense.paidBy !== req.user.id) {
+      return res.status(403).json({ error: 'Only the person who paid can edit this expense' });
+    }
+
+    // Validate that the selected payer is a member of the group (if paidBy is provided)
+    if (paidBy && existingExpense.group) {
+      const group = await Group.findByUserIdAndGroupId(req.user.id, existingExpense.group);
+      if (group) {
+        const payerIsMember = group.members.some(member => member.user === paidBy);
+        if (!payerIsMember) {
+          return res.status(400).json({ error: 'Selected payer is not a member of this group' });
+        }
+      }
+    }
+
+    // Validate splits total
+    if (splits && amount) {
+      const totalSplit = splits.reduce((sum, split) => sum + split.amount, 0);
+      if (Math.abs(totalSplit - amount) > 0.01) {
+        return res.status(400).json({ error: 'Split amounts must equal total amount' });
+      }
+    }
+
+    // Update the expense
+    const updatedExpense = await Expense.update(req.params.id, {
+      description: description || existingExpense.description,
+      amount: amount !== undefined ? parseFloat(amount) : existingExpense.amount,
+      currency: currency || existingExpense.currency,
+      category: category || existingExpense.category,
+      paidBy: paidBy || existingExpense.paidBy,
+      splits: splits || existingExpense.splits,
+      updatedAt: new Date().toISOString()
+    });
+
+    // Populate user names
+    const populatedExpenses = await populateUserNames([updatedExpense]);
+    
+    res.json({
+      message: 'Expense updated successfully',
+      expense: populatedExpenses[0]
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Delete expense
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {

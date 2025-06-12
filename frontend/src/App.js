@@ -9,6 +9,7 @@ import GroupDetails from './pages/GroupDetails';
 import ExpenseDetails from './pages/ExpenseDetails';
 import CreateGroup from './pages/CreateGroup';
 import AddExpense from './pages/AddExpense';
+import EditExpense from './pages/EditExpense';
 import Settlements from './pages/Settlements';
 
 const PrivateRoute = ({ children }) => {
@@ -60,6 +61,14 @@ const AppRoutes = () => {
         element={
           <PrivateRoute>
             <AddExpense />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/groups/:groupId/expenses/:expenseId/edit"
+        element={
+          <PrivateRoute>
+            <EditExpense />
           </PrivateRoute>
         }
       />

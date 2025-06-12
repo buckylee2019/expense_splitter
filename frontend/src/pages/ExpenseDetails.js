@@ -78,13 +78,22 @@ const ExpenseDetails = () => {
             ← Back to Group
           </Link>
           {currentUser && expense.paidBy === currentUser.id && (
-            <button 
-              onClick={handleDeleteExpense}
-              className="button danger"
-              title="Delete expense"
-            >
-              🗑️ Delete Expense
-            </button>
+            <>
+              <Link 
+                to={`/groups/${groupId}/expenses/${expenseId}/edit`}
+                className="button primary"
+                title="Edit expense"
+              >
+                ✏️ Edit Expense
+              </Link>
+              <button 
+                onClick={handleDeleteExpense}
+                className="button danger"
+                title="Delete expense"
+              >
+                🗑️ Delete Expense
+              </button>
+            </>
           )}
         </div>
       </div>

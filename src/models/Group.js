@@ -1,5 +1,5 @@
 const { docClient } = require('../config/dynamodb');
-const { PutCommand, GetCommand, QueryCommand, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
+const { PutCommand, GetCommand, QueryCommand, ScanCommand, DeleteCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
 const { v4: uuidv4 } = require('uuid');
 
 const TABLE_NAME = process.env.GROUPS_TABLE_NAME || 'ExpenseSplitter-Groups';
@@ -111,6 +111,27 @@ class Group {
       typeof member === 'object' ? member.user === userId : member === userId
     );
     return member && member.role === 'admin';
+  }
+
+  static async addMember(groupId, memberData) {
+    const params = {
+      TableName: TABLE_NAME,
+      Key: { id: groupId },
+      UpdateExpression: 'SET members = list_append(if_not_exists(members, :empty_list), :new_member), updatedAt = :updatedAt',
+      ExpressionAttributeValues: {
+        ':new_member': [memberData],
+        ':empty_list': [],
+        ':updatedAt': new Date().toISOString()
+      },
+      ReturnValues: 'ALL_NEW'
+    };
+
+    try {
+      const result = await docClient.send(new UpdateCommand(params));
+      return new Group(result.Attributes);
+    } catch (error) {
+      throw error;
+    }
   }
 
   static async delete(id) {
