@@ -20,6 +20,7 @@ const Settlements = () => {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [unsettledExpenses, setUnsettledExpenses] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
+  const [balances, setBalances] = useState([]);
 
   useEffect(() => {
     fetchData();
@@ -30,14 +31,18 @@ const Settlements = () => {
       setLoading(true);
       console.log('Fetching settlements data...');
       
-      const [settlementsRes, groupsRes] = await Promise.all([
+      const [settlementsRes, groupsRes, balancesRes] = await Promise.all([
         api.get('/api/settlements'),
-        api.get('/api/groups')
+        api.get('/api/groups'),
+        api.get('/api/balances')
       ]);
       
       console.log('Settlements data:', settlementsRes.data);
+      console.log('Balances data:', balancesRes.data);
+      
       setSettlements(settlementsRes.data);
       setGroups(groupsRes.data);
+      setBalances(balancesRes.data.balances || []);
       setError('');
     } catch (err) {
       console.error('Error fetching settlements:', err);
@@ -57,9 +62,61 @@ const Settlements = () => {
       const groupResponse = await api.get(`/api/groups/${groupId}`);
       setSelectedGroup(groupResponse.data);
       
-      setFormData(prev => ({ ...prev, groupId }));
+      // Get balances for this specific group
+      const balancesResponse = await api.get(`/api/balances?groupId=${groupId}`);
+      const groupBalances = balancesResponse.data.balances || [];
+      
+      // Reset form data
+      setFormData({
+        toUserId: '',
+        amount: '',
+        currency: 'USD',
+        groupId,
+        method: 'cash',
+        notes: '',
+        expenseIds: []
+      });
+      
+      // If there are balances, suggest the first one
+      if (groupBalances.length > 0) {
+        const firstBalance = groupBalances[0];
+        
+        if (firstBalance.type === 'you_owe') {
+          // You owe someone else
+          setFormData(prev => ({
+            ...prev,
+            toUserId: firstBalance.user.id,
+            amount: firstBalance.amount.toFixed(2),
+            notes: `Settling balance with ${firstBalance.user.name}`
+          }));
+        } else {
+          // Someone owes you - don't auto-fill as they should be the one paying
+        }
+      }
     } catch (err) {
-      setError('Failed to load group expenses');
+      console.error('Error loading group data:', err);
+      setError('Failed to load group data');
+    }
+  };
+
+  const handleUserChange = (userId) => {
+    // Find the balance with this user
+    const userBalance = balances.find(b => b.user.id === userId);
+    
+    if (userBalance) {
+      // Auto-fill the amount based on the balance
+      setFormData(prev => ({
+        ...prev,
+        toUserId: userId,
+        amount: userBalance.amount.toFixed(2),
+        notes: `Settling balance with ${userBalance.user.name}`
+      }));
+    } else {
+      // Just update the user ID if no balance found
+      setFormData(prev => ({
+        ...prev,
+        toUserId: userId
+      }));
     }
   };
 
@@ -83,7 +140,7 @@ const Settlements = () => {
       // Show success message
       setSuccessMessage('Settlement recorded successfully!');
       
-      // Refresh settlements list
+      // Refresh settlements list and balances
       await fetchData();
       
       // Reset form
@@ -181,10 +238,7 @@ const Settlements = () => {
                   <select
                     id="toUserId"
                     value={formData.toUserId}
-                    onChange={(e) => setFormData(prev => ({ 
-                      ...prev, 
-                      toUserId: e.target.value 
-                    }))}
+                    onChange={(e) => handleUserChange(e.target.value)}
                     required
                     disabled={loading}
                   >
