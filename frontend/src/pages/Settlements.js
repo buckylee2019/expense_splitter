@@ -53,6 +53,7 @@ const Settlements = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
       await api.post('/api/settlements', formData);
@@ -73,8 +74,11 @@ const Settlements = () => {
       });
       setSelectedGroup(null);
       setUnsettledExpenses([]);
+      setLoading(false);
     } catch (err) {
+      console.error('Settlement error:', err);
       setError(err.response?.data?.error || 'Failed to create settlement');
+      setLoading(false);
     }
   };
 
@@ -259,9 +263,9 @@ const Settlements = () => {
             <button 
               type="submit" 
               className="button primary"
-              disabled={!formData.groupId || !formData.toUserId || !formData.amount}
+              disabled={!formData.groupId || !formData.toUserId || !formData.amount || loading}
             >
-              Record Settlement
+              {loading ? 'Processing...' : 'Record Settlement'}
             </button>
           </form>
         </div>

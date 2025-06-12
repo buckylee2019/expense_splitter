@@ -28,15 +28,25 @@ router.post('/', authMiddleware, async (req, res) => {
       expenseIds
     } = req.body;
 
+    // Validate required fields
+    if (!toUserId || !amount || !groupId) {
+      return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    // Validate amount
+    if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+      return res.status(400).json({ error: 'Amount must be a positive number' });
+    }
+
     const settlement = await Settlement.create({
       from: req.user.id,
       to: toUserId,
-      amount,
+      amount: parseFloat(amount),
       currency,
       group: groupId,
       method,
       notes,
-      expenses: expenseIds,
+      expenses: expenseIds || [],
       settledAt: new Date().toISOString()
     });
 
@@ -50,6 +60,7 @@ router.post('/', authMiddleware, async (req, res) => {
       settlement
     });
   } catch (error) {
+    console.error('Settlement creation error:', error);
     res.status(400).json({ error: error.message });
   }
 });
