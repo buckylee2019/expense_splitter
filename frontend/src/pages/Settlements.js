@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
+import '../styles/Settlements.css';
 
 const Settlements = () => {
   const [settlements, setSettlements] = useState([]);
@@ -18,26 +19,33 @@ const Settlements = () => {
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [unsettledExpenses, setUnsettledExpenses] = useState([]);
+  const [successMessage, setSuccessMessage] = useState('');
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [settlementsRes, groupsRes] = await Promise.all([
-          api.get('/api/settlements'),
-          api.get('/api/groups')
-        ]);
-        
-        setSettlements(settlementsRes.data);
-        setGroups(groupsRes.data);
-        setLoading(false);
-      } catch (err) {
-        setError('Failed to load settlements data');
-        setLoading(false);
-      }
-    };
-
     fetchData();
   }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching settlements data...');
+      
+      const [settlementsRes, groupsRes] = await Promise.all([
+        api.get('/api/settlements'),
+        api.get('/api/groups')
+      ]);
+      
+      console.log('Settlements data:', settlementsRes.data);
+      setSettlements(settlementsRes.data);
+      setGroups(groupsRes.data);
+      setError('');
+    } catch (err) {
+      console.error('Error fetching settlements:', err);
+      setError('Failed to load settlements data: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleGroupChange = async (groupId) => {
     try {
@@ -53,14 +61,19 @@ const Settlements = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setLoading(true);
 
     try {
-      await api.post('/api/settlements', formData);
+      console.log('Submitting settlement:', formData);
+      const response = await api.post('/api/settlements', formData);
+      console.log('Settlement response:', response.data);
+      
+      // Show success message
+      setSuccessMessage('Settlement recorded successfully!');
       
       // Refresh settlements list
-      const response = await api.get('/api/settlements');
-      setSettlements(response.data);
+      await fetchData();
       
       // Reset form
       setFormData({
@@ -74,17 +87,13 @@ const Settlements = () => {
       });
       setSelectedGroup(null);
       setUnsettledExpenses([]);
-      setLoading(false);
     } catch (err) {
       console.error('Settlement error:', err);
       setError(err.response?.data?.error || 'Failed to create settlement');
+    } finally {
       setLoading(false);
     }
   };
-
-  if (loading) {
-    return <div className="loading">Loading...</div>;
-  }
 
   return (
     <div className="settlements-page">
@@ -93,36 +102,40 @@ const Settlements = () => {
       </div>
 
       {error && <div className="error-message">{error}</div>}
+      {successMessage && <div className="success-message">{successMessage}</div>}
 
       <div className="settlements-grid">
         <div className="settlements-list card">
           <h2>Recent Settlements</h2>
-          {settlements.length === 0 ? (
+          {loading && <div className="loading">Loading settlements...</div>}
+          {!loading && settlements.length === 0 ? (
             <p className="no-settlements">No settlements yet</p>
           ) : (
-            settlements.map(settlement => (
-              <div key={settlement.id} className="settlement-item">
-                <div className="settlement-header">
-                  <span className="amount">
-                    {settlement.currency} {settlement.amount.toFixed(2)}
-                  </span>
-                  <span className="date">
-                    {new Date(settlement.settledAt).toLocaleDateString()}
-                  </span>
+            <div className="settlements-items">
+              {settlements.map(settlement => (
+                <div key={settlement.id} className="settlement-item">
+                  <div className="settlement-header">
+                    <span className="amount">
+                      {settlement.currency} {settlement.amount.toFixed(2)}
+                    </span>
+                    <span className="date">
+                      {new Date(settlement.settledAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="settlement-details">
+                    <p>
+                      <strong>From:</strong> {settlement.from}
+                      <br />
+                      <strong>To:</strong> {settlement.to}
+                    </p>
+                    {settlement.notes && (
+                      <p className="notes">{settlement.notes}</p>
+                    )}
+                    <span className="method">{settlement.method}</span>
+                  </div>
                 </div>
-                <div className="settlement-details">
-                  <p>
-                    From: {settlement.from}
-                    <br />
-                    To: {settlement.to}
-                  </p>
-                  {settlement.notes && (
-                    <p className="notes">{settlement.notes}</p>
-                  )}
-                  <span className="method">{settlement.method}</span>
-                </div>
-              </div>
-            ))
+              ))}
+            </div>
           )}
         </div>
 
@@ -136,6 +149,7 @@ const Settlements = () => {
                 value={formData.groupId}
                 onChange={(e) => handleGroupChange(e.target.value)}
                 required
+                disabled={loading}
               >
                 <option value="">Select a group</option>
                 {groups.map(group => (
@@ -158,11 +172,12 @@ const Settlements = () => {
                       toUserId: e.target.value 
                     }))}
                     required
+                    disabled={loading}
                   >
                     <option value="">Select member</option>
                     {selectedGroup.members.map(member => (
                       <option key={member.user} value={member.user}>
-                        {member.user}
+                        {member.userName || member.user}
                       </option>
                     ))}
                   </select>
@@ -182,6 +197,7 @@ const Settlements = () => {
                       required
                       min="0"
                       step="0.01"
+                      disabled={loading}
                     />
                   </div>
 
@@ -194,6 +210,7 @@ const Settlements = () => {
                         ...prev, 
                         currency: e.target.value 
                       }))}
+                      disabled={loading}
                     >
                       <option value="USD">USD</option>
                       <option value="EUR">EUR</option>
@@ -211,6 +228,7 @@ const Settlements = () => {
                       ...prev, 
                       method: e.target.value 
                     }))}
+                    disabled={loading}
                   >
                     <option value="cash">Cash</option>
                     <option value="bank_transfer">Bank Transfer</option>
@@ -229,6 +247,7 @@ const Settlements = () => {
                       notes: e.target.value 
                     }))}
                     placeholder="Add any notes about this settlement"
+                    disabled={loading}
                   />
                 </div>
 
@@ -250,6 +269,7 @@ const Settlements = () => {
                                 expenseIds: newExpenseIds 
                               }));
                             }}
+                            disabled={loading}
                           />
                           {expense.description} - {expense.currency} {expense.amount}
                         </label>

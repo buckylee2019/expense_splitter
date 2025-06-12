@@ -63,9 +63,20 @@ class Settlement {
     };
 
     try {
+      console.log(`Finding settlements for user: ${userId}`);
       const result = await docClient.send(new ScanCommand(params));
-      return result.Items ? result.Items.map(item => new Settlement(item)) : [];
+      console.log(`Found ${result.Items ? result.Items.length : 0} settlements`);
+      
+      // Add user-friendly names for display
+      const settlements = result.Items ? result.Items.map(item => {
+        const settlement = new Settlement(item);
+        // Add any additional processing here if needed
+        return settlement;
+      }) : [];
+      
+      return settlements;
     } catch (error) {
+      console.error('Error finding settlements by user ID:', error);
       throw error;
     }
   }
