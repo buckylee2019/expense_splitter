@@ -114,3 +114,4 @@ Thumbs.db
 
 # CloudFormation outputs
 cloudformation/outputs.json
+# Build files\nfrontend/build/
