@@ -15,20 +15,36 @@ const Dashboard = () => {
   const fetchData = async () => {
     try {
       setLoading(true);
+      console.log('🔍 Dashboard: Starting data fetch...');
+      
+      // Get current user info
+      const userRes = await api.get('/api/users/profile');
+      console.log('👤 Dashboard: Current user loaded:', userRes.data);
+
+      // Fetch all data in parallel
+      console.log('📊 Dashboard: Fetching groups, balances, and settlements...');
       const [groupsResponse, balancesResponse, settlementsResponse] = await Promise.all([
         api.get('/api/groups'),
         api.get('/api/balances'),
-        api.get('/api/settlements')
+        api.get('/api/settlements').catch(err => {
+          console.error('❌ Dashboard: Error fetching settlements:', err);
+          return { data: [] }; // Return empty array on error to prevent breaking
+        })
       ]);
+
+      console.log('🏠 Dashboard: Groups loaded:', groupsResponse.data.length);
+      console.log('💰 Dashboard: Balances loaded:', balancesResponse.data.balances?.length || 0);
+      console.log('💵 Dashboard: Settlements loaded:', settlementsResponse.data?.length || 0);
+      console.log('Settlement data:', settlementsResponse.data);
       
       setGroups(groupsResponse.data);
       setBalances(balancesResponse.data);
-      setSettlements(settlementsResponse.data);
+      setSettlements(Array.isArray(settlementsResponse.data) ? settlementsResponse.data : []);
       setError('');
       setLastRefresh(new Date());
     } catch (err) {
-      setError('Failed to load dashboard data');
-      console.error('Dashboard fetch error:', err);
+      console.error('❌ Dashboard: Error loading dashboard data:', err);
+      setError('Failed to load dashboard data: ' + (err.response?.data?.error || err.message));
     } finally {
       setLoading(false);
     }
@@ -99,7 +115,8 @@ const Dashboard = () => {
   const netBalance = totalOwed - totalOwing;
 
   // Get recent settlements (last 5)
-  const recentSettlements = settlements.slice(0, 5);
+  // const recentSettlements = settlements.slice(0, 5);
+  console.log('Dashboard render - settlements data:', settlements);
 
   return (
     <div className="dashboard">
@@ -207,16 +224,9 @@ const Dashboard = () => {
               <Link to="/settlements" className="view-all-link">View All</Link>
             </div>
             
-            {recentSettlements.length === 0 ? (
-              <div className="no-settlements">
-                <p>No settlements recorded yet.</p>
-                <Link to="/settlements" className="button secondary">
-                  Record a Settlement
-                </Link>
-              </div>
-            ) : (
+            {settlements && settlements.length > 0 ? (
               <div className="settlements-list">
-                {recentSettlements.map((settlement, index) => (
+                {settlements.slice(0, 5).map((settlement, index) => (
                   <div key={settlement.id || index} className="settlement-item-compact">
                     <div className="settlement-info">
                       <div className="settlement-amount">
@@ -240,6 +250,13 @@ const Dashboard = () => {
                     View All Settlements
                   </Link>
                 </div>
+              </div>
+            ) : (
+              <div className="no-settlements">
+                <p>No settlements recorded yet.</p>
+                <Link to="/settlements" className="button secondary">
+                  Record a Settlement
+                </Link>
               </div>
             )}
           </div>
