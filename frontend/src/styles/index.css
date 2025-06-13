@@ -1135,6 +1135,17 @@ p {
   .container {
     padding: var(--spacing);
   }
+  
+  .expenses-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+  }
+  
+  .sort-controls {
+    width: 100%;
+    justify-content: space-between;
+  }
 
   .nav-container {
     padding: var(--spacing);
@@ -1522,6 +1533,58 @@ p {
   margin-bottom: var(--spacing-lg);
   color: var(--text-primary);
   font-weight: 600;
+}
+
+/* Expenses Section */
+.expenses-section {
+  margin-top: var(--spacing-xl);
+}
+
+.expenses-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: var(--spacing);
+}
+
+.expenses-header h2 {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.sort-controls label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.sort-select {
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  background: var(--card-background);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sort-select:hover {
+  border-color: var(--primary-color);
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-light);
 }
 
 .expenses-section .expenses-list {

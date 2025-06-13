@@ -11,7 +11,7 @@ const AddExpense = () => {
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
-    currency: 'USD',
+    currency: 'TWD',
     category: 'General',
     splitType: 'equal',
     paidBy: ''

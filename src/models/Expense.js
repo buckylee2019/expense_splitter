@@ -9,7 +9,7 @@ class Expense {
     this.id = data.id || uuidv4();
     this.description = data.description;
     this.amount = data.amount;
-    this.currency = data.currency || 'USD';
+    this.currency = data.currency || 'TWD';
     this.category = data.category;
     this.paidBy = data.paidBy;
     this.group = data.group;

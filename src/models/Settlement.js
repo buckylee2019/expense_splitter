@@ -10,7 +10,7 @@ class Settlement {
     this.from = data.from;
     this.to = data.to;
     this.amount = data.amount;
-    this.currency = data.currency || 'USD';
+    this.currency = data.currency || 'TWD';
     this.group = data.group;
     this.method = data.method || 'cash';
     this.notes = data.notes;

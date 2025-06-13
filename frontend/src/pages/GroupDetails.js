@@ -14,6 +14,7 @@ const GroupDetails = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [showAddMember, setShowAddMember] = useState(false);
+  const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest'
 
   const fetchGroupData = useCallback(async () => {
     try {
@@ -131,6 +132,27 @@ const GroupDetails = () => {
     fetchGroupData();
   };
 
+  // Sort expenses by date
+  const sortExpenses = (expensesList, order) => {
+    return [...expensesList].sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      
+      if (order === 'newest') {
+        return dateB - dateA; // Newest first
+      } else {
+        return dateA - dateB; // Oldest first
+      }
+    });
+  };
+
+  // Get sorted expenses
+  const sortedExpenses = sortExpenses(expenses, sortOrder);
+
+  const handleSortChange = (newSortOrder) => {
+    setSortOrder(newSortOrder);
+  };
+
   const isGroupAdmin = () => {
     if (!currentUser || !group) return false;
     const member = group.members.find(m => m.user === currentUser.id);
@@ -232,7 +254,7 @@ const GroupDetails = () => {
                       `${balance.user.name} owes you` : 
                       `You owe ${balance.user.name}`}
                   </span>
-                  <span className="balance-amount">{balance.currency || 'USD'} {balance.amount.toFixed(2)}</span>
+                  <span className="balance-amount">{balance.currency || 'TWD'} {balance.amount.toFixed(2)}</span>
                 </div>
               ))}
               {balances.length > 3 && (
@@ -252,7 +274,23 @@ const GroupDetails = () => {
       </div>
 
       <div className="expenses-section">
-        <h2>Expenses</h2>
+        <div className="expenses-header">
+          <h2>Expenses</h2>
+          {expenses.length > 0 && (
+            <div className="sort-controls">
+              <label htmlFor="sort-select">Sort by date:</label>
+              <select 
+                id="sort-select"
+                value={sortOrder} 
+                onChange={(e) => handleSortChange(e.target.value)}
+                className="sort-select"
+              >
+                <option value="newest">Newest First</option>
+                <option value="oldest">Oldest First</option>
+              </select>
+            </div>
+          )}
+        </div>
         
         {expenses.length === 0 ? (
           <p className="no-expenses">
@@ -260,7 +298,7 @@ const GroupDetails = () => {
           </p>
         ) : (
           <div className="expenses-list">
-            {expenses.map(expense => (
+            {sortedExpenses.map(expense => (
               <div key={expense.id} className="expense-card-compact card">
                 <div className="expense-main">
                   <div className="expense-info">

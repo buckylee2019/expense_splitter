@@ -19,7 +19,7 @@ const calculateBalances = async (userId, groupId = null) => {
     // Calculate what user owes and is owed based on expenses, separated by currency
     filteredExpenses.forEach(expense => {
       const userPaid = expense.paidBy === userId;
-      const currency = expense.currency || 'USD';
+      const currency = expense.currency || 'TWD';
       
       // Find the user's split in this expense (handle both 'user' and 'userId' fields)
       const userSplit = expense.splits.find(split => 
@@ -66,7 +66,7 @@ const calculateBalances = async (userId, groupId = null) => {
     filteredSettlements.forEach(settlement => {
       const fromUser = settlement.from;
       const toUser = settlement.to;
-      const currency = settlement.currency || 'USD';
+      const currency = settlement.currency || 'TWD';
       
       if (fromUser === userId) {
         // Current user paid someone else
