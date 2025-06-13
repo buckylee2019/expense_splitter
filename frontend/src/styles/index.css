@@ -1059,7 +1059,7 @@ p {
   gap: var(--spacing);
 }
 
-.expenses-list {
+.form-group .expenses-list {
   max-height: 200px;
   overflow-y: auto;
   border: 1px solid var(--border-color);
@@ -1491,10 +1491,32 @@ p {
   font-weight: 600;
 }
 
-.expenses-list {
+.expenses-section .expenses-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing);
+  max-height: 60vh; /* Allow up to 60% of viewport height */
+  overflow-y: auto;
+  padding-right: var(--spacing-xs); /* Space for scrollbar */
+}
+
+/* Custom scrollbar for expenses list */
+.expenses-section .expenses-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.expenses-section .expenses-list::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.expenses-section .expenses-list::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: var(--radius-sm);
+}
+
+.expenses-section .expenses-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 
 /* Compact Expense Cards */
@@ -1842,6 +1864,10 @@ p {
   
   .expense-card-compact {
     padding: var(--spacing);
+  }
+  
+  .expenses-section .expenses-list {
+    max-height: 50vh; /* Slightly less on mobile */
   }
 }
 
