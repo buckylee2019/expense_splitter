@@ -1494,7 +1494,7 @@ p {
 .expenses-section .expenses-list {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing);
+  gap: var(--spacing-sm); /* Reduced from var(--spacing) */
   max-height: 60vh; /* Allow up to 60% of viewport height */
   overflow-y: auto;
   padding-right: var(--spacing-xs); /* Space for scrollbar */
@@ -1521,7 +1521,7 @@ p {
 
 /* Compact Expense Cards */
 .expense-card-compact {
-  padding: var(--spacing-lg);
+  padding: var(--spacing); /* Reduced from var(--spacing-lg) */
   margin-bottom: 0;
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
@@ -1539,7 +1539,7 @@ p {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: var(--spacing);
+  margin-bottom: var(--spacing-sm); /* Reduced from var(--spacing) */
 }
 
 .expense-info {
@@ -1548,17 +1548,17 @@ p {
 }
 
 .expense-title {
-  margin: 0 0 var(--spacing-sm) 0;
-  font-size: 1.1rem;
+  margin: 0 0 var(--spacing-xs) 0; /* Reduced bottom margin */
+  font-size: 1rem; /* Reduced from 1.1rem */
   color: var(--text-primary);
   font-weight: 600;
-  line-height: 1.4;
+  line-height: 1.3; /* Reduced from 1.4 */
 }
 
 .expense-meta {
   display: flex;
-  gap: var(--spacing);
-  font-size: 0.85rem;
+  gap: var(--spacing-sm); /* Reduced from var(--spacing) */
+  font-size: 0.8rem; /* Reduced from 0.85rem */
   color: var(--text-secondary);
   flex-wrap: wrap;
 }
@@ -1592,15 +1592,15 @@ p {
 }
 
 .expense-amount .amount {
-  font-size: 1.25rem;
+  font-size: 1.1rem; /* Reduced from 1.25rem */
 }
 
 .expense-actions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: var(--spacing);
-  padding-top: var(--spacing-sm);
+  gap: var(--spacing-sm); /* Reduced from var(--spacing) */
+  padding-top: var(--spacing-xs); /* Reduced from var(--spacing-sm) */
   border-top: 1px solid var(--border-light);
 }
 
@@ -1863,7 +1863,7 @@ p {
   }
   
   .expense-card-compact {
-    padding: var(--spacing);
+    padding: var(--spacing-sm); /* Even more compact on mobile */
   }
   
   .expenses-section .expenses-list {
