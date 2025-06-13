@@ -221,7 +221,7 @@ const GroupDetails = () => {
           </div>
         </div>
 
-        {balances.length > 0 && (
+        {balances.length > 0 ? (
           <div className="balances-compact card">
             <h4>Quick Balances</h4>
             <div className="balances-summary">
@@ -241,6 +241,12 @@ const GroupDetails = () => {
                 </div>
               )}
             </div>
+          </div>
+        ) : expenses.length > 0 && (
+          <div className="all-settled-message card">
+            <div className="settled-icon">✅</div>
+            <h4>All Settled!</h4>
+            <p>Great news! All expenses in this group are settled. No outstanding balances.</p>
           </div>
         )}
       </div>

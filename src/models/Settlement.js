@@ -12,7 +12,6 @@ class Settlement {
     this.amount = data.amount;
     this.currency = data.currency || 'USD';
     this.group = data.group;
-    this.expenses = data.expenses || [];
     this.method = data.method || 'cash';
     this.notes = data.notes;
     this.settledAt = data.settledAt || new Date().toISOString();

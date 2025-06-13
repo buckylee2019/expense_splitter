@@ -27,8 +27,7 @@ router.post('/', authMiddleware, async (req, res) => {
       currency,
       groupId,
       method,
-      notes,
-      expenseIds
+      notes
     } = req.body;
 
     // Validate required fields
@@ -73,15 +72,9 @@ router.post('/', authMiddleware, async (req, res) => {
       group: groupId,
       method,
       notes,
-      expenses: expenseIds || [],
       settledAt: new Date().toISOString(),
       recordedBy: req.user.id // Track who recorded the settlement
     });
-
-    // Update related expenses as settled
-    if (expenseIds && expenseIds.length > 0) {
-      await Expense.updateSettlementStatus(expenseIds, fromUser, true);
-    }
 
     res.status(201).json({
       message: 'Settlement recorded successfully',

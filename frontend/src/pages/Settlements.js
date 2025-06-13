@@ -14,13 +14,11 @@ const Settlements = () => {
     groupId: '',
     method: 'cash',
     notes: '',
-    expenseIds: [],
     isThirdPartySettlement: false // Flag for third-party settlements
   });
 
   const [groups, setGroups] = useState([]);
   const [selectedGroup, setSelectedGroup] = useState(null);
-  const [unsettledExpenses, setUnsettledExpenses] = useState([]);
   const [successMessage, setSuccessMessage] = useState('');
   const [balances, setBalances] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
@@ -60,10 +58,6 @@ const Settlements = () => {
 
   const handleGroupChange = async (groupId) => {
     try {
-      // Get unsettled expenses for the group
-      const response = await api.get(`/api/expenses?groupId=${groupId}&settled=false`);
-      setUnsettledExpenses(response.data);
-      
       // Get group details with member names
       const groupResponse = await api.get(`/api/groups/${groupId}`);
       setSelectedGroup(groupResponse.data);
@@ -81,7 +75,6 @@ const Settlements = () => {
         groupId,
         method: 'cash',
         notes: '',
-        expenseIds: [],
         isThirdPartySettlement: false
       });
       
@@ -196,11 +189,9 @@ const Settlements = () => {
         groupId: '',
         method: 'cash',
         notes: '',
-        expenseIds: [],
         isThirdPartySettlement: false
       });
       setSelectedGroup(null);
-      setUnsettledExpenses([]);
     } catch (err) {
       console.error('Settlement error:', err);
       setError(err.response?.data?.error || err.message || 'Failed to create settlement');
@@ -396,33 +387,6 @@ const Settlements = () => {
                     disabled={loading}
                   />
                 </div>
-
-                {unsettledExpenses.length > 0 && (
-                  <div className="form-group">
-                    <label>Related Expenses</label>
-                    <div className="expenses-list">
-                      {unsettledExpenses.map(expense => (
-                        <label key={expense.id} className="expense-checkbox">
-                          <input
-                            type="checkbox"
-                            checked={formData.expenseIds.includes(expense.id)}
-                            onChange={(e) => {
-                              const newExpenseIds = e.target.checked
-                                ? [...formData.expenseIds, expense.id]
-                                : formData.expenseIds.filter(id => id !== expense.id);
-                              setFormData(prev => ({ 
-                                ...prev, 
-                                expenseIds: newExpenseIds 
-                              }));
-                            }}
-                            disabled={loading}
-                          />
-                          {expense.description} - {expense.currency} {expense.amount}
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </>
             )}
 

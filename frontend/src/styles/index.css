@@ -2127,3 +2127,44 @@ p {
 .settle-button:hover {
   background-color: #2980b9;
 }
+
+/* All Settled Message */
+.all-settled-message {
+  text-align: center;
+  padding: var(--spacing-xl);
+  background: linear-gradient(135deg, var(--success-light) 0%, #ecfdf5 100%);
+  border: 2px solid var(--success-color);
+  border-radius: var(--radius-lg);
+  margin: var(--spacing) 0;
+}
+
+.settled-icon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing);
+  animation: bounce 2s infinite;
+}
+
+.all-settled-message h4 {
+  color: var(--success-color);
+  font-size: 1.5rem;
+  margin-bottom: var(--spacing-sm);
+  font-weight: 600;
+}
+
+.all-settled-message p {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
