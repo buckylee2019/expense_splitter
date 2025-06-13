@@ -234,9 +234,11 @@ const AddExpense = () => {
               value={formData.currency}
               onChange={handleChange}
             >
-              <option value="USD">USD</option>
-              <option value="EUR">EUR</option>
-              <option value="GBP">GBP</option>
+              <option value="USD">USD - US Dollar</option>
+              <option value="EUR">EUR - Euro</option>
+              <option value="GBP">GBP - British Pound</option>
+              <option value="TWD">TWD - Taiwan Dollar</option>
+              <option value="JPY">JPY - Japanese Yen</option>
             </select>
           </div>
 

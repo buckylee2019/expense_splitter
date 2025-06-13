@@ -287,7 +287,7 @@ const Dashboard = () => {
                   </div>
                   <div className="balance-amount">
                     <span className="amount">
-                      ${balance.amount.toFixed(2)}
+                      {balance.currency || 'USD'} {balance.amount.toFixed(2)}
                     </span>
                     <Link to="/settlements" className="settle-button">
                       Settle

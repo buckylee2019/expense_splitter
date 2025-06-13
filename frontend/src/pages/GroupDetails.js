@@ -232,7 +232,7 @@ const GroupDetails = () => {
                       `${balance.user.name} owes you` : 
                       `You owe ${balance.user.name}`}
                   </span>
-                  <span className="balance-amount">${balance.amount.toFixed(2)}</span>
+                  <span className="balance-amount">{balance.currency || 'USD'} {balance.amount.toFixed(2)}</span>
                 </div>
               ))}
               {balances.length > 3 && (
