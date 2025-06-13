@@ -287,6 +287,34 @@ p {
   font-size: 0.875rem;
 }
 
+/* Checkbox form groups - special styling */
+.form-group.settlement-type-toggle {
+  margin: var(--spacing-lg) 0;
+  padding: var(--spacing) 0;
+  border-top: 1px solid var(--border-light);
+  border-bottom: 1px solid var(--border-light);
+  background: var(--background-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.form-group.settlement-type-toggle label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: 0;
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--text-primary);
+  padding: var(--spacing-sm);
+}
+
+.form-group.settlement-type-toggle input[type="checkbox"] {
+  width: auto;
+  margin: 0;
+  cursor: pointer;
+  transform: scale(1.2);
+}
+
 .form-group input,
 .form-group select,
 .form-group textarea {
@@ -297,6 +325,11 @@ p {
   font-size: 0.875rem;
   transition: all 0.2s ease;
   background-color: var(--card-background);
+}
+
+/* Override width for checkboxes */
+.form-group input[type="checkbox"] {
+  width: auto;
 }
 
 .form-group input:focus,
