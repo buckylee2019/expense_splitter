@@ -12,7 +12,8 @@ const AddExpense = () => {
     description: '',
     amount: '',
     currency: 'TWD',
-    category: '飲食 - 午餐',
+    mainCategory: '飲食',
+    subCategory: '午餐',
     splitType: 'equal',
     paidBy: ''
   });
@@ -21,53 +22,20 @@ const AddExpense = () => {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  const categories = [
-    // 飲食 (Food & Dining)
-    '飲食 - 早餐', '飲食 - 午餐', '飲食 - 晚餐', '飲食 - 宵夜',
-    '飲食 - 飲料', '飲食 - 點心', '飲食 - 酒類', '飲食 - 水果',
-    '飲食 - 食材', '飲食 - 咖啡豆', '飲食 - 旅遊',
-    
-    // 交通 (Transportation)
-    '交通 - 捷運', '交通 - 公車', '交通 - 計程車', '交通 - 火車',
-    '交通 - 機票', '交通 - 汽車', '交通 - 摩托車', '交通 - 加油費',
-    '交通 - 停車費', '交通 - 過路費',
-    
-    // 購物 (Shopping)
-    '購物 - 衣物', '購物 - 鞋子', '購物 - 包包', '購物 - 配件',
-    '購物 - 美妝保養', '購物 - 生活用品', '購物 - 電子產品',
-    '購物 - 文具用品', '購物 - 禮物', '購物 - 紀念品',
-    '購物 - 保健食品', '購物 - 精品', '購物 - 裝飾品',
-    
-    // 娛樂 (Entertainment)
-    '娛樂 - 電影', '娛樂 - KTV', '娛樂 - 遊戲', '娛樂 - 運動',
-    '娛樂 - 健身', '娛樂 - 音樂', '娛樂 - 展覽', '娛樂 - 遊樂園',
-    '娛樂 - 消遣', '娛樂 - 影音', '娛樂 - 博弈',
-    
-    // 生活 (Lifestyle)
-    '生活 - 住宿', '生活 - 旅行', '生活 - 美容美髮', '生活 - 按摩',
-    '生活 - 泡湯', '生活 - 派對',
-    
-    // 家居 (Home & Utilities)
-    '家居 - 房租', '家居 - 電費', '家居 - 水費', '家居 - 瓦斯費',
-    '家居 - 網路費', '家居 - 電話費', '家居 - 管理費',
-    '家居 - 日常用品', '家居 - 家具', '家居 - 家電',
-    '家居 - 修繕費', '家居 - 保養', '家居 - 洗車',
-    
-    // 醫療 (Medical)
-    '醫療 - 門診', '醫療 - 藥品', '醫療 - 牙齒保健', '醫療 - 健康檢查',
-    '醫療 - 打針', '醫療 - 醫療用品',
-    
-    // 學習 (Education)
-    '學習 - 書籍', '學習 - 課程', '學習 - 證書',
-    
-    // 個人 (Personal)
-    '個人 - 保險', '個人 - 投資', '個人 - 稅金', '個人 - 紅包',
-    '個人 - 捐款', '個人 - 社交', '個人 - 通話費', '個人 - 手續費',
-    '個人 - 罰單', '個人 - 訂金', '個人 - 借款',
-    
-    // 其他 (Others)
-    '其他 - 孝親費', '其他 - 其他'
-  ];
+  const categoryData = {
+    '飲食': ['早餐', '午餐', '晚餐', '宵夜', '飲料', '點心', '酒類', '水果', '食材', '咖啡豆', '旅遊'],
+    '交通': ['捷運', '公車', '計程車', '火車', '機票', '汽車', '摩托車', '加油費', '停車費', '過路費'],
+    '購物': ['衣物', '鞋子', '包包', '配件', '美妝保養', '生活用品', '電子產品', '文具用品', '禮物', '紀念品', '保健食品', '精品', '裝飾品'],
+    '娛樂': ['電影', 'KTV', '遊戲', '運動', '健身', '音樂', '展覽', '遊樂園', '消遣', '影音', '博弈'],
+    '生活': ['住宿', '旅行', '美容美髮', '按摩', '泡湯', '派對'],
+    '家居': ['房租', '電費', '水費', '瓦斯費', '網路費', '電話費', '管理費', '日常用品', '家具', '家電', '修繕費', '保養', '洗車'],
+    '醫療': ['門診', '藥品', '牙齒保健', '健康檢查', '打針', '醫療用品'],
+    '學習': ['書籍', '課程', '證書'],
+    '個人': ['保險', '投資', '稅金', '紅包', '捐款', '社交', '通話費', '手續費', '罰單', '訂金', '借款'],
+    '其他': ['孝親費', '其他']
+  };
+
+  const mainCategories = Object.keys(categoryData);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -121,6 +89,16 @@ const AddExpense = () => {
     // Handle payer change separately for better control
     if (name === 'paidBy') {
       handlePayerChange(e);
+      return;
+    }
+    
+    // Handle main category change - reset subcategory to first option
+    if (name === 'mainCategory') {
+      setFormData(prev => ({
+        ...prev,
+        mainCategory: value,
+        subCategory: categoryData[value][0] // Set to first subcategory
+      }));
       return;
     }
     
@@ -187,6 +165,7 @@ const AddExpense = () => {
     try {
       const expenseData = {
         ...formData,
+        category: `${formData.mainCategory} - ${formData.subCategory}`, // Combine categories
         amount: parseFloat(formData.amount),
         groupId,
         splits
@@ -254,14 +233,15 @@ const AddExpense = () => {
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="category">Category</label>
+            <label htmlFor="mainCategory">主類別 (Main Category)</label>
             <select
-              id="category"
-              name="category"
-              value={formData.category}
+              id="mainCategory"
+              name="mainCategory"
+              value={formData.mainCategory}
               onChange={handleChange}
+              required
             >
-              {categories.map(category => (
+              {mainCategories.map(category => (
                 <option key={category} value={category}>
                   {category}
                 </option>
@@ -269,6 +249,25 @@ const AddExpense = () => {
             </select>
           </div>
 
+          <div className="form-group">
+            <label htmlFor="subCategory">子類別 (Subcategory)</label>
+            <select
+              id="subCategory"
+              name="subCategory"
+              value={formData.subCategory}
+              onChange={handleChange}
+              required
+            >
+              {categoryData[formData.mainCategory]?.map(subCategory => (
+                <option key={subCategory} value={subCategory}>
+                  {subCategory}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div className="form-row">
           <div className="form-group">
             <label htmlFor="currency">Currency</label>
             <select
