@@ -5,9 +5,11 @@ import Navbar from './components/Navbar';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Groups from './pages/Groups';
 import GroupDetails from './pages/GroupDetails';
 import ExpenseDetails from './pages/ExpenseDetails';
 import CreateGroup from './pages/CreateGroup';
+import EditGroup from './pages/EditGroup';
 import AddExpense from './pages/AddExpense';
 import EditExpense from './pages/EditExpense';
 import Settlements from './pages/Settlements';
@@ -34,10 +36,26 @@ const AppRoutes = () => {
         }
       />
       <Route
+        path="/groups"
+        element={
+          <PrivateRoute>
+            <Groups />
+          </PrivateRoute>
+        }
+      />
+      <Route
         path="/groups/create"
         element={
           <PrivateRoute>
             <CreateGroup />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/groups/:id/edit"
+        element={
+          <PrivateRoute>
+            <EditGroup />
           </PrivateRoute>
         }
       />

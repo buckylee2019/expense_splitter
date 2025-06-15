@@ -21,7 +21,7 @@ const Navbar = () => {
         {isAuthenticated ? (
           <div className="nav-menu">
             <Link to="/" className="nav-link">Dashboard</Link>
-            <Link to="/groups/create" className="nav-link">Create Group</Link>
+            <Link to="/groups" className="nav-link">Groups</Link>
             <Link to="/settlements" className="nav-link">Settlements</Link>
             <Link to="/reports" className="nav-link">Reports</Link>
             <div className="nav-user">

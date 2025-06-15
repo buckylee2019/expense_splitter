@@ -36,7 +36,19 @@ const populateMemberNames = async (group) => {
 router.get('/', authMiddleware, async (req, res) => {
   try {
     const groups = await Group.findByUserId(req.user.id);
-    res.json(groups);
+    
+    // Add expense count to each group
+    const groupsWithCounts = await Promise.all(
+      groups.map(async (group) => {
+        const expenses = await Expense.findByGroupId(group.id);
+        return {
+          ...group,
+          expenseCount: expenses.length
+        };
+      })
+    );
+    
+    res.json(groupsWithCounts);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -235,3 +247,97 @@ router.delete('/:id', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
+// Update group
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const { name, description } = req.body;
+    const group = await Group.findById(req.params.id);
+
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    // Check if user is admin
+    if (!group.isAdmin(req.user.id)) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    // Update group details
+    if (name) group.name = name;
+    if (description !== undefined) group.description = description;
+    
+    await group.save();
+
+    res.json({
+      message: 'Group updated successfully',
+      group
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Delete group
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const group = await Group.findById(req.params.id);
+
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    // Check if user is admin
+    if (!group.isAdmin(req.user.id)) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    // Check if group has expenses
+    const expenses = await Expense.findByGroupId(req.params.id);
+    if (expenses.length > 0) {
+      return res.status(400).json({ 
+        error: 'Cannot delete group with existing expenses. Please delete all expenses first.' 
+      });
+    }
+
+    await group.delete();
+
+    res.json({
+      message: 'Group deleted successfully'
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Remove member from group
+router.delete('/:id/members/:memberId', authMiddleware, async (req, res) => {
+  try {
+    const group = await Group.findById(req.params.id);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    // Check if user is admin
+    if (!group.isAdmin(req.user.id)) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    // Cannot remove the last admin
+    const admins = group.members.filter(member => member.role === 'admin');
+    const memberToRemove = group.members.find(member => member.user === req.params.memberId);
+    
+    if (memberToRemove && memberToRemove.role === 'admin' && admins.length === 1) {
+      return res.status(400).json({ error: 'Cannot remove the last admin from the group' });
+    }
+
+    group.removeMember(req.params.memberId);
+    await group.save();
+
+    res.json({
+      message: 'Member removed successfully',
+      group
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
