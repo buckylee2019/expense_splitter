@@ -12,7 +12,8 @@ const EditExpense = () => {
     currency: 'USD',
     category: 'General',
     paidBy: '',
-    splitType: 'equal'
+    splitType: 'equal',
+    project: '' // New field for MOZE compatibility
   });
   
   const [splits, setSplits] = useState([]);
@@ -43,7 +44,8 @@ const EditExpense = () => {
           currency: expense.currency || 'USD',
           category: expense.category || 'General',
           paidBy: expense.paidBy,
-          splitType: expense.splitType || 'equal'
+          splitType: expense.splitType || 'equal',
+          project: expense.project || '' // Include project field
         });
         
         setSplits(expense.splits || []);
@@ -158,6 +160,20 @@ const EditExpense = () => {
             />
           </div>
 
+          <div className="form-group">
+            <label htmlFor="project">Project (Optional)</label>
+            <input
+              type="text"
+              id="project"
+              name="project"
+              value={formData.project}
+              onChange={handleChange}
+              placeholder="Project name or category"
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
           <div className="form-group">
             <label htmlFor="amount">Amount</label>
             <input

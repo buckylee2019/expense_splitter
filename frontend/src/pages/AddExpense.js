@@ -15,7 +15,8 @@ const AddExpense = () => {
     mainCategory: '飲食',
     subCategory: '午餐',
     splitType: 'equal',
-    paidBy: ''
+    paidBy: '',
+    project: '' // New field for MOZE compatibility
   });
   const [splits, setSplits] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -215,6 +216,20 @@ const AddExpense = () => {
             />
           </div>
 
+          <div className="form-group">
+            <label htmlFor="project">Project (Optional)</label>
+            <input
+              type="text"
+              id="project"
+              name="project"
+              value={formData.project}
+              onChange={handleChange}
+              placeholder="Project name or category"
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
           <div className="form-group">
             <label htmlFor="amount">Amount</label>
             <input

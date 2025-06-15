@@ -170,22 +170,35 @@ router.get('/export/:year/:month', authMiddleware, async (req, res) => {
         // Create CSV row (matching MOZE format)
         // Use user's split amount (their portion of the expense)
         const amount = -userAmount; // Negative for expenses (MOZE convention)
+        
+        // Get group name for tags field
+        let groupTag = '';
+        if (expense.group) {
+          try {
+            const Group = require('../models/Group');
+            const group = await Group.findById(expense.group);
+            groupTag = group ? `#${group.name}` : ''; // Add # prefix to group name
+          } catch (err) {
+            console.error('Error fetching group for CSV:', err);
+          }
+        }
+        
         const csvRow = [
           '錢包', // 帳戶 (Account)
           expense.currency || 'TWD', // 幣種 (Currency)
           '支出', // 記錄類型 (Record Type)
           mainCategory, // 主類別 (Main Category)
           subCategory, // 子類別 (Sub Category)
-          amount, // 金額 (Amount) - negative for expenses
+          amount, // 金額 (Amount) - user's split amount
           0, // 手續費 (Fee)
           0, // 折扣 (Discount)
-          expense.description || '', // 名稱 (Name)
-          groupName, // 商家 (Merchant/Group)
+          expense.description || '', // 名稱 (Name) - use description
+          '', // 商家 (Merchant) - blank as requested
           dateStr, // 日期 (Date)
           timeStr, // 時間 (Time)
-          '', // 專案 (Project)
-          expense.description || '', // 描述 (Description)
-          '', // 標籤 (Tags)
+          expense.project || '', // 專案 (Project) - new field
+          expense.description || '', // 描述 (Description) - use description
+          groupTag, // 標籤 (Tags) - group name with # prefix
           '' // 對象 (Target)
         ].join(',');
         

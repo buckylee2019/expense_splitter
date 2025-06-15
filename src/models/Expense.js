@@ -17,6 +17,7 @@ class Expense {
     this.splitType = data.splitType;
     this.date = data.date || new Date().toISOString();
     this.notes = data.notes;
+    this.project = data.project; // New field for MOZE compatibility
     this.createdAt = data.createdAt || new Date().toISOString();
     this.updatedAt = data.updatedAt || new Date().toISOString();
   }

@@ -303,6 +303,9 @@ const GroupDetails = () => {
                 <div className="expense-main">
                   <div className="expense-info">
                     <h4 className="expense-title">{expense.description}</h4>
+                    {expense.project && (
+                      <div className="expense-project">📁 {expense.project}</div>
+                    )}
                     <div className="expense-meta">
                       <span className="expense-date">
                         {new Date(expense.date).toLocaleDateString()}

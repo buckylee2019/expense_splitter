@@ -233,10 +233,9 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Expense not found' });
     }
 
-    // Only allow the person who paid for the expense to delete it
-    if (expense.paidBy !== req.user.id) {
-      return res.status(403).json({ error: 'Only the person who paid can delete this expense' });
-    }
+    // Allow any group member to delete the expense
+    // The findByUserIdAndExpenseId already ensures the user is part of the group
+    // So we don't need additional permission checks
 
     await Expense.delete(req.params.id);
 
