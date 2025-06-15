@@ -4,10 +4,10 @@ const Expense = require('../models/Expense');
 const Settlement = require('../models/Settlement');
 const User = require('../models/User');
 const Group = require('../models/Group');
-const auth = require('../middleware/auth');
+const { authMiddleware } = require('../utils/auth');
 
 // Get monthly expense report
-router.get('/monthly/:year/:month', auth, async (req, res) => {
+router.get('/monthly/:year/:month', authMiddleware, async (req, res) => {
   try {
     const { year, month } = req.params;
     const userId = req.user.id;
@@ -115,7 +115,7 @@ router.get('/monthly/:year/:month', auth, async (req, res) => {
 });
 
 // Export monthly expenses as CSV
-router.get('/export/:year/:month', auth, async (req, res) => {
+router.get('/export/:year/:month', authMiddleware, async (req, res) => {
   try {
     const { year, month } = req.params;
     const userId = req.user.id;
