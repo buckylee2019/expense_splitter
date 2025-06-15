@@ -161,17 +161,27 @@ const EditGroup = () => {
 
           <div className="members-list">
             {group.members?.map(member => (
-              <div key={member.id} className="member-item">
+              <div key={member.user || member.id} className="member-item">
                 <div className="member-info">
-                  <span className="member-name">{member.name || member.email}</span>
-                  <span className="member-email">{member.email}</span>
+                  <span className="member-name">
+                    {member.userName || member.name || member.email || 'Unknown User'}
+                  </span>
+                  <span className="member-email">
+                    {member.email || 'No email'}
+                  </span>
+                  <span className="member-role">
+                    {member.role === 'admin' ? '👑 Admin' : '👤 Member'}
+                  </span>
                 </div>
                 <button
-                  onClick={() => handleRemoveMember(member.id, member.name || member.email)}
+                  onClick={() => handleRemoveMember(
+                    member.user || member.id, 
+                    member.userName || member.name || member.email || 'this member'
+                  )}
                   className="btn btn-sm btn-danger"
-                  title="Remove member"
+                  title={`Remove ${member.userName || member.name || member.email || 'member'}`}
                 >
-                  Remove
+                  Remove {member.userName || member.name || member.email?.split('@')[0] || 'Member'}
                 </button>
               </div>
             ))}

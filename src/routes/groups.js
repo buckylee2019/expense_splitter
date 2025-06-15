@@ -16,12 +16,18 @@ const populateMemberNames = async (group) => {
       const user = await User.findById(member.user);
       populatedMembers.push({
         ...member,
-        userName: user ? user.name : 'Unknown User'
+        userName: user ? user.name : 'Unknown User',
+        email: user ? user.email : 'Unknown Email',
+        id: member.user, // Ensure we have the user ID for removal
+        user: member.user // Keep original user field
       });
     } catch (error) {
       populatedMembers.push({
         ...member,
-        userName: 'Unknown User'
+        userName: 'Unknown User',
+        email: 'Unknown Email',
+        id: member.user,
+        user: member.user
       });
     }
   }

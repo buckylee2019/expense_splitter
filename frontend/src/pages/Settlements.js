@@ -143,6 +143,21 @@ const Settlements = () => {
     });
   };
 
+  const handleDeleteSettlement = async (settlementId) => {
+    if (window.confirm('Are you sure you want to delete this settlement? This action cannot be undone.')) {
+      try {
+        await api.delete(`/api/settlements/${settlementId}`);
+        setSuccessMessage('Settlement deleted successfully');
+        fetchData(); // Refresh the data
+        setTimeout(() => setSuccessMessage(''), 3000);
+      } catch (error) {
+        console.error('Error deleting settlement:', error);
+        setError(error.response?.data?.error || 'Failed to delete settlement');
+        setTimeout(() => setError(''), 5000);
+      }
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -225,9 +240,18 @@ const Settlements = () => {
                       <span className="amount">
                         {settlement.currency} {typeof settlement.amount === 'number' ? settlement.amount.toFixed(2) : parseFloat(settlement.amount || 0).toFixed(2)}
                       </span>
-                      <span className="date">
-                        {new Date(settlement.settledAt).toLocaleDateString()}
-                      </span>
+                      <div className="settlement-actions">
+                        <span className="date">
+                          {new Date(settlement.settledAt).toLocaleDateString()}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteSettlement(settlement.id)}
+                          className="btn btn-sm btn-danger delete-settlement-btn"
+                          title="Delete settlement"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                     <div className="settlement-details">
                       <p>

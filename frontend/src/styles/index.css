@@ -2585,6 +2585,7 @@ p {
 .member-info {
   display: flex;
   flex-direction: column;
+  flex: 1;
 }
 
 .member-name {
@@ -2596,6 +2597,13 @@ p {
 .member-email {
   font-size: 0.85rem;
   color: #6c757d;
+  margin-bottom: 0.25rem;
+}
+
+.member-role {
+  font-size: 0.8rem;
+  color: #495057;
+  font-weight: 500;
 }
 
 /* Responsive Design for Groups */

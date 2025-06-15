@@ -87,3 +87,27 @@ router.post('/', authMiddleware, async (req, res) => {
 });
 
 module.exports = router;
+// Delete settlement
+router.delete('/:id', authMiddleware, async (req, res) => {
+  try {
+    const settlement = await Settlement.findById(req.params.id);
+    
+    if (!settlement) {
+      return res.status(404).json({ error: 'Settlement not found' });
+    }
+
+    // Check if user is involved in this settlement (either from or to)
+    if (settlement.from !== req.user.id && settlement.to !== req.user.id) {
+      return res.status(403).json({ error: 'You can only delete settlements you are involved in' });
+    }
+
+    await settlement.delete();
+
+    res.json({
+      message: 'Settlement deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting settlement:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
