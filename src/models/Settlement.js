@@ -1,5 +1,5 @@
 const { docClient } = require('../config/dynamodb');
-const { PutCommand, GetCommand, QueryCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
+const { PutCommand, GetCommand, QueryCommand, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 const { v4: uuidv4 } = require('uuid');
 
 const TABLE_NAME = process.env.SETTLEMENTS_TABLE_NAME || 'ExpenseSplitter-Settlements';
@@ -133,6 +133,26 @@ class Settlement {
 
     await docClient.send(new PutCommand(params));
     return this;
+  }
+
+  async delete() {
+    const params = {
+      TableName: TABLE_NAME,
+      Key: { id: this.id }
+    };
+
+    await docClient.send(new DeleteCommand(params));
+    return true;
+  }
+
+  static async deleteById(id) {
+    const params = {
+      TableName: TABLE_NAME,
+      Key: { id }
+    };
+
+    await docClient.send(new DeleteCommand(params));
+    return true;
   }
 }
 

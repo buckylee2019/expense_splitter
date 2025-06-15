@@ -181,7 +181,7 @@ const EditGroup = () => {
                   className="btn btn-sm btn-danger"
                   title={`Remove ${member.userName || member.name || member.email || 'member'}`}
                 >
-                  Remove {member.userName || member.name || member.email?.split('@')[0] || 'Member'}
+                  Remove
                 </button>
               </div>
             ))}
