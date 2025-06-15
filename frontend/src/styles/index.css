@@ -2620,3 +2620,132 @@ p {
   content: "📁 ";
   margin-right: 0.25rem;
 }
+/* Weight-based Split Styles */
+.weight-info {
+  background: #e3f2fd;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 14px;
+  color: #1976d2;
+}
+
+.split-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: white;
+}
+
+.member-name {
+  flex: 1;
+  font-weight: 500;
+  min-width: 120px;
+}
+
+.weight-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 100px;
+}
+
+.weight-input label {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+}
+
+.weight-value {
+  width: 60px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.amount-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
+.amount-input label {
+  font-size: 12px;
+  color: #666;
+  margin: 0;
+}
+
+.split-amount {
+  width: 80px;
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.split-amount:disabled {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.weight-percentage {
+  font-size: 12px;
+  color: #666;
+  font-weight: 500;
+  min-width: 60px;
+  text-align: right;
+}
+
+.splits-section h3 {
+  margin-bottom: 16px;
+  color: #333;
+}
+
+.split-summary {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.split-summary p {
+  margin: 4px 0;
+  font-weight: 500;
+}
+
+.split-summary .error {
+  color: #d32f2f;
+  font-weight: 600;
+}
+
+/* Responsive design for weight splits */
+@media (max-width: 768px) {
+  .split-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .member-name {
+    min-width: auto;
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+  
+  .weight-input,
+  .amount-input {
+    justify-content: space-between;
+    min-width: auto;
+  }
+  
+  .weight-percentage {
+    text-align: center;
+    margin-top: 4px;
+  }
+}

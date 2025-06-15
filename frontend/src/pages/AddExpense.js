@@ -19,6 +19,7 @@ const AddExpense = () => {
     project: '' // New field for MOZE compatibility
   });
   const [splits, setSplits] = useState([]);
+  const [weights, setWeights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -65,7 +66,15 @@ const AddExpense = () => {
           userId: member.user,
           amount: equalAmount
         }));
+        
+        // Initialize weights for all group members (default weight = 1)
+        const initialWeights = groupData.members.map(member => ({
+          userId: member.user,
+          weight: 1
+        }));
+        
         setSplits(initialSplits);
+        setWeights(initialWeights);
         setLoading(false);
       } catch (err) {
         setError('Failed to load group data');
@@ -109,13 +118,18 @@ const AddExpense = () => {
     }));
 
     // Recalculate splits when amount changes
-    if (name === 'amount' && formData.splitType === 'equal') {
+    if (name === 'amount') {
       const amount = parseFloat(value) || 0;
-      const equalAmount = amount / splits.length;
-      setSplits(prev => prev.map(split => ({
-        ...split,
-        amount: equalAmount
-      })));
+      
+      if (formData.splitType === 'equal') {
+        const equalAmount = amount / splits.length;
+        setSplits(prev => prev.map(split => ({
+          ...split,
+          amount: equalAmount
+        })));
+      } else if (formData.splitType === 'weight') {
+        calculateWeightedSplits(amount);
+      }
     }
   };
 
@@ -131,13 +145,60 @@ const AddExpense = () => {
     const splitType = e.target.value;
     setFormData(prev => ({ ...prev, splitType }));
 
+    const amount = parseFloat(formData.amount) || 0;
+
     if (splitType === 'equal') {
-      const amount = parseFloat(formData.amount) || 0;
       const equalAmount = amount / splits.length;
       setSplits(prev => prev.map(split => ({
         ...split,
         amount: equalAmount
       })));
+    } else if (splitType === 'weight') {
+      calculateWeightedSplits(amount);
+    }
+  };
+
+  const calculateWeightedSplits = (totalAmount) => {
+    const totalWeight = weights.reduce((sum, weight) => sum + weight.weight, 0);
+    
+    if (totalWeight === 0) return;
+    
+    setSplits(prev => prev.map(split => {
+      const weight = weights.find(w => w.userId === split.userId)?.weight || 1;
+      const weightedAmount = (totalAmount * weight) / totalWeight;
+      return {
+        ...split,
+        amount: Math.round(weightedAmount * 100) / 100 // Round to 2 decimal places
+      };
+    }));
+  };
+
+  const handleWeightChange = (userId, newWeight) => {
+    const weight = Math.max(0, parseFloat(newWeight) || 0);
+    
+    setWeights(prev => prev.map(w => 
+      w.userId === userId ? { ...w, weight } : w
+    ));
+
+    // Recalculate splits if in weight mode
+    if (formData.splitType === 'weight') {
+      const amount = parseFloat(formData.amount) || 0;
+      // Update weights first, then calculate
+      const updatedWeights = weights.map(w => 
+        w.userId === userId ? { ...w, weight } : w
+      );
+      const totalWeight = updatedWeights.reduce((sum, w) => sum + w.weight, 0);
+      
+      if (totalWeight > 0) {
+        setSplits(prev => prev.map(split => {
+          const userWeight = updatedWeights.find(w => w.userId === split.userId)?.weight || 0;
+          const weightedAmount = (amount * userWeight) / totalWeight;
+          return {
+            ...split,
+            amount: Math.round(weightedAmount * 100) / 100
+          };
+        }));
+      }
     }
   };
 
@@ -335,29 +396,61 @@ const AddExpense = () => {
             onChange={handleSplitTypeChange}
           >
             <option value="equal">Equal Split</option>
+            <option value="weight">Weight-based Split</option>
             <option value="custom">Custom Split</option>
           </select>
         </div>
 
         <div className="splits-section">
           <h3>Split Details</h3>
+          {formData.splitType === 'weight' && (
+            <div className="weight-info">
+              <p>Set weights for each member (higher weight = larger share)</p>
+            </div>
+          )}
           <div className="splits-list">
             {splits.map((split, index) => {
               const member = group.members.find(m => m.user === split.userId);
+              const weight = weights.find(w => w.userId === split.userId)?.weight || 1;
+              
               return (
                 <div key={split.userId} className="split-item">
                   <span className="member-name">
                     {member ? member.userName || member.user : `Member ${index + 1}`}
                   </span>
-                  <input
-                    type="number"
-                    value={split.amount}
-                    onChange={(e) => handleSplitChange(split.userId, e.target.value)}
-                    disabled={formData.splitType === 'equal'}
-                    min="0"
-                    step="0.01"
-                    className="split-amount"
-                  />
+                  
+                  {formData.splitType === 'weight' && (
+                    <div className="weight-input">
+                      <label>Weight:</label>
+                      <input
+                        type="number"
+                        value={weight}
+                        onChange={(e) => handleWeightChange(split.userId, e.target.value)}
+                        min="0"
+                        step="0.1"
+                        className="weight-value"
+                      />
+                    </div>
+                  )}
+                  
+                  <div className="amount-input">
+                    <label>Amount:</label>
+                    <input
+                      type="number"
+                      value={split.amount}
+                      onChange={(e) => handleSplitChange(split.userId, e.target.value)}
+                      disabled={formData.splitType === 'equal' || formData.splitType === 'weight'}
+                      min="0"
+                      step="0.01"
+                      className="split-amount"
+                    />
+                  </div>
+                  
+                  {formData.splitType === 'weight' && (
+                    <div className="weight-percentage">
+                      ({((weight / weights.reduce((sum, w) => sum + w.weight, 0)) * 100).toFixed(1)}%)
+                    </div>
+                  )}
                 </div>
               );
             })}
