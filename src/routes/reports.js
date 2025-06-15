@@ -25,7 +25,9 @@ router.get('/monthly/:year/:month', authMiddleware, async (req, res) => {
     // Filter expenses by date
     const monthlyExpenses = allExpenses.filter(expense => {
       const expenseDate = new Date(expense.date);
-      return expenseDate >= startDate && expenseDate <= endDate;
+      const isInDateRange = expenseDate >= startDate && expenseDate <= endDate;
+      const isPaidByUser = expense.paidBy === userId; // Only include expenses paid by current user
+      return isInDateRange && isPaidByUser;
     });
     
     console.log(`Found ${monthlyExpenses.length} expenses for the month`);
@@ -132,7 +134,9 @@ router.get('/export/:year/:month', authMiddleware, async (req, res) => {
     const allExpenses = await Expense.findByUserId(userId);
     const monthlyExpenses = allExpenses.filter(expense => {
       const expenseDate = new Date(expense.date);
-      return expenseDate >= startDate && expenseDate <= endDate;
+      const isInDateRange = expenseDate >= startDate && expenseDate <= endDate;
+      const isPaidByUser = expense.paidBy === userId; // Only include expenses paid by current user
+      return isInDateRange && isPaidByUser;
     });
     
     // Convert to MOZE CSV format
@@ -156,20 +160,14 @@ router.get('/export/:year/:month', authMiddleware, async (req, res) => {
         const mainCategory = categoryParts[0] || '其他';
         const subCategory = categoryParts[1] || '其他';
         
-        // Find user's split amount
-        const userSplit = expense.splits.find(split => 
-          (split.user === userId || split.userId === userId)
-        );
-        const userAmount = userSplit ? userSplit.amount : 0;
-        const isPaidByUser = expense.paidBy === userId;
-        
         // Format date and time
         const expenseDate = new Date(expense.date);
         const dateStr = `${expenseDate.getFullYear()}/${expenseDate.getMonth() + 1}/${expenseDate.getDate()}`;
         const timeStr = `${expenseDate.getHours().toString().padStart(2, '0')}:${expenseDate.getMinutes().toString().padStart(2, '0')}`;
         
         // Create CSV row (matching MOZE format)
-        const amount = isPaidByUser ? -expense.amount : -userAmount; // Negative for expenses
+        // Since we only export expenses paid by the user, use full expense amount
+        const amount = -expense.amount; // Negative for expenses (MOZE convention)
         const csvRow = [
           '錢包', // 帳戶 (Account)
           expense.currency || 'TWD', // 幣種 (Currency)
