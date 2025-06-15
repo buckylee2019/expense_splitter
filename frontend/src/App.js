@@ -11,6 +11,7 @@ import CreateGroup from './pages/CreateGroup';
 import AddExpense from './pages/AddExpense';
 import EditExpense from './pages/EditExpense';
 import Settlements from './pages/Settlements';
+import Reports from './pages/Reports';
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -77,6 +78,14 @@ const AppRoutes = () => {
         element={
           <PrivateRoute>
             <Settlements />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/reports"
+        element={
+          <PrivateRoute>
+            <Reports />
           </PrivateRoute>
         }
       />
