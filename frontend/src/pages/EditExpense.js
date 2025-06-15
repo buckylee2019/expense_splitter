@@ -161,15 +161,19 @@ const EditExpense = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="project">Project (Optional)</label>
-            <input
-              type="text"
+            <label htmlFor="project">Project</label>
+            <select
               id="project"
               name="project"
               value={formData.project}
               onChange={handleChange}
-              placeholder="Project name or category"
-            />
+            >
+              <option value="">Select Project (Optional)</option>
+              <option value="生活開銷">生活開銷</option>
+              <option value="玩樂">玩樂</option>
+              <option value="家用">家用</option>
+              <option value="家居裝潢">家居裝潢</option>
+            </select>
           </div>
         </div>
 
