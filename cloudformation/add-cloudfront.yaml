@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Add CloudFront distribution to existing ExpenseSplitter frontend'
+Description: 'Add CloudFront distribution to existing ExpenseSplitter frontend with API Gateway integration'
 
 Parameters:
   Environment:
@@ -11,6 +11,11 @@ Parameters:
     Type: String
     Default: expense-splitter-frontend-dev-224425919845
     Description: Name of the existing S3 bucket
+
+  ApiGatewayId:
+    Type: String
+    Description: API Gateway ID to integrate with CloudFront
+    Default: ""
 
 Resources:
   # CloudFront Origin Access Control (newer than OAI)
@@ -30,14 +35,28 @@ Resources:
     Properties:
       DistributionConfig:
         Origins:
+          # S3 Origin for frontend assets
           - DomainName: !Sub '${ExistingBucketName}.s3.${AWS::Region}.amazonaws.com'
             Id: S3Origin
             S3OriginConfig:
               OriginAccessIdentity: ''
             OriginAccessControlId: !Ref OriginAccessControl
+          # API Gateway Origin for backend API
+          - !If
+            - HasApiGateway
+            - DomainName: !Sub '${ApiGatewayId}.execute-api.${AWS::Region}.amazonaws.com'
+              Id: ApiGatewayOrigin
+              CustomOriginConfig:
+                HTTPPort: 443
+                HTTPSPort: 443
+                OriginProtocolPolicy: https-only
+                OriginSSLProtocols:
+                  - TLSv1.2
+              OriginPath: !Sub '/${Environment}'
+            - !Ref 'AWS::NoValue'
         Enabled: true
         DefaultRootObject: index.html
-        Comment: !Sub 'CloudFront Distribution for ExpenseSplitter Frontend - ${Environment}'
+        Comment: !Sub 'CloudFront Distribution for ExpenseSplitter - ${Environment}'
         DefaultCacheBehavior:
           AllowedMethods:
             - DELETE
@@ -55,6 +74,27 @@ Resources:
           CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # Managed-CachingOptimized
           OriginRequestPolicyId: 88a5eaf4-2fd4-4709-b370-b4c650ea3fcf  # Managed-CORS-S3Origin
           ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03  # Managed-SecurityHeadersPolicy
+        CacheBehaviors: !If
+          - HasApiGateway
+          - - PathPattern: '/api/*'
+              TargetOriginId: ApiGatewayOrigin
+              ViewerProtocolPolicy: redirect-to-https
+              AllowedMethods:
+                - DELETE
+                - GET
+                - HEAD
+                - OPTIONS
+                - PATCH
+                - POST
+                - PUT
+              CachedMethods:
+                - GET
+                - HEAD
+              # Use caching disabled policy for API calls
+              CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad  # Managed-CachingDisabled
+              OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac  # Managed-AllViewerExceptHostHeader
+              ResponseHeadersPolicyId: 5cc3b908-e619-4b99-88e5-2cf7f45965bd  # Managed-CORS-With-Preflight
+          - !Ref 'AWS::NoValue'
         CustomErrorResponses:
           - ErrorCode: 403
             ResponseCode: 200
@@ -92,6 +132,9 @@ Resources:
             Action: 's3:GetObject'
             Resource: !Sub 'arn:aws:s3:::${ExistingBucketName}/*'
 
+Conditions:
+  HasApiGateway: !Not [!Equals [!Ref ApiGatewayId, ""]]
+
 Outputs:
   CloudFrontDistributionId:
     Description: CloudFront Distribution ID
@@ -110,6 +153,15 @@ Outputs:
     Value: !Sub 'https://${CloudFrontDistribution.DomainName}'
     Export:
       Name: !Sub '${AWS::StackName}-WebsiteURL'
+
+  ApiURL:
+    Description: API URL via CloudFront (if API Gateway provided)
+    Value: !If
+      - HasApiGateway
+      - !Sub 'https://${CloudFrontDistribution.DomainName}/api'
+      - 'No API Gateway configured'
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiURL'
 
   S3WebsiteURL:
     Description: Direct S3 website URL (HTTP)

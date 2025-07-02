@@ -14,6 +14,7 @@ import AddExpense from './pages/AddExpense';
 import EditExpense from './pages/EditExpense';
 import Settlements from './pages/Settlements';
 import Reports from './pages/Reports';
+import Profile from './pages/Profile';
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -104,6 +105,14 @@ const AppRoutes = () => {
         element={
           <PrivateRoute>
             <Reports />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <PrivateRoute>
+            <Profile />
           </PrivateRoute>
         }
       />

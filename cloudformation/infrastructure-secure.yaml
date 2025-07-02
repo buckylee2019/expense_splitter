@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'Infrastructure for Expense Splitter Application'
+Description: 'Infrastructure for Expense Splitter Application with CloudFront-only API access'
 
 Parameters:
   Environment:
@@ -200,7 +200,7 @@ Resources:
         - Key: Application
           Value: ExpenseSplitter
 
-  # API Gateway with Resource Policy for CloudFront-only access
+  # API Gateway with Resource Policy
   ApiGateway:
     Type: AWS::ApiGateway::RestApi
     Properties:
@@ -272,16 +272,10 @@ Conditions:
 
 Outputs:
   ApiUrl:
-    Description: API Gateway URL (restricted to CloudFront access only when CloudFront ID provided)
+    Description: API Gateway URL (restricted to CloudFront access only)
     Value: !Sub 'https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/${Environment}'
     Export:
       Name: !Sub '${AWS::StackName}-ApiUrl'
-
-  ApiGatewayId:
-    Description: API Gateway ID
-    Value: !Ref ApiGateway
-    Export:
-      Name: !Sub '${AWS::StackName}-ApiGatewayId'
 
   UsersTableName:
     Description: Users DynamoDB Table Name
@@ -312,3 +306,9 @@ Outputs:
     Value: !Ref ExpenseSplitterFunction
     Export:
       Name: !Sub '${AWS::StackName}-LambdaFunction'
+
+  ApiGatewayId:
+    Description: API Gateway ID
+    Value: !Ref ApiGateway
+    Export:
+      Name: !Sub '${AWS::StackName}-ApiGatewayId'

@@ -11,6 +11,8 @@ class User {
     this.name = data.name;
     this.email = data.email;
     this.password = data.password;
+    this.phone = data.phone || '';
+    this.avatar = data.avatar || '';
     this.friends = data.friends || [];
     this.groups = data.groups || [];
     this.createdAt = data.createdAt || new Date().toISOString();

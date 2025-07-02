@@ -16,9 +16,16 @@ router.get('/profile', authMiddleware, async (req, res) => {
 // Update user profile
 router.put('/profile', authMiddleware, async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, phone, avatar } = req.body;
     
-    req.user.name = name || req.user.name;
+    // Update fields if provided
+    if (name !== undefined) req.user.name = name;
+    if (phone !== undefined) req.user.phone = phone;
+    if (avatar !== undefined) req.user.avatar = avatar;
+    
+    // Update timestamp
+    req.user.updatedAt = new Date().toISOString();
+    
     await req.user.save();
 
     res.json({
@@ -26,6 +33,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
       user: req.user.toJSON()
     });
   } catch (error) {
+    console.error('Error updating profile:', error);
     res.status(400).json({ error: error.message });
   }
 });
