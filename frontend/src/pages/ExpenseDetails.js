@@ -130,6 +130,12 @@ const ExpenseDetails = () => {
                 )}
               </span>
             </div>
+            {expense.project && (
+              <div className="meta-item">
+                <strong>Project:</strong> 
+                <span className="project-display">📁 {expense.project}</span>
+              </div>
+            )}
             <div className="meta-item">
               <strong>Date:</strong> {new Date(expense.date).toLocaleDateString()}
             </div>

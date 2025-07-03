@@ -12,6 +12,7 @@ const EditExpense = () => {
     amount: '',
     currency: 'TWD',
     category: '',
+    project: '', // Keep project field for MOZE compatibility
     paidBy: '',
     splitType: 'equal',
     notes: ''
@@ -205,6 +206,24 @@ const EditExpense = () => {
             />
           </div>
 
+          <div className="form-group">
+            <label htmlFor="project">Project</label>
+            <select
+              id="project"
+              name="project"
+              value={formData.project}
+              onChange={handleChange}
+            >
+              <option value="">Select Project (Optional)</option>
+              <option value="生活開銷">生活開銷</option>
+              <option value="玩樂">玩樂</option>
+              <option value="家用">家用</option>
+              <option value="家居裝潢">家居裝潢</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="form-row">
           <div className="form-group">
             <label htmlFor="notes">Notes (Optional)</label>
             <input
