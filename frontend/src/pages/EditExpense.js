@@ -53,7 +53,10 @@ const EditExpense = () => {
           notes: expense.notes || ''
         });
         
-        setSplits(expense.splits || []);
+        setSplits((expense.splits || []).map(split => ({
+          ...split,
+          included: split.amount > 0 // If amount > 0, consider it included
+        })));
         setError('');
       } catch (err) {
         setError('Failed to load expense details');
@@ -76,11 +79,7 @@ const EditExpense = () => {
     // Recalculate splits when amount changes
     if (name === 'amount' && formData.splitType === 'equal') {
       const amount = parseFloat(value) || 0;
-      const equalAmount = amount / splits.length;
-      setSplits(prev => prev.map(split => ({
-        ...split,
-        amount: equalAmount
-      })));
+      calculateEqualSplits(amount);
     }
   };
 
@@ -92,9 +91,45 @@ const EditExpense = () => {
     ));
   };
 
+  const handleMemberToggle = (userId) => {
+    setSplits(prev => prev.map(split => 
+      (split.userId || split.user) === userId 
+        ? { ...split, included: !split.included }
+        : split
+    ));
+    
+    // Recalculate equal splits after toggling
+    if (formData.splitType === 'equal') {
+      const amount = parseFloat(formData.amount) || 0;
+      setTimeout(() => calculateEqualSplits(amount), 0);
+    }
+  };
+
+  const calculateEqualSplits = (totalAmount) => {
+    setSplits(prev => {
+      const includedMembers = prev.filter(split => split.included);
+      const equalAmount = includedMembers.length > 0 ? totalAmount / includedMembers.length : 0;
+      
+      return prev.map(split => ({
+        ...split,
+        amount: split.included ? equalAmount : 0
+      }));
+    });
+  };
+
   const validateSplits = () => {
     const totalAmount = parseFloat(formData.amount) || 0;
     const totalSplits = splits.reduce((sum, split) => sum + split.amount, 0);
+    
+    // For equal split, ensure at least one member is selected
+    if (formData.splitType === 'equal') {
+      const includedMembers = splits.filter(split => split.included);
+      if (includedMembers.length === 0) {
+        setError('Please select at least one member for the equal split');
+        return false;
+      }
+    }
+    
     return Math.abs(totalAmount - totalSplits) < 0.01;
   };
 
@@ -115,10 +150,13 @@ const EditExpense = () => {
     setError('');
 
     try {
+      // Filter out splits with zero amounts (unselected members in equal split)
+      const activeSplits = splits.filter(split => split.amount > 0);
+      
       await api.put(`/api/expenses/${expenseId}`, {
         ...formData,
         amount: parseFloat(formData.amount),
-        splits
+        splits: activeSplits
       });
 
       navigate(`/groups/${groupId}/expenses/${expenseId}`);
@@ -286,18 +324,37 @@ const EditExpense = () => {
               const isCurrentUser = (split.userId || split.user) === currentUser?.id;
               
               return (
-                <div key={split.userId || split.user || index} className="split-item">
-                  <span className="split-user">
-                    {displayName}{isCurrentUser ? ' (You)' : ''}
-                  </span>
-                  <input
-                    type="number"
-                    value={split.amount}
-                    onChange={(e) => handleSplitChange(split.userId || split.user, e.target.value)}
-                    step="0.01"
-                    min="0"
-                    className="split-amount"
-                  />
+                <div key={split.userId || split.user || index} className={`split-item ${formData.splitType === 'equal' && !split.included ? 'excluded' : ''}`}>
+                  <div className="member-info">
+                    {formData.splitType === 'equal' && (
+                      <div className="member-checkbox">
+                        <input
+                          type="checkbox"
+                          id={`edit-member-${split.userId || split.user}`}
+                          checked={split.included}
+                          onChange={() => handleMemberToggle(split.userId || split.user)}
+                        />
+                        <label htmlFor={`edit-member-${split.userId || split.user}`} className="checkbox-label">
+                          Include in split
+                        </label>
+                      </div>
+                    )}
+                    <span className="member-name">
+                      {displayName}{isCurrentUser ? ' (You)' : ''}
+                    </span>
+                  </div>
+                  <div className="amount-input">
+                    <label>Amount:</label>
+                    <input
+                      type="number"
+                      value={split.amount}
+                      onChange={(e) => handleSplitChange(split.userId || split.user, e.target.value)}
+                      disabled={formData.splitType === 'equal'}
+                      step="0.01"
+                      min="0"
+                      className="split-amount"
+                    />
+                  </div>
                 </div>
               );
             })}

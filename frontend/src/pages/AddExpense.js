@@ -52,7 +52,8 @@ const AddExpense = () => {
         const equalAmount = 0;
         const initialSplits = groupData.members.map(member => ({
           userId: member.user,
-          amount: equalAmount
+          amount: equalAmount,
+          included: true // Default to including all members in equal split
         }));
         
         // Initialize weights for all group members (default weight = 1)
@@ -100,11 +101,7 @@ const AddExpense = () => {
       const amount = parseFloat(value) || 0;
       
       if (formData.splitType === 'equal') {
-        const equalAmount = amount / splits.length;
-        setSplits(prev => prev.map(split => ({
-          ...split,
-          amount: equalAmount
-        })));
+        calculateEqualSplits(amount);
       } else if (formData.splitType === 'weight') {
         calculateWeightedSplits(amount);
       }
@@ -119,6 +116,32 @@ const AddExpense = () => {
     ));
   };
 
+  const handleMemberToggle = (userId) => {
+    setSplits(prev => prev.map(split => 
+      split.userId === userId 
+        ? { ...split, included: !split.included }
+        : split
+    ));
+    
+    // Recalculate equal splits after toggling
+    if (formData.splitType === 'equal') {
+      const amount = parseFloat(formData.amount) || 0;
+      setTimeout(() => calculateEqualSplits(amount), 0); // Use setTimeout to ensure state is updated
+    }
+  };
+
+  const calculateEqualSplits = (totalAmount) => {
+    setSplits(prev => {
+      const includedMembers = prev.filter(split => split.included);
+      const equalAmount = includedMembers.length > 0 ? totalAmount / includedMembers.length : 0;
+      
+      return prev.map(split => ({
+        ...split,
+        amount: split.included ? equalAmount : 0
+      }));
+    });
+  };
+
   const handleSplitTypeChange = (e) => {
     const splitType = e.target.value;
     setFormData(prev => ({ ...prev, splitType }));
@@ -126,11 +149,7 @@ const AddExpense = () => {
     const amount = parseFloat(formData.amount) || 0;
 
     if (splitType === 'equal') {
-      const equalAmount = amount / splits.length;
-      setSplits(prev => prev.map(split => ({
-        ...split,
-        amount: equalAmount
-      })));
+      calculateEqualSplits(amount);
     } else if (splitType === 'weight') {
       calculateWeightedSplits(amount);
     }
@@ -183,6 +202,16 @@ const AddExpense = () => {
   const validateSplits = () => {
     const totalAmount = parseFloat(formData.amount) || 0;
     const totalSplits = splits.reduce((sum, split) => sum + split.amount, 0);
+    
+    // For equal split, ensure at least one member is selected
+    if (formData.splitType === 'equal') {
+      const includedMembers = splits.filter(split => split.included);
+      if (includedMembers.length === 0) {
+        setError('Please select at least one member for the equal split');
+        return false;
+      }
+    }
+    
     return Math.abs(totalAmount - totalSplits) < 0.01;
   };
 
@@ -208,11 +237,14 @@ const AddExpense = () => {
     setError('');
 
     try {
+      // Filter out splits with zero amounts (unselected members in equal split)
+      const activeSplits = splits.filter(split => split.amount > 0);
+      
       const expenseData = {
         ...formData,
         amount: parseFloat(formData.amount),
         groupId,
-        splits
+        splits: activeSplits
       };
       
       await api.post('/api/expenses', expenseData);
@@ -396,10 +428,25 @@ const AddExpense = () => {
               const weight = weights.find(w => w.userId === split.userId)?.weight || 1;
               
               return (
-                <div key={split.userId} className="split-item">
-                  <span className="member-name">
-                    {member ? member.userName || member.user : `Member ${index + 1}`}
-                  </span>
+                <div key={split.userId} className={`split-item ${formData.splitType === 'equal' && !split.included ? 'excluded' : ''}`}>
+                  <div className="member-info">
+                    {formData.splitType === 'equal' && (
+                      <div className="member-checkbox">
+                        <input
+                          type="checkbox"
+                          id={`member-${split.userId}`}
+                          checked={split.included}
+                          onChange={() => handleMemberToggle(split.userId)}
+                        />
+                        <label htmlFor={`member-${split.userId}`} className="checkbox-label">
+                          Include in split
+                        </label>
+                      </div>
+                    )}
+                    <span className="member-name">
+                      {member ? member.userName || member.user : `Member ${index + 1}`}
+                    </span>
+                  </div>
                   
                   {formData.splitType === 'weight' && (
                     <div className="weight-input">
