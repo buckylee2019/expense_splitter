@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import CategorySelector from '../components/CategorySelector';
 
 const EditExpense = () => {
   const { groupId, expenseId } = useParams();
@@ -9,11 +10,11 @@ const EditExpense = () => {
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
-    currency: 'USD',
-    category: 'General',
+    currency: 'TWD',
+    category: '',
     paidBy: '',
     splitType: 'equal',
-    project: '' // New field for MOZE compatibility
+    notes: ''
   });
   
   const [splits, setSplits] = useState([]);
@@ -196,23 +197,28 @@ const EditExpense = () => {
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="category">Category</label>
-            <select
-              id="category"
-              name="category"
+            <label>Category *</label>
+            <CategorySelector
               value={formData.category}
-              onChange={handleChange}
-            >
-              <option value="General">General</option>
-              <option value="Food">Food</option>
-              <option value="Transportation">Transportation</option>
-              <option value="Entertainment">Entertainment</option>
-              <option value="Utilities">Utilities</option>
-              <option value="Shopping">Shopping</option>
-              <option value="Other">Other</option>
-            </select>
+              onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+              required={true}
+            />
           </div>
 
+          <div className="form-group">
+            <label htmlFor="notes">Notes (Optional)</label>
+            <input
+              type="text"
+              id="notes"
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              placeholder="Additional notes..."
+            />
+          </div>
+        </div>
+
+        <div className="form-row">
           <div className="form-group">
             <label htmlFor="paidBy">Paid By</label>
             <select

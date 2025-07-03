@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import CategoryBadge from '../components/CategoryBadge';
 import AddMember from '../components/AddMember';
 
 const GroupDetails = () => {
@@ -313,9 +314,7 @@ const GroupDetails = () => {
                       <span className="expense-payer">
                         by {expense.paidByName || 'Unknown'}
                       </span>
-                      {expense.category && (
-                        <span className="expense-category">{expense.category}</span>
-                      )}
+                      <CategoryBadge category={expense.category} />
                     </div>
                   </div>
                   

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import CategorySelector from '../components/CategorySelector';
+import { parseCategoryString } from '../data/expenseCategories';
 
 const AddExpense = () => {
   const { groupId } = useParams();
@@ -12,32 +14,16 @@ const AddExpense = () => {
     description: '',
     amount: '',
     currency: 'TWD',
-    mainCategory: '飲食',
-    subCategory: '午餐',
+    category: '', // Updated to use comprehensive category system
     splitType: 'equal',
     paidBy: '',
-    project: '' // New field for MOZE compatibility
+    notes: ''
   });
   const [splits, setSplits] = useState([]);
   const [weights, setWeights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
-
-  const categoryData = {
-    '飲食': ['早餐', '午餐', '晚餐', '宵夜', '飲料', '點心', '酒類', '水果', '食材', '咖啡豆', '旅遊'],
-    '交通': ['捷運', '公車', '計程車', '火車', '機票', '汽車', '摩托車', '加油費', '停車費', '過路費'],
-    '購物': ['衣物', '鞋子', '包包', '配件', '美妝保養', '生活用品', '電子產品', '文具用品', '禮物', '紀念品', '保健食品', '精品', '裝飾品'],
-    '娛樂': ['電影', 'KTV', '遊戲', '運動', '健身', '音樂', '展覽', '遊樂園', '消遣', '影音', '博弈'],
-    '生活': ['住宿', '旅行', '美容美髮', '按摩', '泡湯', '派對'],
-    '家居': ['房租', '電費', '水費', '瓦斯費', '網路費', '電話費', '管理費', '日常用品', '家具', '家電', '修繕費', '保養', '洗車'],
-    '醫療': ['門診', '藥品', '牙齒保健', '健康檢查', '打針', '醫療用品'],
-    '學習': ['書籍', '課程', '證書'],
-    '個人': ['保險', '投資', '稅金', '紅包', '捐款', '社交', '通話費', '手續費', '罰單', '訂金', '借款'],
-    '其他': ['孝親費', '其他']
-  };
-
-  const mainCategories = Object.keys(categoryData);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,16 +85,6 @@ const AddExpense = () => {
     // Handle payer change separately for better control
     if (name === 'paidBy') {
       handlePayerChange(e);
-      return;
-    }
-    
-    // Handle main category change - reset subcategory to first option
-    if (name === 'mainCategory') {
-      setFormData(prev => ({
-        ...prev,
-        mainCategory: value,
-        subCategory: categoryData[value][0] // Set to first subcategory
-      }));
       return;
     }
     
@@ -216,6 +192,11 @@ const AddExpense = () => {
       return;
     }
     
+    if (!formData.category) {
+      setError('Please select a category for this expense');
+      return;
+    }
+    
     if (!validateSplits()) {
       setError('Split amounts must equal the total amount');
       return;
@@ -227,7 +208,6 @@ const AddExpense = () => {
     try {
       const expenseData = {
         ...formData,
-        category: `${formData.mainCategory} - ${formData.subCategory}`, // Combine categories
         amount: parseFloat(formData.amount),
         groupId,
         splits
@@ -278,24 +258,6 @@ const AddExpense = () => {
           </div>
 
           <div className="form-group">
-            <label htmlFor="project">Project</label>
-            <select
-              id="project"
-              name="project"
-              value={formData.project}
-              onChange={handleChange}
-            >
-              <option value="">Select Project (Optional)</option>
-              <option value="生活開銷">生活開銷</option>
-              <option value="玩樂">玩樂</option>
-              <option value="家用">家用</option>
-              <option value="家居裝潢">家居裝潢</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
             <label htmlFor="amount">Amount</label>
             <input
               type="number"
@@ -313,37 +275,24 @@ const AddExpense = () => {
 
         <div className="form-row">
           <div className="form-group">
-            <label htmlFor="mainCategory">主類別 (Main Category)</label>
-            <select
-              id="mainCategory"
-              name="mainCategory"
-              value={formData.mainCategory}
-              onChange={handleChange}
-              required
-            >
-              {mainCategories.map(category => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
+            <label>Category *</label>
+            <CategorySelector
+              value={formData.category}
+              onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
+              required={true}
+            />
           </div>
 
           <div className="form-group">
-            <label htmlFor="subCategory">子類別 (Subcategory)</label>
-            <select
-              id="subCategory"
-              name="subCategory"
-              value={formData.subCategory}
+            <label htmlFor="notes">Notes (Optional)</label>
+            <input
+              type="text"
+              id="notes"
+              name="notes"
+              value={formData.notes}
               onChange={handleChange}
-              required
-            >
-              {categoryData[formData.mainCategory]?.map(subCategory => (
-                <option key={subCategory} value={subCategory}>
-                  {subCategory}
-                </option>
-              ))}
-            </select>
+              placeholder="Additional notes..."
+            />
           </div>
         </div>
 

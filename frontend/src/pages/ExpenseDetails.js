@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import { parseCategoryString, getCategoryIcon, getCategoryColor } from '../data/expenseCategories';
 
 const ExpenseDetails = () => {
   const { groupId, expenseId } = useParams();
@@ -110,7 +111,24 @@ const ExpenseDetails = () => {
           
           <div className="expense-meta">
             <div className="meta-item">
-              <strong>Category:</strong> {expense.category || 'General'}
+              <strong>Category:</strong> 
+              <span className="category-display">
+                {expense.category ? (
+                  <>
+                    <span className="category-icon">
+                      {getCategoryIcon(parseCategoryString(expense.category).category)}
+                    </span>
+                    <span 
+                      className="category-text"
+                      style={{ color: getCategoryColor(parseCategoryString(expense.category).category) }}
+                    >
+                      {expense.category}
+                    </span>
+                  </>
+                ) : (
+                  <span className="category-text">未分類</span>
+                )}
+              </span>
             </div>
             <div className="meta-item">
               <strong>Date:</strong> {new Date(expense.date).toLocaleDateString()}

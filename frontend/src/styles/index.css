@@ -2918,3 +2918,326 @@ p {
     font-size: 1.5rem;
   }
 }
+/* Category Selector Styles */
+.category-selector {
+  position: relative;
+  width: 100%;
+}
+
+.category-selector-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  min-height: 44px;
+}
+
+.category-selector-trigger:hover {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.category-selector-trigger.open {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.category-selector-trigger.required {
+  border-color: var(--error-color);
+}
+
+.category-display {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.category-icon {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.category-text {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.category-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.clear-button {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 2px;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.clear-button:hover {
+  background: var(--error-light);
+  color: var(--error-color);
+}
+
+.dropdown-arrow {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  transition: transform 0.2s ease;
+}
+
+.dropdown-arrow.up {
+  transform: rotate(180deg);
+}
+
+.category-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.dropdown-header {
+  padding: var(--spacing);
+  background: var(--background-secondary);
+  border-bottom: 1px solid var(--border-light);
+  font-weight: 600;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.back-button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s ease;
+}
+
+.back-button:hover {
+  background: var(--primary-light);
+}
+
+.category-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+  padding: var(--spacing);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.category-item:hover {
+  background: var(--background-secondary);
+}
+
+.category-item:last-child {
+  border-bottom: none;
+}
+
+.category-name {
+  flex: 1;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.subcategory-count {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  background: var(--background-secondary);
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.subcategory-list {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.subcategory-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+  padding: var(--spacing);
+  cursor: pointer;
+  transition: background 0.2s ease;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.subcategory-item:hover {
+  background: var(--background-secondary);
+}
+
+.subcategory-item:last-child {
+  border-bottom: none;
+}
+
+.subcategory-item.category-only {
+  background: var(--primary-light);
+  font-weight: 500;
+}
+
+.subcategory-item.category-only:hover {
+  background: var(--primary-color);
+  color: white;
+}
+
+.subcategory-name {
+  flex: 1;
+  color: var(--text-primary);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .category-dropdown {
+    max-height: 250px;
+  }
+  
+  .category-item,
+  .subcategory-item {
+    padding: var(--spacing-sm);
+  }
+  
+  .category-icon {
+    font-size: 1rem;
+  }
+}
+/* Category Display Styles */
+.category-display {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  margin-left: var(--spacing-xs);
+}
+
+.category-display .category-icon {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.category-display .category-text {
+  font-weight: 500;
+}
+
+/* Expense list category badges */
+.expense-category-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: var(--background-secondary);
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+}
+
+.expense-category-badge .category-icon {
+  font-size: 0.875rem;
+}
+
+/* Category colors for badges */
+.expense-category-badge[data-category="交通"] {
+  background: #EBF4FF;
+  color: #3B82F6;
+  border-color: #BFDBFE;
+}
+
+.expense-category-badge[data-category="個人"] {
+  background: #F3E8FF;
+  color: #8B5CF6;
+  border-color: #DDD6FE;
+}
+
+.expense-category-badge[data-category="娛樂"] {
+  background: #FEF3C7;
+  color: #F59E0B;
+  border-color: #FDE68A;
+}
+
+.expense-category-badge[data-category="學習"] {
+  background: #D1FAE5;
+  color: #10B981;
+  border-color: #A7F3D0;
+}
+
+.expense-category-badge[data-category="家居"] {
+  background: #F3F4F6;
+  color: #6B7280;
+  border-color: #D1D5DB;
+}
+
+.expense-category-badge[data-category="家庭"] {
+  background: #FEE2E2;
+  color: #EF4444;
+  border-color: #FECACA;
+}
+
+.expense-category-badge[data-category="收入"] {
+  background: #DCFCE7;
+  color: #22C55E;
+  border-color: #BBF7D0;
+}
+
+.expense-category-badge[data-category="生活"] {
+  background: #FCE7F3;
+  color: #EC4899;
+  border-color: #FBCFE8;
+}
+
+.expense-category-badge[data-category="購物"] {
+  background: #FED7AA;
+  color: #F97316;
+  border-color: #FDBA74;
+}
+
+.expense-category-badge[data-category="轉帳"] {
+  background: #CFFAFE;
+  color: #06B6D4;
+  border-color: #A5F3FC;
+}
+
+.expense-category-badge[data-category="醫療"] {
+  background: #FEE2E2;
+  color: #DC2626;
+  border-color: #FECACA;
+}
+
+.expense-category-badge[data-category="飲食"] {
+  background: #ECFCCB;
+  color: #84CC16;
+  border-color: #D9F99D;
+}
