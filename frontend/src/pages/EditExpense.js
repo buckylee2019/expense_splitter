@@ -13,6 +13,7 @@ const EditExpense = () => {
     currency: 'TWD',
     category: '',
     project: '', // Keep project field for MOZE compatibility
+    date: new Date().toISOString().split('T')[0], // Default to today in YYYY-MM-DD format
     paidBy: '',
     splitType: 'equal',
     notes: ''
@@ -43,11 +44,13 @@ const EditExpense = () => {
         setFormData({
           description: expense.description,
           amount: expense.amount.toString(),
-          currency: expense.currency || 'USD',
-          category: expense.category || 'General',
+          currency: expense.currency || 'TWD',
+          category: expense.category || '',
+          project: expense.project || '',
+          date: expense.date ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0], // Convert to YYYY-MM-DD format
           paidBy: expense.paidBy,
           splitType: expense.splitType || 'equal',
-          project: expense.project || '' // Include project field
+          notes: expense.notes || ''
         });
         
         setSplits(expense.splits || []);
@@ -192,6 +195,19 @@ const EditExpense = () => {
               min="0"
               required
               placeholder="0.00"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="date">Date</label>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              required
+              max={new Date().toISOString().split('T')[0]} // Can't select future dates
             />
           </div>
         </div>

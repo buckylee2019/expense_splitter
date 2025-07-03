@@ -16,6 +16,7 @@ const AddExpense = () => {
     currency: 'TWD',
     category: '', // New comprehensive category system
     project: '', // Keep project field for MOZE compatibility
+    date: new Date().toISOString().split('T')[0], // Default to today in YYYY-MM-DD format
     splitType: 'equal',
     paidBy: '',
     notes: ''
@@ -270,6 +271,19 @@ const AddExpense = () => {
               min="0"
               step="0.01"
               placeholder="0.00"
+            />
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="date">Date</label>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              value={formData.date}
+              onChange={handleChange}
+              required
+              max={new Date().toISOString().split('T')[0]} // Can't select future dates
             />
           </div>
         </div>
