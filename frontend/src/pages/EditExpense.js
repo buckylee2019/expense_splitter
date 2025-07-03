@@ -325,24 +325,26 @@ const EditExpense = () => {
               
               return (
                 <div key={split.userId || split.user || index} className={`split-item ${formData.splitType === 'equal' && !split.included ? 'excluded' : ''}`}>
+                  {formData.splitType === 'equal' && (
+                    <div className="member-checkbox">
+                      <input
+                        type="checkbox"
+                        id={`edit-member-${split.userId || split.user}`}
+                        checked={split.included}
+                        onChange={() => handleMemberToggle(split.userId || split.user)}
+                      />
+                      <label htmlFor={`edit-member-${split.userId || split.user}`} className="checkbox-label">
+                        Include in split
+                      </label>
+                    </div>
+                  )}
+                  
                   <div className="member-info">
-                    {formData.splitType === 'equal' && (
-                      <div className="member-checkbox">
-                        <input
-                          type="checkbox"
-                          id={`edit-member-${split.userId || split.user}`}
-                          checked={split.included}
-                          onChange={() => handleMemberToggle(split.userId || split.user)}
-                        />
-                        <label htmlFor={`edit-member-${split.userId || split.user}`} className="checkbox-label">
-                          Include in split
-                        </label>
-                      </div>
-                    )}
                     <span className="member-name">
                       {displayName}{isCurrentUser ? ' (You)' : ''}
                     </span>
                   </div>
+                  
                   <div className="amount-input">
                     <label>Amount:</label>
                     <input
