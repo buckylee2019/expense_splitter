@@ -6,6 +6,8 @@ const Dashboard = () => {
   const location = useLocation();
   const [groups, setGroups] = useState([]);
   const [balances, setBalances] = useState({ balances: [], summary: {} });
+  const [optimizationInfo, setOptimizationInfo] = useState(null);
+  const [useOptimized, setUseOptimized] = useState(true); // Default to optimized
   const [settlements, setSettlements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -25,7 +27,7 @@ const Dashboard = () => {
       console.log('📊 Dashboard: Fetching groups, balances, and settlements...');
       const [groupsResponse, balancesResponse, settlementsResponse] = await Promise.all([
         api.get('/api/groups'),
-        api.get('/api/balances'),
+        api.get(`/api/balances${useOptimized ? '?optimized=true' : ''}`),
         api.get('/api/settlements').catch(err => {
           console.error('❌ Dashboard: Error fetching settlements:', err);
           return { data: [] }; // Return empty array on error to prevent breaking
@@ -39,6 +41,16 @@ const Dashboard = () => {
       
       setGroups(groupsResponse.data);
       setBalances(balancesResponse.data);
+      
+      // Store optimization info if available
+      if (balancesResponse.data.optimizedTransfers) {
+        setOptimizationInfo({
+          transferCount: balancesResponse.data.transferCount,
+          originalTransferCount: balancesResponse.data.originalTransferCount,
+          optimizedTransfers: balancesResponse.data.optimizedTransfers
+        });
+      }
+      
       setSettlements(Array.isArray(settlementsResponse.data) ? settlementsResponse.data : []);
       setError('');
       setLastRefresh(new Date());
@@ -100,6 +112,13 @@ const Dashboard = () => {
   // Add a manual refresh function
   const handleRefresh = () => {
     fetchData();
+  };
+
+  // Toggle between optimized and original balance calculation
+  const toggleOptimization = () => {
+    setUseOptimized(!useOptimized);
+    // Refresh data with new optimization setting
+    setTimeout(() => fetchData(), 100);
   };
 
   if (loading) {
@@ -267,9 +286,40 @@ const Dashboard = () => {
         <div className="balances-section">
           <div className="card">
             <div className="card-header">
-              <h2>💳 Outstanding Balances</h2>
-              <span className="card-subtitle">{balances.balances.length} pending</span>
+              <div>
+                <h2>💳 Outstanding Balances</h2>
+                <span className="card-subtitle">{balances.balances.length} pending</span>
+              </div>
+              <div className="balance-controls">
+                <button 
+                  onClick={toggleOptimization}
+                  className={`button ${useOptimized ? 'primary' : 'secondary'} small`}
+                  title={useOptimized ? 'Using optimized transfers (fewer transactions)' : 'Using direct transfers'}
+                >
+                  {useOptimized ? '🎯 Optimized' : '📊 Direct'}
+                </button>
+              </div>
             </div>
+            
+            {optimizationInfo && useOptimized && (
+              <div className="optimization-info">
+                <div className="optimization-stats">
+                  <span className="stat">
+                    <strong>{optimizationInfo.transferCount}</strong> transfers needed
+                  </span>
+                  <span className="stat">
+                    <strong>{Math.max(0, optimizationInfo.originalTransferCount - optimizationInfo.transferCount)}</strong> transfers saved
+                  </span>
+                  <span className="stat success">
+                    <strong>{optimizationInfo.originalTransferCount > 0 ? Math.round((1 - optimizationInfo.transferCount / optimizationInfo.originalTransferCount) * 100) : 0}%</strong> reduction
+                  </span>
+                </div>
+                <p className="optimization-description">
+                  💡 Optimized algorithm minimizes money transfers by finding the most efficient settlement path.
+                </p>
+              </div>
+            )}
+            
             <div className="balances-list">
               {balances.balances.map((balance, index) => (
                 <div key={index} className={`balance-item card ${balance.type}`}>
