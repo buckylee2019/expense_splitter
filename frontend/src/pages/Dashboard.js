@@ -301,22 +301,6 @@ const Dashboard = () => {
               </div>
             </div>
             
-            {optimizationInfo && useOptimized && (
-              <div className="optimization-info">
-                <div className="optimization-stats">
-                  <span className="stat">
-                    <strong>{optimizationInfo.transferCount}</strong> transfers needed
-                  </span>
-                  <span className="stat">
-                    <strong>{Math.max(0, optimizationInfo.originalTransferCount - optimizationInfo.transferCount)}</strong> transfers saved
-                  </span>
-                  <span className="stat success">
-                    <strong>{optimizationInfo.originalTransferCount > 0 ? Math.round((1 - optimizationInfo.transferCount / optimizationInfo.originalTransferCount) * 100) : 0}%</strong> reduction
-                  </span>
-                </div>
-              </div>
-            )}
-            
             <div className="balances-list">
               {balances.balances.map((balance, index) => (
                 <div key={index} className={`balance-item card ${balance.type}`}>

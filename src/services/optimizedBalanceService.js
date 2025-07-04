@@ -122,8 +122,8 @@ const calculateNetBalances = async (userId, groupId = null) => {
     if (!netBalances[toUser][currency]) netBalances[toUser][currency] = 0;
     
     // Settlement: fromUser paid toUser
-    netBalances[fromUser][currency] -= settlement.amount; // fromUser owes less
-    netBalances[toUser][currency] += settlement.amount;   // toUser is owed less
+    netBalances[fromUser][currency] += settlement.amount; // fromUser owes less (net balance improves)
+    netBalances[toUser][currency] -= settlement.amount;   // toUser is owed less (net balance decreases)
   });
 
   return netBalances;
@@ -321,8 +321,8 @@ const getGroupOptimizedTransfers = async (groupId) => {
       if (!netBalances[fromUser][currency]) netBalances[fromUser][currency] = 0;
       if (!netBalances[toUser][currency]) netBalances[toUser][currency] = 0;
       
-      netBalances[fromUser][currency] -= settlement.amount;
-      netBalances[toUser][currency] += settlement.amount;
+      netBalances[fromUser][currency] += settlement.amount; // fromUser owes less (net balance improves)
+      netBalances[toUser][currency] -= settlement.amount;   // toUser is owed less (net balance decreases)
     });
     
     // Generate optimized transfers

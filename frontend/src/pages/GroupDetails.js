@@ -292,19 +292,6 @@ const GroupDetails = () => {
               </button>
             </div>
             
-            {optimizationInfo && useOptimized && (
-              <div className="optimization-info-compact">
-                <div className="optimization-stats-compact">
-                  <span className="stat-compact">
-                    <strong>{optimizationInfo.transferCount}</strong> transfers
-                  </span>
-                  <span className="stat-compact success">
-                    <strong>{Math.max(0, optimizationInfo.originalTransferCount - optimizationInfo.transferCount)}</strong> saved
-                  </span>
-                </div>
-              </div>
-            )}
-            
             <div className="balances-summary">
               {balances.slice(0, 3).map((balance, index) => (
                 <div key={index} className={`balance-item ${balance.type}`}>

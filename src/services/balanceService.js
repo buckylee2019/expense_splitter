@@ -69,23 +69,23 @@ const calculateBalances = async (userId, groupId = null) => {
       const currency = settlement.currency || 'TWD';
       
       if (fromUser === userId) {
-        // Current user paid someone else
+        // Current user paid someone else - this REDUCES what user owes to that person
         if (!balances[toUser]) {
           balances[toUser] = {};
         }
         if (!balances[toUser][currency]) {
           balances[toUser][currency] = 0;
         }
-        balances[toUser][currency] += settlement.amount;
+        balances[toUser][currency] -= settlement.amount; // SUBTRACT because user paid
       } else if (toUser === userId) {
-        // Someone else paid the current user
+        // Someone else paid the current user - this REDUCES what that person owes to user
         if (!balances[fromUser]) {
           balances[fromUser] = {};
         }
         if (!balances[fromUser][currency]) {
           balances[fromUser][currency] = 0;
         }
-        balances[fromUser][currency] -= settlement.amount;
+        balances[fromUser][currency] += settlement.amount; // ADD because they paid user
       }
     });
 
