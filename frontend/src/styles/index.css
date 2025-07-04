@@ -4063,3 +4063,219 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     font-size: 0.9rem;
   }
 }
+/* Group Balance Items with Settle Buttons */
+.balance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  background: var(--background-secondary);
+  gap: var(--spacing);
+}
+
+.balance-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+  flex: 1;
+}
+
+.settle-btn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.settle-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.settle-btn:active {
+  transform: translateY(0);
+}
+
+/* Settlement Modal Styling */
+.settlement-modal {
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  padding-bottom: var(--spacing);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+  background: var(--background-secondary);
+  color: var(--text-primary);
+}
+
+.settlement-summary {
+  background: linear-gradient(135deg, var(--primary-light) 0%, var(--background-secondary) 100%);
+  border: 1px solid var(--primary-color);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  margin-bottom: var(--spacing-lg);
+}
+
+.settlement-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.from-to {
+  font-size: 1rem;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.amount-display {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--primary-color);
+  text-align: center;
+}
+
+.settlement-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+.settlement-form .form-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing);
+}
+
+.settlement-form .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.settlement-form label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.settlement-form input,
+.settlement-form select,
+.settlement-form textarea {
+  padding: var(--spacing-sm);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.settlement-form input:focus,
+.settlement-form select:focus,
+.settlement-form textarea:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.settlement-form textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: flex-end;
+  margin-top: var(--spacing);
+  padding-top: var(--spacing);
+  border-top: 1px solid var(--border-light);
+}
+
+/* More balances section improvements */
+.more-balances {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: var(--spacing-xs);
+  font-style: italic;
+}
+
+.view-all-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.view-all-link:hover {
+  text-decoration: underline;
+}
+
+/* Mobile responsive for settlement modal */
+@media (max-width: 768px) {
+  .settlement-modal {
+    width: 95%;
+    margin: var(--spacing);
+  }
+  
+  .settlement-form .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+  
+  .form-actions button {
+    width: 100%;
+  }
+  
+  .settle-btn {
+    font-size: 0.7rem;
+    padding: var(--spacing-xs);
+  }
+  
+  .amount-display {
+    font-size: 1.25rem;
+  }
+}

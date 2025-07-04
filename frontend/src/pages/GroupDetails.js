@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import CategoryBadge from '../components/CategoryBadge';
 import AddMember from '../components/AddMember';
+import SettlementModal from '../components/SettlementModal';
 
 const GroupDetails = () => {
   const { groupId } = useParams();
@@ -12,6 +13,8 @@ const GroupDetails = () => {
   const [balances, setBalances] = useState([]);
   const [optimizationInfo, setOptimizationInfo] = useState(null);
   const [useOptimized, setUseOptimized] = useState(true); // Default to optimized for groups
+  const [showSettlementModal, setShowSettlementModal] = useState(false);
+  const [selectedBalance, setSelectedBalance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
@@ -59,6 +62,20 @@ const GroupDetails = () => {
   // Toggle between optimized and original balance calculation
   const toggleOptimization = () => {
     setUseOptimized(!useOptimized);
+  };
+
+  // Handle settle button click
+  const handleSettleClick = (balance) => {
+    setSelectedBalance(balance);
+    setShowSettlementModal(true);
+  };
+
+  // Handle settlement completion
+  const handleSettlementComplete = () => {
+    setShowSettlementModal(false);
+    setSelectedBalance(null);
+    // Refresh group data to update balances
+    fetchGroupData();
   };
 
   useEffect(() => {
@@ -291,17 +308,27 @@ const GroupDetails = () => {
             <div className="balances-summary">
               {balances.slice(0, 3).map((balance, index) => (
                 <div key={index} className={`balance-item ${balance.type}`}>
-                  <span className="balance-text">
-                    {balance.type === 'owes_you' ? 
-                      `${balance.user.name} owes you` : 
-                      `You owe ${balance.user.name}`}
-                  </span>
-                  <span className="balance-amount">{balance.currency || 'TWD'} {balance.amount.toFixed(2)}</span>
+                  <div className="balance-info">
+                    <span className="balance-text">
+                      {balance.type === 'owes_you' ? 
+                        `${balance.user.name} owes you` : 
+                        `You owe ${balance.user.name}`}
+                    </span>
+                    <span className="balance-amount">{balance.currency || 'TWD'} {balance.amount.toFixed(2)}</span>
+                  </div>
+                  <button 
+                    className="settle-btn"
+                    onClick={() => handleSettleClick(balance)}
+                    title="Settle this balance"
+                  >
+                    Settle
+                  </button>
                 </div>
               ))}
               {balances.length > 3 && (
                 <div className="more-balances">
                   +{balances.length - 3} more...
+                  <Link to="/settlements" className="view-all-link">View All</Link>
                 </div>
               )}
             </div>
@@ -399,6 +426,16 @@ const GroupDetails = () => {
             />
           </div>
         </div>
+      )}
+
+      {showSettlementModal && selectedBalance && (
+        <SettlementModal
+          balance={selectedBalance}
+          groupId={groupId}
+          currentUser={currentUser}
+          onComplete={handleSettlementComplete}
+          onCancel={() => setShowSettlementModal(false)}
+        />
       )}
     </div>
   );
