@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
+import CategoryPieChart from '../components/CategoryPieChart';
 
 const Dashboard = () => {
   const location = useLocation();
@@ -9,6 +10,7 @@ const Dashboard = () => {
   const [optimizationInfo, setOptimizationInfo] = useState(null);
   const [useOptimized, setUseOptimized] = useState(true); // Default to optimized
   const [settlements, setSettlements] = useState([]);
+  const [recentExpenses, setRecentExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -24,23 +26,29 @@ const Dashboard = () => {
       console.log('👤 Dashboard: Current user loaded:', userRes.data);
 
       // Fetch all data in parallel
-      console.log('📊 Dashboard: Fetching groups, balances, and settlements...');
-      const [groupsResponse, balancesResponse, settlementsResponse] = await Promise.all([
+      console.log('📊 Dashboard: Fetching groups, balances, settlements, and recent expenses...');
+      const [groupsResponse, balancesResponse, settlementsResponse, expensesResponse] = await Promise.all([
         api.get('/api/groups'),
         api.get(`/api/balances${useOptimized ? '?optimized=true' : ''}`),
         api.get('/api/settlements').catch(err => {
           console.error('❌ Dashboard: Error fetching settlements:', err);
           return { data: [] }; // Return empty array on error to prevent breaking
+        }),
+        api.get('/api/expenses?limit=50').catch(err => {
+          console.error('❌ Dashboard: Error fetching recent expenses:', err);
+          return { data: [] }; // Return empty array on error
         })
       ]);
 
       console.log('🏠 Dashboard: Groups loaded:', groupsResponse.data.length);
       console.log('💰 Dashboard: Balances loaded:', balancesResponse.data.balances?.length || 0);
       console.log('💵 Dashboard: Settlements loaded:', settlementsResponse.data?.length || 0);
+      console.log('📊 Dashboard: Recent expenses loaded:', expensesResponse.data?.length || 0);
       console.log('Settlement data:', settlementsResponse.data);
       
       setGroups(groupsResponse.data);
       setBalances(balancesResponse.data);
+      setRecentExpenses(Array.isArray(expensesResponse.data) ? expensesResponse.data : []);
       
       // Store optimization info if available
       if (balancesResponse.data.optimizedTransfers) {
@@ -235,6 +243,18 @@ const Dashboard = () => {
             </div>
           )}
         </div>
+
+        {/* Category Pie Chart Section */}
+        {recentExpenses.length > 0 && (
+          <div className="chart-section">
+            <div className="card">
+              <CategoryPieChart 
+                expenses={recentExpenses} 
+                title="Recent Expenses by Category"
+              />
+            </div>
+          </div>
+        )}
 
         <div className="settlements-section">
           <div className="card">

@@ -4247,3 +4247,119 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     font-size: 1.25rem;
   }
 }
+/* Category Pie Chart Styling */
+.pie-chart-container {
+  background: var(--card-background);
+  border-radius: var(--radius);
+  padding: var(--spacing-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: var(--spacing-lg);
+}
+
+.pie-chart-wrapper {
+  height: 400px;
+  margin-bottom: var(--spacing-lg);
+  position: relative;
+}
+
+.no-data-message {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+}
+
+.no-data-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing);
+  opacity: 0.5;
+}
+
+.no-data-message h3 {
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  font-size: 1.25rem;
+}
+
+.no-data-message p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.category-summary {
+  border-top: 1px solid var(--border-light);
+  padding-top: var(--spacing);
+}
+
+.summary-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--spacing);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-sm);
+  background: var(--background-secondary);
+  border-radius: var(--radius-sm);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--spacing-xs);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Chart container responsive */
+@media (max-width: 768px) {
+  .pie-chart-wrapper {
+    height: 300px;
+  }
+  
+  .summary-stats {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+  
+  .stat-item {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+  }
+  
+  .stat-label {
+    margin-bottom: 0;
+  }
+}
+
+/* Chart section in reports */
+.chart-section {
+  margin-bottom: var(--spacing-xl);
+}
+
+.chart-section h2 {
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: var(--spacing);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.chart-section h2::before {
+  content: '📊';
+  font-size: 1.25rem;
+}

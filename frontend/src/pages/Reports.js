@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import CategoryPieChart from '../components/CategoryPieChart';
 import '../styles/Reports.css';
 
 const Reports = () => {
@@ -187,6 +188,15 @@ const Reports = () => {
                 <span className="stat-label">Amount Owed</span>
                 <span className="stat-value owed">{formatCurrency(reportData.summary.totalOwed)}</span>
               </div>
+            </div>
+
+            {/* Category Pie Chart */}
+            <div className="chart-section">
+              <h2>Category Distribution</h2>
+              <CategoryPieChart 
+                expenses={reportData.expenses} 
+                title={`Expenses by Category - ${selectedYear}/${selectedMonth}`}
+              />
             </div>
 
             {/* Category Breakdown */}
