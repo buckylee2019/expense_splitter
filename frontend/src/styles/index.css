@@ -831,23 +831,6 @@ p {
   color: var(--danger-color);
 }
 
-.settle-button {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--primary-color);
-  text-decoration: none;
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border: 1px solid var(--primary-color);
-  border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-  line-height: 1;
-}
-
-.settle-button:hover {
-  background-color: var(--primary-color);
-  color: white;
-}
-
 .balance-info .user {
   font-size: 1rem;
   font-weight: 600;
@@ -2589,21 +2572,6 @@ p {
 }
 
 /* Settle button in balances */
-.settle-button {
-  display: inline-block;
-  background-color: #3498db;
-  color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8em;
-  text-decoration: none;
-  margin-top: 5px;
-}
-
-.settle-button:hover {
-  background-color: #2980b9;
-}
-
 /* All Settled Message */
 .all-settled-message {
   text-align: center;

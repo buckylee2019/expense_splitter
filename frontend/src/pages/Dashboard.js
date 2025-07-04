@@ -314,9 +314,6 @@ const Dashboard = () => {
                     <strong>{optimizationInfo.originalTransferCount > 0 ? Math.round((1 - optimizationInfo.transferCount / optimizationInfo.originalTransferCount) * 100) : 0}%</strong> reduction
                   </span>
                 </div>
-                <p className="optimization-description">
-                  💡 Optimized algorithm minimizes money transfers by finding the most efficient settlement path.
-                </p>
               </div>
             )}
             
@@ -339,9 +336,6 @@ const Dashboard = () => {
                     <span className="amount">
                       {balance.currency || 'TWD'} {balance.amount.toFixed(2)}
                     </span>
-                    <Link to="/settlements" className="settle-button">
-                      Settle
-                    </Link>
                   </div>
                 </div>
               ))}

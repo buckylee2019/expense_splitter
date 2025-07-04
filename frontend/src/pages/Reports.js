@@ -102,7 +102,7 @@ const Reports = () => {
   return (
     <div className="reports">
       <div className="page-header">
-        <h1>📊 Monthly Expense Report</h1>
+        <h1> Monthly Expense Report</h1>
         <p>View and export your monthly expense data</p>
       </div>
 
