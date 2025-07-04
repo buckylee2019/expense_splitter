@@ -15,6 +15,7 @@ import EditExpense from './pages/EditExpense';
 import Settlements from './pages/Settlements';
 import Reports from './pages/Reports';
 import Profile from './pages/Profile';
+import useMobileDetection from './hooks/useMobileDetection';
 
 const PrivateRoute = ({ children }) => {
   const { isAuthenticated } = useAuth();
@@ -121,6 +122,9 @@ const AppRoutes = () => {
 };
 
 function App() {
+  // Enable mobile detection for bottom tabs
+  useMobileDetection();
+
   return (
     <AuthProvider>
       <Router>
