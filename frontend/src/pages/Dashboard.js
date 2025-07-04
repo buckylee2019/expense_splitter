@@ -159,28 +159,30 @@ const Dashboard = () => {
         </div>
       )}
       
-      <div className="dashboard-header">
-        <div>
+      <div className="dashboard-header flex flex-between">
+        <div className="header-content">
           <h1>💰 Welcome to ExpenseSplitter</h1>
           <p className="mb-0">Manage your shared expenses with ease</p>
         </div>
-        <div className="header-actions">
+        <div className="header-actions flex flex-row">
           <button 
             onClick={handleRefresh} 
             className="button secondary"
             disabled={loading}
             title="Refresh dashboard data"
           >
-            🔄 {loading ? 'Refreshing...' : 'Refresh'}
+            <span className="hide-mobile">🔄 {loading ? 'Refreshing...' : 'Refresh'}</span>
+            <span className="show-mobile">🔄</span>
           </button>
-          <Link to="/groups/create" className="button primary large">
-            ➕ Create New Group
+          <Link to="/groups/create" className="button primary">
+            <span className="hide-mobile">➕ Create New Group</span>
+            <span className="show-mobile">➕</span>
           </Link>
         </div>
       </div>
 
-      <div className="dashboard-summary">
-        <div className="summary-card">
+      <div className="dashboard-summary grid grid-2">
+        <div className="summary-card card">
           <h3>💚 Money Owed to You</h3>
           <div className="balance-details">
             <p className="owed">${totalOwed.toFixed(2)}</p>
@@ -188,7 +190,7 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <div className="summary-card">
+        <div className="summary-card card">
           <h3>💸 Money You Owe</h3>
           <div className="balance-details">
             <p className="owing">${totalOwing.toFixed(2)}</p>
@@ -196,7 +198,7 @@ const Dashboard = () => {
           </div>
         </div>
         
-        <div className="summary-card">
+        <div className="summary-card card">
           <h3>⚖️ Net Balance</h3>
           <div className="balance-details">
             <p className={netBalance >= 0 ? 'owed' : 'owing'}>
@@ -209,7 +211,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="dashboard-grid">
+      <div className="dashboard-grid grid dashboard-main">
         <div className="groups-section">
           <div className="card-header">
             <h2>🏠 Your Groups</h2>

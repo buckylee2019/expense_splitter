@@ -1,4 +1,6 @@
 @import "./theme.css";
+@import "./responsive.css";
+@import "./navbar.css";
 
 * {
   margin: 0;
