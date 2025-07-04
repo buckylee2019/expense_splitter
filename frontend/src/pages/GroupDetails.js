@@ -10,6 +10,8 @@ const GroupDetails = () => {
   const [group, setGroup] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [balances, setBalances] = useState([]);
+  const [optimizationInfo, setOptimizationInfo] = useState(null);
+  const [useOptimized, setUseOptimized] = useState(true); // Default to optimized for groups
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
@@ -27,12 +29,23 @@ const GroupDetails = () => {
       const [groupRes, expensesRes, balancesRes] = await Promise.all([
         api.get(`/api/groups/${groupId}`),
         api.get(`/api/expenses?groupId=${groupId}`),
-        api.get(`/api/balances?groupId=${groupId}`)
+        api.get(`/api/balances?groupId=${groupId}${useOptimized ? '&optimized=true' : ''}`)
       ]);
 
       setGroup(groupRes.data);
       setExpenses(expensesRes.data);
       setBalances(balancesRes.data.balances);
+      
+      // Store optimization info if available
+      if (balancesRes.data.optimizedTransfers) {
+        setOptimizationInfo({
+          transferCount: balancesRes.data.transferCount,
+          originalTransferCount: balancesRes.data.originalTransferCount,
+          optimizedTransfers: balancesRes.data.optimizedTransfers
+        });
+      } else {
+        setOptimizationInfo(null);
+      }
       setError('');
       setLastRefresh(new Date());
     } catch (err) {
@@ -41,7 +54,12 @@ const GroupDetails = () => {
     } finally {
       setLoading(false);
     }
-  }, [groupId]);
+  }, [groupId, useOptimized]);
+
+  // Toggle between optimized and original balance calculation
+  const toggleOptimization = () => {
+    setUseOptimized(!useOptimized);
+  };
 
   useEffect(() => {
     fetchGroupData();
@@ -246,7 +264,30 @@ const GroupDetails = () => {
 
         {balances.length > 0 ? (
           <div className="balances-compact card">
-            <h4>Quick Balances</h4>
+            <div className="balances-header">
+              <h4>Quick Balances</h4>
+              <button 
+                onClick={toggleOptimization}
+                className={`button ${useOptimized ? 'primary' : 'secondary'} small`}
+                title={useOptimized ? 'Using optimized transfers (fewer transactions)' : 'Using direct transfers'}
+              >
+                {useOptimized ? '🎯 Optimized' : '📊 Direct'}
+              </button>
+            </div>
+            
+            {optimizationInfo && useOptimized && (
+              <div className="optimization-info-compact">
+                <div className="optimization-stats-compact">
+                  <span className="stat-compact">
+                    <strong>{optimizationInfo.transferCount}</strong> transfers
+                  </span>
+                  <span className="stat-compact success">
+                    <strong>{Math.max(0, optimizationInfo.originalTransferCount - optimizationInfo.transferCount)}</strong> saved
+                  </span>
+                </div>
+              </div>
+            )}
+            
             <div className="balances-summary">
               {balances.slice(0, 3).map((balance, index) => (
                 <div key={index} className={`balance-item ${balance.type}`}>

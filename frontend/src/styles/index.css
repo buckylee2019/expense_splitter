@@ -3933,3 +3933,133 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     align-items: stretch;
   }
 }
+/* Group Details - Quick Balances Optimization */
+.balances-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing);
+}
+
+.balances-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.optimization-info-compact {
+  background: linear-gradient(135deg, var(--success-light) 0%, var(--background-secondary) 100%);
+  border: 1px solid var(--success-color);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing);
+}
+
+.optimization-stats-compact {
+  display: flex;
+  gap: var(--spacing);
+  justify-content: center;
+}
+
+.stat-compact {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.stat-compact strong {
+  font-size: 1rem;
+  color: var(--text-primary);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.stat-compact.success strong {
+  color: var(--success-color);
+}
+
+/* Balances compact styling improvements */
+.balances-compact {
+  margin-bottom: var(--spacing-lg);
+}
+
+.balances-summary {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.balance-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  background: var(--background-secondary);
+}
+
+.balance-item.owes_you {
+  border-left: 3px solid var(--success-color);
+  background: var(--success-light);
+}
+
+.balance-item.you_owe {
+  border-left: 3px solid var(--danger-color);
+  background: var(--danger-light);
+}
+
+.balance-text {
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.balance-amount {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.balance-item.owes_you .balance-amount {
+  color: var(--success-color);
+}
+
+.balance-item.you_owe .balance-amount {
+  color: var(--danger-color);
+}
+
+.more-balances {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  padding: var(--spacing-xs);
+  font-style: italic;
+}
+
+/* Mobile responsive for group balances */
+@media (max-width: 768px) {
+  .balances-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-xs);
+  }
+  
+  .balances-header h4 {
+    text-align: center;
+  }
+  
+  .optimization-stats-compact {
+    gap: var(--spacing-sm);
+  }
+  
+  .stat-compact {
+    font-size: 0.7rem;
+  }
+  
+  .stat-compact strong {
+    font-size: 0.9rem;
+  }
+}

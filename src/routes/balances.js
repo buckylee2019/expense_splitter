@@ -1,7 +1,7 @@
 const express = require('express');
 const { authMiddleware } = require('../utils/auth');
 const { calculateBalances } = require('../services/balanceService');
-const { calculateOptimizedBalances, getGroupOptimizedTransfers } = require('../services/optimizedBalanceService');
+const { calculateOptimizedBalances, calculateOptimizedGroupBalances, getGroupOptimizedTransfers } = require('../services/optimizedBalanceService');
 
 const router = express.Router();
 
@@ -11,9 +11,15 @@ router.get('/', authMiddleware, async (req, res) => {
     const { groupId, optimized } = req.query;
     
     if (optimized === 'true') {
-      // Use optimized algorithm that minimizes transfer count
-      const result = await calculateOptimizedBalances(req.user.id, groupId);
-      res.json(result);
+      if (groupId) {
+        // Use group-specific optimization
+        const result = await calculateOptimizedGroupBalances(req.user.id, groupId);
+        res.json(result);
+      } else {
+        // Use global optimization across all groups
+        const result = await calculateOptimizedBalances(req.user.id, groupId);
+        res.json(result);
+      }
     } else {
       // Use original algorithm for backward compatibility
       const balances = await calculateBalances(req.user.id, groupId);

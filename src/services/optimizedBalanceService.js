@@ -348,8 +348,47 @@ const getGroupOptimizedTransfers = async (groupId) => {
   }
 };
 
+/**
+ * Calculate optimized balances for a specific group (user-specific view)
+ * @param {string} userId - Current user ID
+ * @param {string} groupId - Group ID to filter by
+ * @returns {Object} - Optimized balance data with minimal transfers for this user
+ */
+const calculateOptimizedGroupBalances = async (userId, groupId) => {
+  try {
+    // Get group-wide optimization first
+    const groupOptimization = await getGroupOptimizedTransfers(groupId);
+    
+    // Filter transfers relevant to current user
+    const userTransfers = groupOptimization.optimizedTransfers.filter(transfer => 
+      transfer.from === userId || transfer.to === userId
+    );
+    
+    // Format for frontend consumption
+    const formattedBalances = await formatBalancesForUser(userTransfers, userId);
+    
+    // Calculate summary statistics
+    const summary = calculateSummary(formattedBalances);
+    
+    return {
+      balances: formattedBalances,
+      summary,
+      optimizedTransfers: userTransfers,
+      transferCount: userTransfers.length,
+      originalTransferCount: groupOptimization.originalTransferCount,
+      groupTransferCount: groupOptimization.transferCount,
+      groupSavingsPercentage: groupOptimization.savingsPercentage
+    };
+    
+  } catch (error) {
+    console.error('Error calculating optimized group balances:', error);
+    throw error;
+  }
+};
+
 module.exports = { 
   calculateOptimizedBalances,
+  calculateOptimizedGroupBalances,
   getGroupOptimizedTransfers,
   calculateNetBalances,
   optimizeTransfers
