@@ -4247,44 +4247,91 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     font-size: 1.25rem;
   }
 }
-/* Category Pie Chart Styling */
+/* Category Pie Chart Breadcrumb Navigation */
+.chart-breadcrumb {
+  display: flex;
+  align-items: center;
+  margin-bottom: var(--spacing);
+  padding: var(--spacing-sm) var(--spacing);
+  background: var(--background-secondary);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+}
+
+.breadcrumb-item {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.breadcrumb-item:hover:not(:disabled) {
+  background: var(--primary-light);
+  color: var(--primary-color);
+}
+
+.breadcrumb-item.active {
+  color: var(--text-primary);
+  font-weight: 600;
+  cursor: default;
+}
+
+.breadcrumb-item:disabled {
+  color: var(--text-primary);
+  cursor: default;
+}
+
+.breadcrumb-separator {
+  color: var(--text-muted);
+  margin: 0 var(--spacing-xs);
+  font-weight: normal;
+}
+
+/* Chart Instructions */
+.chart-instructions {
+  text-align: center;
+  padding: var(--spacing-sm);
+  background: linear-gradient(135deg, var(--info-light) 0%, var(--background-secondary) 100%);
+  border: 1px solid var(--info-color);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--spacing);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Enhanced pie chart container for drill-down */
 .pie-chart-container {
   background: var(--card-background);
   border-radius: var(--radius);
   padding: var(--spacing-lg);
   box-shadow: var(--shadow-sm);
   margin-bottom: var(--spacing-lg);
+  position: relative;
 }
 
 .pie-chart-wrapper {
   height: 400px;
   margin-bottom: var(--spacing-lg);
   position: relative;
+  cursor: pointer; /* Indicate clickable chart */
 }
 
-.no-data-message {
-  text-align: center;
-  padding: var(--spacing-xl);
-  color: var(--text-secondary);
+/* Hover effect for clickable chart segments */
+.pie-chart-wrapper canvas {
+  transition: transform 0.2s ease;
 }
 
-.no-data-icon {
-  font-size: 4rem;
-  margin-bottom: var(--spacing);
-  opacity: 0.5;
+.pie-chart-wrapper:hover canvas {
+  transform: scale(1.02);
 }
 
-.no-data-message h3 {
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-sm);
-  font-size: 1.25rem;
-}
-
-.no-data-message p {
-  margin: 0;
-  font-size: 0.875rem;
-}
-
+/* Enhanced category summary for drill-down */
 .category-summary {
   border-top: 1px solid var(--border-light);
   padding-top: var(--spacing);
@@ -4304,6 +4351,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   padding: var(--spacing-sm);
   background: var(--background-secondary);
   border-radius: var(--radius-sm);
+  transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+  background: var(--background-hover);
+  transform: translateY(-1px);
 }
 
 .stat-label {
@@ -4322,10 +4375,50 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   line-height: 1.2;
 }
 
-/* Chart container responsive */
+/* No data message styling */
+.no-data-message {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+}
+
+.no-data-icon {
+  font-size: 4rem;
+  margin-bottom: var(--spacing);
+  opacity: 0.5;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}
+
+.no-data-message h3 {
+  color: var(--text-primary);
+  margin-bottom: var(--spacing-sm);
+  font-size: 1.25rem;
+}
+
+.no-data-message p {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+/* Mobile responsive enhancements */
 @media (max-width: 768px) {
   .pie-chart-wrapper {
     height: 300px;
+  }
+  
+  .chart-breadcrumb {
+    flex-wrap: wrap;
+    gap: var(--spacing-xs);
+  }
+  
+  .breadcrumb-item {
+    font-size: 0.8rem;
+    padding: var(--spacing-xs);
   }
   
   .summary-stats {
@@ -4342,9 +4435,14 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   .stat-label {
     margin-bottom: 0;
   }
+  
+  .chart-instructions {
+    font-size: 0.8rem;
+    padding: var(--spacing-xs);
+  }
 }
 
-/* Chart section in reports */
+/* Chart section in reports and dashboard */
 .chart-section {
   margin-bottom: var(--spacing-xl);
 }
@@ -4362,4 +4460,25 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .chart-section h2::before {
   content: '📊';
   font-size: 1.25rem;
+}
+
+/* Loading state for charts */
+.chart-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+}
+
+.chart-loading::before {
+  content: '⏳';
+  margin-right: var(--spacing-sm);
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
