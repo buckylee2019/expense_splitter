@@ -130,7 +130,7 @@ const Register = () => {
           <h4>✨ What you'll get:</h4>
           <ul className="features-list">
             <li><i className="fi fi-rr-home"></i> Create unlimited expense groups</li>
-            <li><i className="fi fi-rr-users"></i> Add friends and family members</li>
+            <li><i className="fi fi-rr-people-group"></i> Add friends and family members</li>
             <li><i className="fi fi-rr-calculator"></i> Track who owes what automatically</li>
             <li><i className="fi fi-rr-chart-pie"></i> View detailed expense history</li>
             <li><i className="fi fi-rr-credit-card"></i> Record settlements easily</li>

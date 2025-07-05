@@ -154,18 +154,6 @@ const Dashboard = () => {
         </div>
       )}
       
-      <div className="dashboard-header flex flex-between">
-        <div className="header-content">
-          <h1>Dashboard</h1>
-        </div>
-        <div className="header-actions flex flex-row">
-          <Link to="/groups/create" className="button primary">
-            <i className="fi fi-rr-plus"></i>
-            <span className="hide-mobile">Create Group</span>
-          </Link>
-        </div>
-      </div>
-
       <div className="dashboard-summary grid grid-2">
         <div className="summary-card card">
           <h3>💚 Money Owed to You</h3>
@@ -222,7 +210,7 @@ const Dashboard = () => {
                   <h3><i className="fi fi-rr-home"></i> {group.name}</h3>
                   <p>{group.description || 'No description provided'}</p>
                   <div className="group-meta">
-                    <span><i className="fi fi-rr-users"></i> {group.members.length} members</span>
+                    <span><i className="fi fi-rr-people-group"></i> {group.members.length} members</span>
                     {group.isActive && <span className="active-badge"><i className="fi fi-rr-check"></i> Active</span>}
                   </div>
                 </Link>

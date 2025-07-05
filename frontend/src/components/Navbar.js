@@ -57,7 +57,7 @@ const Navbar = () => {
                 className={`nav-link ${isActiveLink('/groups') ? 'active' : ''}`}
               >
                 <span className="nav-icon">
-                  <i className="fi fi-rr-users"></i>
+                  <i className="fi fi-rr-people-group"></i>
                 </span>
                 <span className="nav-text">Groups</span>
               </Link>
@@ -122,7 +122,7 @@ const Navbar = () => {
           className={`tab-item ${isActiveLink('/groups') ? 'active' : ''}`}
         >
           <div className="tab-icon">
-            <i className="fi fi-rr-users"></i>
+            <i className="fi fi-rr-people-group"></i>
           </div>
           <span className="tab-label">Groups</span>
         </Link>
