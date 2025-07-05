@@ -96,10 +96,10 @@ const Groups = () => {
                 <p className="group-description">{group.description || 'No description'}</p>
                 <div className="group-stats">
                   <span className="stat">
-                    👥 {group.members?.length || 0} members
+                    <i className="fi fi-rr-users"></i> {group.members?.length || 0} members
                   </span>
                   <span className="stat">
-                    💰 {group.expenseCount || 0} expenses
+                    <i className="fi fi-rr-calculator"></i> {group.expenseCount || 0} expenses
                   </span>
                 </div>
               </div>

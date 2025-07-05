@@ -202,7 +202,7 @@ const Reports = () => {
             {/* Category Breakdown */}
             {Object.keys(reportData.summary.byCategory).length > 0 && (
               <div className="category-breakdown">
-                <h3>💰 By Category</h3>
+                <h3><i className="fi fi-rr-calculator"></i> By Category</h3>
                 <div className="category-list">
                   {Object.entries(reportData.summary.byCategory)
                     .sort(([,a], [,b]) => b - a)

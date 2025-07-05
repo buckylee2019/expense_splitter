@@ -219,11 +219,11 @@ const Dashboard = () => {
                   key={group.id} 
                   className="group-card"
                 >
-                  <h3>🏠 {group.name}</h3>
+                  <h3><i className="fi fi-rr-home"></i> {group.name}</h3>
                   <p>{group.description || 'No description provided'}</p>
                   <div className="group-meta">
-                    <span>👥 {group.members.length} members</span>
-                    {group.isActive && <span className="active-badge">✅ Active</span>}
+                    <span><i className="fi fi-rr-users"></i> {group.members.length} members</span>
+                    {group.isActive && <span className="active-badge"><i className="fi fi-rr-check"></i> Active</span>}
                   </div>
                 </Link>
               ))}
@@ -246,7 +246,7 @@ const Dashboard = () => {
         <div className="settlements-section">
           <div className="card">
             <div className="card-header">
-              <h2>💵 Recent Settlements</h2>
+              <h2><i className="fi fi-rr-hand-holding-usd"></i> Recent Settlements</h2>
               <Link to="/settlements" className="view-all-link">View All</Link>
             </div>
             
@@ -294,7 +294,7 @@ const Dashboard = () => {
           <div className="card">
             <div className="card-header">
               <div>
-                <h2>💳 Outstanding Balances</h2>
+                <h2><i className="fi fi-rr-credit-card"></i> Outstanding Balances</h2>
                 <span className="card-subtitle">{balances.balances.length} pending</span>
               </div>
               <div className="balance-controls">
@@ -303,7 +303,7 @@ const Dashboard = () => {
                   className={`button ${useOptimized ? 'primary' : 'secondary'} small`}
                   title={useOptimized ? 'Using optimized transfers (fewer transactions)' : 'Using direct transfers'}
                 >
-                  {useOptimized ? '🎯 Optimized' : '📊 Direct'}
+                  {useOptimized ? <><i className="fi fi-rr-target"></i> Optimized</> : <><i className="fi fi-rr-chart-pie"></i> Direct</>}
                 </button>
               </div>
             </div>
@@ -342,17 +342,17 @@ const Dashboard = () => {
           </div>
           <div className="actions-grid">
             <Link to="/groups/create" className="action-card">
-              <div className="action-icon">🏠</div>
+              <div className="action-icon"><i className="fi fi-rr-home"></i></div>
               <h4>Create Group</h4>
               <p>Start a new expense group</p>
             </Link>
             <Link to="/settlements" className="action-card">
-              <div className="action-icon">💰</div>
+              <div className="action-icon"><i className="fi fi-rr-calculator"></i></div>
               <h4>Record Settlement</h4>
               <p>Mark a debt as paid</p>
             </Link>
             <div className="action-card disabled">
-              <div className="action-icon">📊</div>
+              <div className="action-icon"><i className="fi fi-rr-chart-pie"></i></div>
               <h4>Reports</h4>
               <p>Coming soon...</p>
             </div>

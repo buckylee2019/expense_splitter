@@ -61,7 +61,7 @@ const SettlementModal = ({ balance, groupId, currentUser, onComplete, onCancel }
     <div className="modal-overlay">
       <div className="modal-content settlement-modal">
         <div className="modal-header">
-          <h3>💰 Record Settlement</h3>
+          <h3><i className="fi fi-rr-hand-holding-usd"></i> Record Settlement</h3>
           <button className="close-btn" onClick={onCancel}>×</button>
         </div>
 
@@ -123,12 +123,12 @@ const SettlementModal = ({ balance, groupId, currentUser, onComplete, onCancel }
               value={formData.method}
               onChange={handleChange}
             >
-              <option value="cash">💵 Cash</option>
+              <option value="cash">Cash</option>
               <option value="bank_transfer">🏦 Bank Transfer</option>
               <option value="digital_wallet">📱 Digital Wallet</option>
-              <option value="credit_card">💳 Credit Card</option>
+              <option value="credit_card">Credit Card</option>
               <option value="check">📝 Check</option>
-              <option value="other">🔄 Other</option>
+              <option value="other">Other</option>
             </select>
           </div>
 
@@ -158,7 +158,7 @@ const SettlementModal = ({ balance, groupId, currentUser, onComplete, onCancel }
               className="button primary"
               disabled={loading}
             >
-              {loading ? 'Recording...' : '✅ Record Settlement'}
+              {loading ? 'Recording...' : 'Record Settlement'}
             </button>
           </div>
         </form>
