@@ -88,7 +88,8 @@ router.post('/', authMiddleware, async (req, res) => {
       groupId,
       splitType,
       splits,
-      paidBy
+      paidBy,
+      date
     } = req.body;
 
     // Accept both 'group' and 'groupId' for backward compatibility
@@ -128,7 +129,7 @@ router.post('/', authMiddleware, async (req, res) => {
       group: expenseGroupId,
       splitType,
       splits,
-      date: new Date().toISOString()
+      date: date || new Date().toISOString()
     });
 
     res.status(201).json({
@@ -167,7 +168,8 @@ router.put('/:id', authMiddleware, async (req, res) => {
       currency,
       category,
       splits,
-      paidBy
+      paidBy,
+      date
     } = req.body;
 
     // Find the existing expense
@@ -209,6 +211,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       category: category || existingExpense.category,
       paidBy: paidBy || existingExpense.paidBy,
       splits: splits || existingExpense.splits,
+      date: date || existingExpense.date,
       updatedAt: new Date().toISOString()
     });
 
