@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
 
 const Profile = () => {
   const navigate = useNavigate();
+  const { logout } = useAuth();
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -82,6 +84,13 @@ const Profile = () => {
   const getInitials = (name) => {
     if (!name) return 'U';
     return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  };
+
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      logout();
+      navigate('/login');
+    }
   };
 
   if (loading) {
@@ -220,6 +229,23 @@ const Profile = () => {
               <div className="stat-label">Days since last update</div>
             </div>
           </div>
+        </div>
+
+        <div className="profile-actions card">
+          <h3>Account Actions</h3>
+          <div className="action-buttons">
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="logout-button"
+            >
+              <i className="fi fi-rr-sign-out-alt"></i>
+              <span>Logout</span>
+            </button>
+          </div>
+          <p className="logout-description">
+            Sign out of your account and return to the login page.
+          </p>
         </div>
       </div>
     </div>

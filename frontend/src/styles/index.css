@@ -3100,6 +3100,62 @@ p {
   font-weight: 500;
 }
 
+/* Profile Actions Section */
+.profile-actions {
+  padding: var(--spacing-xl);
+  height: fit-content;
+}
+
+.profile-actions h3 {
+  color: var(--text-primary);
+  margin: 0 0 var(--spacing-lg) 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.action-buttons {
+  margin-bottom: var(--spacing);
+}
+
+.logout-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+  width: 100%;
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.logout-button:hover {
+  background: linear-gradient(135deg, #c82333, #bd2130);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.logout-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.logout-button i {
+  font-size: 1.1rem;
+}
+
+.logout-description {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
+  line-height: 1.4;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .profile-container {
@@ -3123,7 +3179,8 @@ p {
   }
   
   .profile-card,
-  .profile-stats {
+  .profile-stats,
+  .profile-actions {
     padding: var(--spacing-lg);
   }
   
