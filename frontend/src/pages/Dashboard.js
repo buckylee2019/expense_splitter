@@ -117,11 +117,6 @@ const Dashboard = () => {
     };
   }, []);
 
-  // Add a manual refresh function
-  const handleRefresh = () => {
-    fetchData();
-  };
-
   // Toggle between optimized and original balance calculation
   const toggleOptimization = () => {
     setUseOptimized(!useOptimized);
@@ -149,7 +144,7 @@ const Dashboard = () => {
     <div className="dashboard">
       {successMessage && (
         <div className="success-message">
-          ✅ {successMessage}
+          <i className="fi fi-rr-check"></i> {successMessage}
         </div>
       )}
       
@@ -161,22 +156,12 @@ const Dashboard = () => {
       
       <div className="dashboard-header flex flex-between">
         <div className="header-content">
-          <h1>💰 Welcome to ExpenseSplitter</h1>
-          <p className="mb-0">Manage your shared expenses with ease</p>
+          <h1>Dashboard</h1>
         </div>
         <div className="header-actions flex flex-row">
-          <button 
-            onClick={handleRefresh} 
-            className="button secondary"
-            disabled={loading}
-            title="Refresh dashboard data"
-          >
-            <span className="hide-mobile">🔄 {loading ? 'Refreshing...' : 'Refresh'}</span>
-            <span className="show-mobile">🔄</span>
-          </button>
           <Link to="/groups/create" className="button primary">
-            <span className="hide-mobile">➕ Create New Group</span>
-            <span className="show-mobile">➕</span>
+            <i className="fi fi-rr-plus"></i>
+            <span className="hide-mobile">Create Group</span>
           </Link>
         </div>
       </div>
@@ -214,13 +199,13 @@ const Dashboard = () => {
       <div className="dashboard-grid grid dashboard-main">
         <div className="groups-section">
           <div className="card-header">
-            <h2>🏠 Your Groups</h2>
+            <h2><i className="fi fi-rr-home"></i> Your Groups</h2>
             <span className="card-subtitle">{groups.length} groups</span>
           </div>
           
           {groups.length === 0 ? (
             <div className="no-groups">
-              <h3>🎯 Ready to start splitting expenses?</h3>
+              <h3><i className="fi fi-rr-target"></i> Ready to start splitting expenses?</h3>
               <p>Create your first group to begin tracking shared expenses with friends, family, or roommates.</p>
               <Link to="/groups/create" className="button primary large mt-lg">
                 🚀 Create Your First Group

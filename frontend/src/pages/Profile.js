@@ -103,17 +103,6 @@ const Profile = () => {
 
   return (
     <div className="container">
-      <div className="page-header">
-        <h1>My Profile</h1>
-        <button
-          type="button"
-          onClick={() => navigate('/')}
-          className="button secondary"
-        >
-          Back to Dashboard
-        </button>
-      </div>
-
       <div className="profile-container">
         <div className="profile-card card">
           <div className="profile-header">

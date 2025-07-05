@@ -21,7 +21,7 @@ const Navbar = () => {
       <nav className="navbar">
         <div className="nav-container">
           <Link to="/" className="nav-logo">
-            💰 ExpenseSplitter
+            <i className="fi fi-rr-calculator"></i> ExpenseSplitter
           </Link>
           <div className="nav-auth">
             <Link to="/login" className="nav-link">Login</Link>
@@ -38,7 +38,7 @@ const Navbar = () => {
       <nav className="navbar desktop-nav">
         <div className="nav-container">
           <Link to="/" className="nav-logo">
-            💰 ExpenseSplitter
+            <i className="fi fi-rr-calculator"></i> ExpenseSplitter
           </Link>
           
           <div className="nav-menu">

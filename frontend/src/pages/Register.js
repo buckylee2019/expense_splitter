@@ -53,7 +53,7 @@ const Register = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="text-center mb-xl">
-          <h1 className="mb-sm">💰 ExpenseSplitter</h1>
+          <h1 className="mb-sm"><i className="fi fi-rr-calculator"></i> ExpenseSplitter</h1>
           <h2 className="mb-0">Create Account</h2>
           <p className="text-secondary">Join thousands splitting expenses effortlessly</p>
         </div>
@@ -62,7 +62,7 @@ const Register = () => {
         
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
-            <label htmlFor="username">👤 Username</label>
+            <label htmlFor="username"><i className="fi fi-rr-user"></i> Username</label>
             <input
               type="text"
               id="username"
@@ -118,7 +118,7 @@ const Register = () => {
             className="auth-button"
             disabled={loading}
           >
-            {loading ? '🔄 Creating Account...' : '🎉 Create Account'}
+            {loading ? <><i className="fi fi-rr-refresh"></i> Creating Account...</> : <><i className="fi fi-rr-party-horn"></i> Create Account</>}
           </button>
         </form>
         
@@ -129,11 +129,11 @@ const Register = () => {
         <div className="auth-features mt-lg">
           <h4>✨ What you'll get:</h4>
           <ul className="features-list">
-            <li>🏠 Create unlimited expense groups</li>
-            <li>👥 Add friends and family members</li>
-            <li>💰 Track who owes what automatically</li>
-            <li>📊 View detailed expense history</li>
-            <li>💳 Record settlements easily</li>
+            <li><i className="fi fi-rr-home"></i> Create unlimited expense groups</li>
+            <li><i className="fi fi-rr-users"></i> Add friends and family members</li>
+            <li><i className="fi fi-rr-calculator"></i> Track who owes what automatically</li>
+            <li><i className="fi fi-rr-chart-pie"></i> View detailed expense history</li>
+            <li><i className="fi fi-rr-credit-card"></i> Record settlements easily</li>
             <li>🔒 Secure and private data</li>
           </ul>
         </div>

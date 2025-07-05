@@ -40,7 +40,7 @@ const Login = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="text-center mb-xl">
-          <h1 className="mb-sm">💰 ExpenseSplitter</h1>
+          <h1 className="mb-sm"><i className="fi fi-rr-calculator"></i> ExpenseSplitter</h1>
           <h2 className="mb-0">Welcome Back!</h2>
           <p className="text-secondary">Sign in to manage your shared expenses</p>
         </div>
@@ -79,7 +79,7 @@ const Login = () => {
             className="auth-button"
             disabled={loading}
           >
-            {loading ? '🔄 Signing in...' : '🚀 Sign In'}
+            {loading ? <><i className="fi fi-rr-refresh"></i> Signing in...</> : <><i className="fi fi-rr-sign-in-alt"></i> Sign In</>}
           </button>
         </form>
         
@@ -89,7 +89,7 @@ const Login = () => {
 
         <div className="auth-demo mt-lg">
           <div className="demo-section">
-            <h4>🎯 Demo Credentials</h4>
+            <h4><i className="fi fi-rr-target"></i> Demo Credentials</h4>
             <p className="help-text">Try the app with these test accounts:</p>
             <div className="demo-accounts">
               <div className="demo-account">
