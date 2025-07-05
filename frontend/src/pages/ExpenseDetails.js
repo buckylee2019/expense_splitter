@@ -85,7 +85,8 @@ const ExpenseDetails = () => {
                 className="button primary"
                 title="Edit expense"
               >
-                ✏️ Edit Expense
+                <i className="fi fi-rr-edit"></i>
+                <span className="hide-mobile">Edit</span>
               </Link>
               {currentUser.id === expense.paidBy && (
                 <button 
@@ -93,7 +94,8 @@ const ExpenseDetails = () => {
                 className="button danger"
                 title="Delete expense"
               >
-                🗑️ Delete Expense
+                <i className="fi fi-rr-trash"></i>
+                <span className="hide-mobile">Delete</span>
                 </button>
               )}
             </>
@@ -103,7 +105,6 @@ const ExpenseDetails = () => {
 
       <div className="expense-details-content">
         <div className="expense-main-info card">
-          <h1>{expense.description}</h1>
           <div className="expense-amount">
             <span className="currency">{expense.currency}</span>
             <span className="amount">{expense.amount.toFixed(2)}</span>

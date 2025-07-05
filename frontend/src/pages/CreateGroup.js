@@ -67,10 +67,6 @@ const CreateGroup = () => {
 
   return (
     <div className="create-group">
-      <div className="page-header">
-        <h1>Create New Group</h1>
-      </div>
-
       {error && <div className="error-message">{error}</div>}
 
       <form onSubmit={handleSubmit} className="group-form card">

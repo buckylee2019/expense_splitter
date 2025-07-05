@@ -217,10 +217,6 @@ const Settlements = () => {
 
   return (
     <div className="settlements-page">
-      <div className="page-header">
-        <h1>Settlements</h1>
-      </div>
-
       {error && <div className="error-message">{error}</div>}
       {successMessage && <div className="success-message">{successMessage}</div>}
 
@@ -249,7 +245,7 @@ const Settlements = () => {
                           className="btn btn-sm btn-danger delete-settlement-btn"
                           title="Delete settlement"
                         >
-                          🗑️
+                          <i className="fi fi-rr-trash"></i>
                         </button>
                       </div>
                     </div>

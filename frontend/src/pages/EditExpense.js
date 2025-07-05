@@ -176,16 +176,6 @@ const EditExpense = () => {
 
   return (
     <div className="edit-expense">
-      <div className="page-header">
-        <h1>Edit Expense</h1>
-        <button 
-          onClick={() => navigate(`/groups/${groupId}/expenses/${expenseId}`)}
-          className="btn btn-secondary"
-        >
-          Cancel
-        </button>
-      </div>
-
       {error && <div className="error">{error}</div>}
 
       <form onSubmit={handleSubmit} className="expense-form">

@@ -212,7 +212,6 @@ const GroupDetails = () => {
       )}
       
       <div className="page-header">
-        <h1>{group.name}</h1>
         <div className="header-actions">
           <button 
             onClick={handleRefresh} 
@@ -220,13 +219,15 @@ const GroupDetails = () => {
             disabled={loading}
             title="Refresh group data"
           >
-            🔄 {loading ? 'Refreshing...' : 'Refresh'}
+            <i className="fi fi-rr-refresh"></i>
+            <span className="hide-mobile">{loading ? 'Refreshing...' : 'Refresh'}</span>
           </button>
           <Link 
             to={`/groups/${groupId}/expenses/add`}
             className="button primary"
           >
-            Add Expense
+            <i className="fi fi-rr-plus"></i>
+            <span className="hide-mobile">Add Expense</span>
           </Link>
           {isGroupAdmin() && (
             <button 
@@ -234,7 +235,8 @@ const GroupDetails = () => {
               className="button danger"
               title="Delete group"
             >
-              🗑️ Delete Group
+              <i className="fi fi-rr-trash"></i>
+              <span className="hide-mobile">Delete Group</span>
             </button>
           )}
         </div>
@@ -392,7 +394,7 @@ const GroupDetails = () => {
                       className="delete-button-small"
                       title="Delete expense"
                     >
-                      🗑️
+                      <i className="fi fi-rr-trash"></i>
                     </button>
                   )}
                 </div>

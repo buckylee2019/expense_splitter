@@ -80,14 +80,16 @@ const Groups = () => {
                     className="btn btn-sm btn-secondary"
                     title="Edit Group"
                   >
-                    ✏️ Edit
+                    <i className="fi fi-rr-edit"></i>
+                    <span className="hide-mobile">Edit</span>
                   </button>
                   <button 
                     onClick={() => handleDeleteGroup(group.id, group.name)}
                     className="btn btn-sm btn-danger"
                     title="Delete Group"
                   >
-                    🗑️ Delete
+                    <i className="fi fi-rr-trash"></i>
+                    <span className="hide-mobile">Delete</span>
                   </button>
                 </div>
               </div>
