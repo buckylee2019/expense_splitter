@@ -88,6 +88,13 @@
 .nav-icon {
   font-size: 1rem;
   line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-icon svg {
+  transition: all 0.2s ease;
 }
 
 .nav-text {
@@ -204,6 +211,13 @@
   font-size: 1.25rem;
   line-height: 1;
   margin-bottom: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tab-icon svg {
+  transition: all 0.2s ease;
 }
 
 .tab-label {
