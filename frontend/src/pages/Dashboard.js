@@ -210,7 +210,7 @@ const Dashboard = () => {
                   <h3><i className="fi fi-rr-home"></i> {group.name}</h3>
                   <p>{group.description || 'No description provided'}</p>
                   <div className="group-meta">
-                    <span><i className="fi fi-rr-people-group"></i> {group.members.length} members</span>
+                    <span><i className="fi fi-rr-users"></i> {group.members.length} members</span>
                     {group.isActive && <span className="active-badge"><i className="fi fi-rr-check"></i> Active</span>}
                   </div>
                 </Link>
