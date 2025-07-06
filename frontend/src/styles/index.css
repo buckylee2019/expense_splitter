@@ -1351,7 +1351,13 @@ p {
     box-sizing: border-box;
   }
 
-  /* Photo Upload Styles */
+  /* Hide Monthly Expense Report banner on mobile */
+  .reports .page-header {
+    display: none;
+  }
+}
+
+/* Photo Upload Styles */
 .photo-upload-section {
   display: flex;
   align-items: center;
@@ -1471,8 +1477,7 @@ p {
     width: 28px;
     height: 28px;
   }
-}
-
+  
   .form-actions {
     flex-direction: column;
   }
@@ -4828,4 +4833,17 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .balance-text-content {
   flex: 1;
   min-width: 0;
+}
+
+/* Reports Net Balance Styling */
+.stat-value.owing {
+  color: var(--danger-color);
+}
+
+.stat-note {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-weight: normal;
 }

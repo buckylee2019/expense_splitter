@@ -185,8 +185,13 @@ const Reports = () => {
               </div>
               
               <div className="stat-item">
-                <span className="stat-label">Amount Owed</span>
-                <span className="stat-value owed">{formatCurrency(reportData.summary.totalOwed)}</span>
+                <span className="stat-label">Net Balance</span>
+                <span className={`stat-value ${reportData.summary.totalOwed >= 0 ? 'owed' : 'owing'}`}>
+                  {reportData.summary.totalOwed >= 0 ? '+' : ''}{formatCurrency(reportData.summary.totalOwed)}
+                </span>
+                <small className="stat-note">
+                  {reportData.summary.totalOwed >= 0 ? 'You are owed money' : 'You owe money'}
+                </small>
               </div>
             </div>
 

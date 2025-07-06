@@ -79,10 +79,14 @@ router.get('/monthly/:year/:month', authMiddleware, async (req, res) => {
       totalExpenses: expensesWithDetails.length,
       totalAmount: expensesWithDetails.reduce((sum, exp) => sum + exp.userAmount, 0), // User's total share
       totalPaid: expensesWithDetails.filter(exp => exp.isPaidByUser).reduce((sum, exp) => sum + exp.amount, 0), // What user paid
-      totalOwed: expensesWithDetails.filter(exp => !exp.isPaidByUser).reduce((sum, exp) => sum + exp.userAmount, 0), // What user owes
+      totalOwed: 0, // Will be calculated below as totalPaid - totalAmount
       byCategory: {},
       byCurrency: {}
     };
+    
+    // Calculate net amount owed: AMOUNT PAID - TOTAL AMOUNT
+    // Positive = user is owed money, Negative = user owes money
+    summary.totalOwed = summary.totalPaid - summary.totalAmount;
     
     // Group by category and currency using user's split amounts
     expensesWithDetails.forEach(expense => {
