@@ -5035,6 +5035,38 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   }
 }
 
+/* Group Details Quick Balances Multi-Currency */
+.balance-amounts-compact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-xs);
+  margin-top: 2px;
+}
+
+.balance-amounts-compact .balance-amount {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.balance-amounts-compact .balance-amount.owes_you {
+  color: var(--success-color);
+}
+
+.balance-amounts-compact .balance-amount.you_owe {
+  color: var(--danger-color);
+}
+
+@media (max-width: 768px) {
+  .balance-amounts-compact {
+    flex-direction: column;
+    gap: 1px;
+  }
+  
+  .balance-amounts-compact .balance-amount {
+    font-size: 0.85rem;
+  }
+}
+
 /* User Photo Enhancements for Modern Design */
 .user-photo {
   width: 40px;

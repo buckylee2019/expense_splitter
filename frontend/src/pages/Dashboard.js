@@ -310,9 +310,9 @@ const Dashboard = () => {
                           <div className="balance-user-details">
                             <span className="user-name">{userBalance.user.name}</span>
                             <span className="balance-description">
-                              {userCurrencies.length === 1 
-                                ? (userCurrencies[0].type === 'owes_you' ? 'owes you' : 'you owe')
-                                : 'multiple currencies'
+                              {userCurrencies.some(c => c.type === 'owes_you') && userCurrencies.some(c => c.type === 'you_owe')
+                                ? 'mixed balances'
+                                : userCurrencies[0].type === 'owes_you' ? 'owes you' : 'you owe'
                               }
                             </span>
                           </div>

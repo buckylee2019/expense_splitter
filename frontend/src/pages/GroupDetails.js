@@ -235,31 +235,111 @@ const GroupDetails = () => {
             </div>
             
             <div className="balances-summary">
-              {balances.slice(0, 3).map((balance, index) => (
-                <div key={index} className={`balance-item ${balance.type}`}>
-                  <div className="balance-info-with-photo">
-                    <UserPhoto user={balance.user} size="small" />
-                    <div className="balance-text-content">
-                      <span className="balance-text">
-                        {balance.type === 'owes_you' ? 
-                          `${balance.user.name} owes you` : 
-                          `You owe ${balance.user.name}`}
-                      </span>
-                      <span className="balance-amount">{balance.currency || 'TWD'} {balance.amount.toFixed(2)}</span>
+              {(() => {
+                // Helper function to get currency symbol
+                const getCurrencySymbol = (currency) => {
+                  const symbols = {
+                    'TWD': 'NT$',
+                    'USD': '$',
+                    'JPY': '¥',
+                    'EUR': '€',
+                    'GBP': '£',
+                    'CNY': '¥',
+                    'HKD': 'HK$',
+                    'SGD': 'S$'
+                  };
+                  return symbols[currency] || currency;
+                };
+
+                // Group balances by user
+                const userBalances = {};
+                
+                balances.forEach(balance => {
+                  const userId = balance.user.id;
+                  if (!userBalances[userId]) {
+                    userBalances[userId] = {
+                      user: balance.user,
+                      currencies: {}
+                    };
+                  }
+                  
+                  const currency = balance.currency || 'TWD';
+                  if (!userBalances[userId].currencies[currency]) {
+                    userBalances[userId].currencies[currency] = { owed: 0, owing: 0 };
+                  }
+                  
+                  if (balance.type === 'owes_you') {
+                    userBalances[userId].currencies[currency].owed += balance.amount;
+                  } else {
+                    userBalances[userId].currencies[currency].owing += balance.amount;
+                  }
+                });
+
+                return Object.values(userBalances).slice(0, 3).map((userBalance, index) => {
+                  // Calculate net balances for this user across all currencies
+                  const userCurrencies = [];
+                  
+                  Object.keys(userBalance.currencies).forEach(currency => {
+                    const net = userBalance.currencies[currency].owed - userBalance.currencies[currency].owing;
+                    if (Math.abs(net) > 0.01) { // Only show significant amounts
+                      userCurrencies.push({
+                        currency,
+                        amount: Math.abs(net),
+                        type: net > 0 ? 'owes_you' : 'you_owe'
+                      });
+                    }
+                  });
+
+                  if (userCurrencies.length === 0) return null;
+
+                  return (
+                    <div key={userBalance.user.id} className="balance-item">
+                      <div className="balance-info-with-photo">
+                        <UserPhoto user={userBalance.user} size="small" />
+                        <div className="balance-text-content">
+                          <span className="balance-text">
+                            {userCurrencies.some(c => c.type === 'owes_you') && userCurrencies.some(c => c.type === 'you_owe')
+                              ? `Mixed balances with ${userBalance.user.name}`
+                              : userCurrencies[0].type === 'owes_you' 
+                                ? `${userBalance.user.name} owes you`
+                                : `You owe ${userBalance.user.name}`
+                            }
+                          </span>
+                          <div className="balance-amounts-compact">
+                            {userCurrencies.map((currencyBalance, currIndex) => (
+                              <span 
+                                key={currencyBalance.currency} 
+                                className={`balance-amount ${currencyBalance.type}`}
+                              >
+                                {getCurrencySymbol(currencyBalance.currency)} {currencyBalance.amount.toFixed(2)}
+                                {currIndex < userCurrencies.length - 1 && ' + '}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                      <button 
+                        className="settle-btn"
+                        onClick={() => handleSettleClick({
+                          user: userBalance.user,
+                          type: userCurrencies[0].type,
+                          amount: userCurrencies[0].amount,
+                          currency: userCurrencies[0].currency
+                        })}
+                        title="Settle this balance"
+                      >
+                        Settle
+                      </button>
                     </div>
-                  </div>
-                  <button 
-                    className="settle-btn"
-                    onClick={() => handleSettleClick(balance)}
-                    title="Settle this balance"
-                  >
-                    Settle
-                  </button>
-                </div>
-              ))}
+                  );
+                }).filter(Boolean);
+              })()}
               {balances.length > 3 && (
                 <div className="more-balances">
-                  +{balances.length - 3} more...
+                  +{Object.keys(balances.reduce((acc, balance) => {
+                    acc[balance.user.id] = true;
+                    return acc;
+                  }, {})).length - 3} more...
                   <Link to="/settlements" className="view-all-link">View All</Link>
                 </div>
               )}
