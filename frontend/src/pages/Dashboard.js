@@ -246,7 +246,7 @@ const Dashboard = () => {
 
               {/* Individual Balance Items */}
               <div className="balance-items-list">
-                {balances.balances.map((balance, index) => {
+                {(() => {
                   // Helper function to get currency symbol
                   const getCurrencySymbol = (currency) => {
                     const symbols = {
@@ -262,25 +262,80 @@ const Dashboard = () => {
                     return symbols[currency] || currency;
                   };
 
-                  return (
-                    <div key={index} className={`balance-item-modern ${balance.type}`}>
-                      <div className="balance-user-info">
-                        <UserPhoto user={balance.user} size="small" />
-                        <div className="balance-user-details">
-                          <span className="user-name">{balance.user.name}</span>
-                          <span className="balance-description">
-                            {balance.type === 'owes_you' ? 'owes you' : 'you owe'}
-                          </span>
+                  // Group balances by user
+                  const userBalances = {};
+                  
+                  balances.balances.forEach(balance => {
+                    const userId = balance.user.id;
+                    if (!userBalances[userId]) {
+                      userBalances[userId] = {
+                        user: balance.user,
+                        currencies: {}
+                      };
+                    }
+                    
+                    const currency = balance.currency || 'TWD';
+                    if (!userBalances[userId].currencies[currency]) {
+                      userBalances[userId].currencies[currency] = { owed: 0, owing: 0 };
+                    }
+                    
+                    if (balance.type === 'owes_you') {
+                      userBalances[userId].currencies[currency].owed += balance.amount;
+                    } else {
+                      userBalances[userId].currencies[currency].owing += balance.amount;
+                    }
+                  });
+
+                  return Object.values(userBalances).map((userBalance, index) => {
+                    // Calculate net balances for this user across all currencies
+                    const userCurrencies = [];
+                    
+                    Object.keys(userBalance.currencies).forEach(currency => {
+                      const net = userBalance.currencies[currency].owed - userBalance.currencies[currency].owing;
+                      if (Math.abs(net) > 0.01) { // Only show significant amounts
+                        userCurrencies.push({
+                          currency,
+                          amount: Math.abs(net),
+                          type: net > 0 ? 'owes_you' : 'you_owe'
+                        });
+                      }
+                    });
+
+                    if (userCurrencies.length === 0) return null;
+
+                    return (
+                      <div key={userBalance.user.id} className="balance-item-modern">
+                        <div className="balance-user-info">
+                          <UserPhoto user={userBalance.user} size="small" />
+                          <div className="balance-user-details">
+                            <span className="user-name">{userBalance.user.name}</span>
+                            <span className="balance-description">
+                              {userCurrencies.length === 1 
+                                ? (userCurrencies[0].type === 'owes_you' ? 'owes you' : 'you owe')
+                                : 'multiple currencies'
+                              }
+                            </span>
+                          </div>
+                        </div>
+                        <div className="balance-amount-modern">
+                          <div className="multi-currency-user-amounts">
+                            {userCurrencies.map((currencyBalance, currIndex) => (
+                              <span 
+                                key={currencyBalance.currency} 
+                                className={`amount-value ${currencyBalance.type}`}
+                              >
+                                {getCurrencySymbol(currencyBalance.currency)} {currencyBalance.amount.toFixed(2)}
+                                {currIndex < userCurrencies.length - 1 && (
+                                  <span className="currency-separator-small"> + </span>
+                                )}
+                              </span>
+                            ))}
+                          </div>
                         </div>
                       </div>
-                      <div className="balance-amount-modern">
-                        <span className={`amount-value ${balance.type}`}>
-                          {getCurrencySymbol(balance.currency || 'TWD')} {balance.amount.toFixed(2)}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  }).filter(Boolean);
+                })()}
               </div>
             </div>
           </div>
