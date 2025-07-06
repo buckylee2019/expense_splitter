@@ -1276,6 +1276,50 @@ p {
     grid-template-columns: 1fr;
   }
 
+  /* Settlements grid - make single column on mobile */
+  .settlements-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+
+  /* Dashboard summary - ensure single column on small screens */
+  .dashboard-summary {
+    grid-template-columns: 1fr;
+    gap: var(--spacing);
+  }
+
+  /* Actions grid - single column on mobile */
+  .actions-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing);
+  }
+
+  /* Expense meta - single column on mobile */
+  .expense-meta {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-sm);
+  }
+
+  /* Balance items - prevent overflow on mobile */
+  .balance-item {
+    padding: var(--spacing);
+    min-height: auto;
+  }
+
+  .balance-info {
+    margin-right: var(--spacing-sm);
+  }
+
+  .balance-amount {
+    min-width: 70px;
+    max-width: 90px;
+  }
+
+  /* Settlement items - mobile optimization */
+  .settlement-item {
+    padding: var(--spacing);
+  }
+
   .form-actions {
     flex-direction: column;
   }
