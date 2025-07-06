@@ -4,6 +4,7 @@ import api from '../services/api';
 import CategoryBadge from '../components/CategoryBadge';
 import AddMember from '../components/AddMember';
 import SettlementModal from '../components/SettlementModal';
+import UserPhoto from '../components/UserPhoto';
 
 const GroupDetails = () => {
   const { groupId } = useParams();
@@ -236,13 +237,16 @@ const GroupDetails = () => {
             <div className="balances-summary">
               {balances.slice(0, 3).map((balance, index) => (
                 <div key={index} className={`balance-item ${balance.type}`}>
-                  <div className="balance-info">
-                    <span className="balance-text">
-                      {balance.type === 'owes_you' ? 
-                        `${balance.user.name} owes you` : 
-                        `You owe ${balance.user.name}`}
-                    </span>
-                    <span className="balance-amount">{balance.currency || 'TWD'} {balance.amount.toFixed(2)}</span>
+                  <div className="balance-info-with-photo">
+                    <UserPhoto user={balance.user} size="small" />
+                    <div className="balance-text-content">
+                      <span className="balance-text">
+                        {balance.type === 'owes_you' ? 
+                          `${balance.user.name} owes you` : 
+                          `You owe ${balance.user.name}`}
+                      </span>
+                      <span className="balance-amount">{balance.currency || 'TWD'} {balance.amount.toFixed(2)}</span>
+                    </div>
                   </div>
                   <button 
                     className="settle-btn"

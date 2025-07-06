@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import CategoryPieChart from '../components/CategoryPieChart';
+import UserPhoto from '../components/UserPhoto';
 
 const Dashboard = () => {
   const location = useLocation();
@@ -299,17 +300,20 @@ const Dashboard = () => {
             <div className="balances-list">
               {balances.balances.map((balance, index) => (
                 <div key={index} className={`balance-item card ${balance.type}`}>
-                  <div className="balance-info">
-                    <span className="user">
-                      {balance.type === 'owes_you' ? 
-                        `💚 ${balance.user.name} owes you` : 
-                        `💸 You owe ${balance.user.name}`}
-                    </span>
-                    <small className="balance-note">
-                      {balance.type === 'owes_you' ? 
-                        'They should pay you' : 
-                        'You should pay them'}
-                    </small>
+                  <div className="balance-info-with-photo">
+                    <UserPhoto user={balance.user} size="small" />
+                    <div className="balance-text-content">
+                      <span className="user">
+                        {balance.type === 'owes_you' ? 
+                          `${balance.user.name} owes you` : 
+                          `You owe ${balance.user.name}`}
+                      </span>
+                      <small className="balance-note">
+                        {balance.type === 'owes_you' ? 
+                          'They should pay you' : 
+                          'You should pay them'}
+                      </small>
+                    </div>
                   </div>
                   <div className="balance-amount">
                     <span className="amount">

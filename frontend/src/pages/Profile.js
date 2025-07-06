@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import api from '../services/api';
+import UserPhoto from '../components/UserPhoto';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -12,6 +13,8 @@ const Profile = () => {
     phone: '',
     avatar: ''
   });
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -52,6 +55,45 @@ const Profile = () => {
     if (success) setSuccess('');
   };
 
+  const handlePhotoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Check file size (limit to 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        setError('Photo size must be less than 2MB');
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        setError('Please select a valid image file');
+        return;
+      }
+
+      setPhotoFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPhotoPreview(e.target.result);
+      };
+      reader.readAsDataURL(file);
+      
+      // Clear messages
+      if (error) setError('');
+      if (success) setSuccess('');
+    }
+  };
+
+  const removePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview('');
+    setFormData(prev => ({
+      ...prev,
+      avatar: ''
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -65,13 +107,35 @@ const Profile = () => {
     setSuccess('');
 
     try {
-      const response = await api.put('/api/users/profile', formData);
+      let updatedFormData = { ...formData };
       
-      setUser(response.data.user);
-      setSuccess('Profile updated successfully!');
-      
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(''), 3000);
+      // If there's a new photo, convert it to base64
+      if (photoFile) {
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          updatedFormData.avatar = e.target.result;
+          
+          const response = await api.put('/api/users/profile', updatedFormData);
+          setUser(response.data.user);
+          setSuccess('Profile updated successfully!');
+          
+          // Clear the photo file after successful upload
+          setPhotoFile(null);
+          
+          // Clear success message after 3 seconds
+          setTimeout(() => setSuccess(''), 3000);
+          setSubmitting(false);
+        };
+        reader.readAsDataURL(photoFile);
+      } else {
+        const response = await api.put('/api/users/profile', updatedFormData);
+        setUser(response.data.user);
+        setSuccess('Profile updated successfully!');
+        
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(''), 3000);
+        setSubmitting(false);
+      }
       
     } catch (err) {
       console.error('Error updating profile:', err);
@@ -79,11 +143,6 @@ const Profile = () => {
     } finally {
       setSubmitting(false);
     }
-  };
-
-  const getInitials = (name) => {
-    if (!name) return 'U';
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
   };
 
   const handleLogout = () => {
@@ -106,15 +165,13 @@ const Profile = () => {
       <div className="profile-container">
         <div className="profile-card card">
           <div className="profile-header">
-            <div className="profile-avatar">
-              {formData.avatar ? (
-                <img src={formData.avatar} alt="Profile" />
-              ) : (
-                <div className="avatar-placeholder">
-                  {getInitials(formData.name)}
-                </div>
-              )}
-            </div>
+            <UserPhoto 
+              user={{ 
+                name: formData.name, 
+                avatar: photoPreview || formData.avatar 
+              }} 
+              size="large" 
+            />
             <div className="profile-info">
               <h2>{user?.name || 'User'}</h2>
               <p className="profile-email">{user?.email}</p>
@@ -154,17 +211,33 @@ const Profile = () => {
             </div>
 
             <div className="form-group">
-              <label htmlFor="avatar">Avatar URL</label>
-              <input
-                type="url"
-                id="avatar"
-                name="avatar"
-                value={formData.avatar}
-                onChange={handleChange}
-                placeholder="Enter avatar image URL (optional)"
-              />
+              <label htmlFor="photo">Profile Photo</label>
+              <div className="photo-upload-section">
+                <input
+                  type="file"
+                  id="photo"
+                  accept="image/*"
+                  onChange={handlePhotoChange}
+                  className="photo-input"
+                />
+                <label htmlFor="photo" className="photo-upload-btn">
+                  <i className="fi fi-rr-camera"></i>
+                  Choose Photo
+                </label>
+                {(photoPreview || formData.avatar) && (
+                  <button
+                    type="button"
+                    onClick={removePhoto}
+                    className="btn btn-sm btn-danger"
+                    style={{ marginLeft: '10px' }}
+                  >
+                    <i className="fi fi-rr-trash"></i>
+                    Remove
+                  </button>
+                )}
+              </div>
               <small className="form-help">
-                You can use a URL to an image hosted online (e.g., from Gravatar, social media, etc.)
+                Upload a profile photo (max 2MB). Supported formats: JPG, PNG, GIF
               </small>
             </div>
 
