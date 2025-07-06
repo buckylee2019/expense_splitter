@@ -92,16 +92,16 @@ const Groups = () => {
                 <Link 
                   to={`/groups/${group.id}`} 
                   className="btn btn-primary btn-sm"
+                  title="View Details"
                 >
                   <i className="fi fi-rr-eye"></i>
-                  <span className="hide-mobile">View Details</span>
                 </Link>
                 <Link 
                   to={`/groups/${group.id}/expenses/add`} 
                   className="btn btn-secondary btn-sm"
+                  title="Add Expense"
                 >
                   <i className="fi fi-rr-plus"></i>
-                  <span className="hide-mobile">Add Expense</span>
                 </Link>
                 <button 
                   onClick={() => handleEditGroup(group.id)}
@@ -109,7 +109,6 @@ const Groups = () => {
                   title="Edit Group"
                 >
                   <i className="fi fi-rr-edit"></i>
-                  <span className="hide-mobile">Edit</span>
                 </button>
                 <button 
                   onClick={() => handleDeleteGroup(group.id, group.name)}
@@ -117,7 +116,6 @@ const Groups = () => {
                   title="Delete Group"
                 >
                   <i className="fi fi-rr-trash"></i>
-                  <span className="hide-mobile">Delete</span>
                 </button>
               </div>
             </div>
