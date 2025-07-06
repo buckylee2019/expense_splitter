@@ -4889,6 +4889,54 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: var(--text-secondary);
 }
 
+/* Multi-currency display */
+.multi-currency-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-xs);
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.currency-amount {
+  display: flex;
+  align-items: center;
+}
+
+.currency-amount .amount-value.positive {
+  color: var(--success-color);
+}
+
+.currency-amount .amount-value.negative {
+  color: var(--danger-color);
+}
+
+.currency-separator {
+  color: var(--text-secondary);
+  font-weight: 500;
+  margin: 0 var(--spacing-xs);
+}
+
+/* Mobile responsive for multi-currency */
+@media (max-width: 768px) {
+  .multi-currency-amounts {
+    font-size: 1.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+  
+  .currency-separator {
+    display: none;
+  }
+  
+  .currency-amount {
+    width: 100%;
+  }
+}
+
 .balance-items-list {
   display: flex;
   flex-direction: column;

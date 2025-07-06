@@ -150,62 +150,137 @@ const Dashboard = () => {
               {/* Balance Summary */}
               <div className="balance-summary-header">
                 {(() => {
-                  // Calculate net balance
-                  const totalOwed = balances.summary.totalOwed || 0;
-                  const totalOwing = balances.summary.totalOwing || 0;
-                  const netBalance = totalOwed - totalOwing;
+                  // Helper function to get currency symbol
+                  const getCurrencySymbol = (currency) => {
+                    const symbols = {
+                      'TWD': 'NT$',
+                      'USD': '$',
+                      'JPY': '¥',
+                      'EUR': '€',
+                      'GBP': '£',
+                      'CNY': '¥',
+                      'HKD': 'HK$',
+                      'SGD': 'S$'
+                    };
+                    return symbols[currency] || currency;
+                  };
+
+                  // Group balances by currency and calculate net for each
+                  const currencyBalances = {};
                   
-                  if (netBalance > 0) {
-                    return (
-                      <>
-                        <h3>Overall, you are owed</h3>
-                        <div className="total-owed-amount positive">
-                          TWD {netBalance.toFixed(2)}
-                        </div>
-                      </>
-                    );
-                  } else if (netBalance < 0) {
-                    return (
-                      <>
-                        <h3>Overall, you owe</h3>
-                        <div className="total-owed-amount negative">
-                          TWD {Math.abs(netBalance).toFixed(2)}
-                        </div>
-                      </>
-                    );
-                  } else {
+                  balances.balances.forEach(balance => {
+                    const currency = balance.currency || 'TWD';
+                    if (!currencyBalances[currency]) {
+                      currencyBalances[currency] = { owed: 0, owing: 0 };
+                    }
+                    
+                    if (balance.type === 'owes_you') {
+                      currencyBalances[currency].owed += balance.amount;
+                    } else {
+                      currencyBalances[currency].owing += balance.amount;
+                    }
+                  });
+                  
+                  // Calculate net balances per currency
+                  const netBalances = {};
+                  let hasPositive = false;
+                  let hasNegative = false;
+                  
+                  Object.keys(currencyBalances).forEach(currency => {
+                    const net = currencyBalances[currency].owed - currencyBalances[currency].owing;
+                    if (Math.abs(net) > 0.01) { // Only include significant amounts
+                      netBalances[currency] = net;
+                      if (net > 0) hasPositive = true;
+                      if (net < 0) hasNegative = true;
+                    }
+                  });
+                  
+                  const currencies = Object.keys(netBalances);
+                  
+                  if (currencies.length === 0) {
                     return (
                       <>
                         <h3>You're all settled up</h3>
                         <div className="total-owed-amount neutral">
-                          TWD 0.00
+                          No outstanding balances
                         </div>
                       </>
                     );
                   }
+                  
+                  // Determine overall message
+                  let headerText = '';
+                  if (hasPositive && !hasNegative) {
+                    headerText = 'Overall, you are owed';
+                  } else if (hasNegative && !hasPositive) {
+                    headerText = 'Overall, you owe';
+                  } else {
+                    headerText = 'Your balance summary';
+                  }
+                  
+                  return (
+                    <>
+                      <h3>{headerText}</h3>
+                      <div className="multi-currency-amounts">
+                        {currencies.map((currency, index) => {
+                          const amount = netBalances[currency];
+                          const isPositive = amount > 0;
+                          const displayAmount = Math.abs(amount);
+                          
+                          return (
+                            <span key={currency} className="currency-amount">
+                              <span className={`amount-value ${isPositive ? 'positive' : 'negative'}`}>
+                                {getCurrencySymbol(currency)} {displayAmount.toFixed(2)}
+                              </span>
+                              {index < currencies.length - 1 && (
+                                <span className="currency-separator"> + </span>
+                              )}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </>
+                  );
                 })()}
               </div>
 
               {/* Individual Balance Items */}
               <div className="balance-items-list">
-                {balances.balances.map((balance, index) => (
-                  <div key={index} className={`balance-item-modern ${balance.type}`}>
-                    <div className="balance-user-info">
-                      <UserPhoto user={balance.user} size="small" />
-                      <div className="balance-user-details">
-                        <span className="user-name">{balance.user.name}</span>
-                        <span className="balance-description">
-                          {balance.type === 'owes_you' ? 'owes you' : 'you owe'}
+                {balances.balances.map((balance, index) => {
+                  // Helper function to get currency symbol
+                  const getCurrencySymbol = (currency) => {
+                    const symbols = {
+                      'TWD': 'NT$',
+                      'USD': '$',
+                      'JPY': '¥',
+                      'EUR': '€',
+                      'GBP': '£',
+                      'CNY': '¥',
+                      'HKD': 'HK$',
+                      'SGD': 'S$'
+                    };
+                    return symbols[currency] || currency;
+                  };
+
+                  return (
+                    <div key={index} className={`balance-item-modern ${balance.type}`}>
+                      <div className="balance-user-info">
+                        <UserPhoto user={balance.user} size="small" />
+                        <div className="balance-user-details">
+                          <span className="user-name">{balance.user.name}</span>
+                          <span className="balance-description">
+                            {balance.type === 'owes_you' ? 'owes you' : 'you owe'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="balance-amount-modern">
+                        <span className={`amount-value ${balance.type}`}>
+                          {getCurrencySymbol(balance.currency || 'TWD')} {balance.amount.toFixed(2)}
                         </span>
                       </div>
                     </div>
-                    <div className="balance-amount-modern">
-                      <span className={`amount-value ${balance.type}`}>
-                        {balance.currency || 'TWD'} {balance.amount.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>
