@@ -513,7 +513,7 @@ p {
 
 .dashboard-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: var(--spacing-lg);
   margin-bottom: var(--spacing-2xl);
 }
@@ -594,7 +594,7 @@ p {
 
 .groups-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: var(--spacing-lg);
 }
 
@@ -878,7 +878,7 @@ p {
 
 .actions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: var(--spacing-lg);
 }
 
@@ -1294,6 +1294,12 @@ p {
     gap: var(--spacing);
   }
 
+  /* Groups grid - force single column on mobile */
+  .groups-grid {
+    grid-template-columns: 1fr !important;
+    gap: var(--spacing);
+  }
+
   /* Expense meta - single column on mobile */
   .expense-meta {
     grid-template-columns: 1fr;
@@ -1318,6 +1324,31 @@ p {
   /* Settlement items - mobile optimization */
   .settlement-item {
     padding: var(--spacing);
+  }
+
+  /* Expense components - mobile optimization */
+  .expense-main {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .expense-info {
+    width: 100%;
+  }
+
+  .expense-meta {
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  /* Ensure all cards fit mobile screens */
+  .card,
+  .expense-card-compact,
+  .settlement-item-compact {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .form-actions {
@@ -2669,7 +2700,7 @@ p {
 /* Groups Management Styles */
 .groups-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
   margin-top: 2rem;
 }
