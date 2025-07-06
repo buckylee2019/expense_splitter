@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import CategoryBadge from '../components/CategoryBadge';
 import AddMember from '../components/AddMember';
@@ -7,7 +7,6 @@ import SettlementModal from '../components/SettlementModal';
 
 const GroupDetails = () => {
   const { groupId } = useParams();
-  const navigate = useNavigate();
   const [group, setGroup] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [balances, setBalances] = useState([]);
