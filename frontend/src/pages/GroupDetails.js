@@ -131,35 +131,6 @@ const GroupDetails = () => {
   };
 
   // Add manual refresh function
-  const handleRefresh = () => {
-    fetchGroupData();
-  };
-
-  const handleDeleteGroup = async () => {
-    if (!window.confirm(`Are you sure you want to delete the group "${group.name}"? This action cannot be undone.`)) {
-      return;
-    }
-
-    try {
-      await api.delete(`/api/groups/${groupId}`);
-      
-      // Navigate back to dashboard after successful deletion
-      navigate('/', { 
-        state: { 
-          message: `Group "${group.name}" has been deleted successfully.` 
-        }
-      });
-    } catch (err) {
-      const errorMessage = err.response?.data?.error || err.message;
-      setError('Failed to delete group: ' + errorMessage);
-      
-      // If there are expenses, show a more helpful message
-      if (err.response?.data?.expenseCount) {
-        setError(`Cannot delete group: There are ${err.response.data.expenseCount} expenses in this group. Please delete all expenses first.`);
-      }
-    }
-  };
-
   // Check if current user is admin of the group
   const handleMemberAdded = (updatedGroup) => {
     setGroup(updatedGroup);
@@ -211,37 +182,6 @@ const GroupDetails = () => {
         </div>
       )}
       
-      <div className="page-header">
-        <div className="header-actions">
-          <button 
-            onClick={handleRefresh} 
-            className="button secondary"
-            disabled={loading}
-            title="Refresh group data"
-          >
-            <i className="fi fi-rr-refresh"></i>
-            <span className="hide-mobile">{loading ? 'Refreshing...' : 'Refresh'}</span>
-          </button>
-          <Link 
-            to={`/groups/${groupId}/expenses/add`}
-            className="button primary"
-          >
-            <i className="fi fi-rr-plus"></i>
-            <span className="hide-mobile">Add Expense</span>
-          </Link>
-          {isGroupAdmin() && (
-            <button 
-              onClick={handleDeleteGroup}
-              className="button danger"
-              title="Delete group"
-            >
-              <i className="fi fi-rr-trash"></i>
-              <span className="hide-mobile">Delete Group</span>
-            </button>
-          )}
-        </div>
-      </div>
-
       <div className="group-info-compact">
         <div className="group-summary card">
           <div className="group-basic-info">
@@ -334,20 +274,29 @@ const GroupDetails = () => {
       <div className="expenses-section">
         <div className="expenses-header">
           <h2>Expenses</h2>
-          {expenses.length > 0 && (
-            <div className="sort-controls">
-              <label htmlFor="sort-select">Sort by date:</label>
-              <select 
-                id="sort-select"
-                value={sortOrder} 
-                onChange={(e) => handleSortChange(e.target.value)}
-                className="sort-select"
-              >
-                <option value="newest">Newest First</option>
-                <option value="oldest">Oldest First</option>
-              </select>
-            </div>
-          )}
+          <div className="expenses-header-actions">
+            <Link 
+              to={`/groups/${groupId}/expenses/add`}
+              className="button primary"
+            >
+              <i className="fi fi-rr-plus"></i>
+              <span className="hide-mobile">Add Expense</span>
+            </Link>
+            {expenses.length > 0 && (
+              <div className="sort-controls">
+                <label htmlFor="sort-select">Sort by date:</label>
+                <select 
+                  id="sort-select"
+                  value={sortOrder} 
+                  onChange={(e) => handleSortChange(e.target.value)}
+                  className="sort-select"
+                >
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                </select>
+              </div>
+            )}
+          </div>
         </div>
         
         {expenses.length === 0 ? (

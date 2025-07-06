@@ -53,7 +53,7 @@ const Register = () => {
     <div className="auth-container">
       <div className="auth-card">
         <div className="text-center mb-xl">
-          <h1 className="mb-sm"><i className="fi fi-rr-calculator"></i> ExpenseSplitter</h1>
+          <h1 className="mb-sm"><i className="fi fi-rr-calculator"></i> SplitX</h1>
           <h2 className="mb-0">Create Account</h2>
           <p className="text-secondary">Join thousands splitting expenses effortlessly</p>
         </div>

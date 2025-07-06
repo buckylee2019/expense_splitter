@@ -1,4 +1,4 @@
-// Professional interface icons for ExpenseSplitter
+// Professional interface icons for SplitX
 // Using Flaticon's interface icon set for better UI consistency
 
 export const Icons = {

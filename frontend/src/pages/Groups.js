@@ -74,24 +74,6 @@ const Groups = () => {
             <div key={group.id} className="group-card">
               <div className="group-header">
                 <h3 className="group-name">{group.name}</h3>
-                <div className="group-actions">
-                  <button 
-                    onClick={() => handleEditGroup(group.id)}
-                    className="btn btn-sm btn-secondary"
-                    title="Edit Group"
-                  >
-                    <i className="fi fi-rr-edit"></i>
-                    <span className="hide-mobile">Edit</span>
-                  </button>
-                  <button 
-                    onClick={() => handleDeleteGroup(group.id, group.name)}
-                    className="btn btn-sm btn-danger"
-                    title="Delete Group"
-                  >
-                    <i className="fi fi-rr-trash"></i>
-                    <span className="hide-mobile">Delete</span>
-                  </button>
-                </div>
               </div>
               
               <div className="group-info">
@@ -111,14 +93,32 @@ const Groups = () => {
                   to={`/groups/${group.id}`} 
                   className="btn btn-primary btn-sm"
                 >
-                  View Details
+                  <i className="fi fi-rr-eye"></i>
+                  <span className="hide-mobile">View Details</span>
                 </Link>
                 <Link 
-                  to={`/groups/${group.id}/expenses/create`} 
+                  to={`/groups/${group.id}/expenses/add`} 
                   className="btn btn-secondary btn-sm"
                 >
-                  Add Expense
+                  <i className="fi fi-rr-plus"></i>
+                  <span className="hide-mobile">Add Expense</span>
                 </Link>
+                <button 
+                  onClick={() => handleEditGroup(group.id)}
+                  className="btn btn-sm btn-secondary"
+                  title="Edit Group"
+                >
+                  <i className="fi fi-rr-edit"></i>
+                  <span className="hide-mobile">Edit</span>
+                </button>
+                <button 
+                  onClick={() => handleDeleteGroup(group.id, group.name)}
+                  className="btn btn-sm btn-danger"
+                  title="Delete Group"
+                >
+                  <i className="fi fi-rr-trash"></i>
+                  <span className="hide-mobile">Delete</span>
+                </button>
               </div>
             </div>
           ))}

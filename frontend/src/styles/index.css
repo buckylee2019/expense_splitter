@@ -1658,6 +1658,13 @@ p {
   color: var(--text-primary);
 }
 
+.expenses-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+  flex-wrap: wrap;
+}
+
 .sort-controls {
   display: flex;
   align-items: center;

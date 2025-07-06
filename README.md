@@ -1,4 +1,4 @@
-# Expense Splitter Application
+# SplitX Application
 
 A full-stack application for splitting expenses among friends and groups.
 
