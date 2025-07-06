@@ -1,17 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
-import CategoryPieChart from '../components/CategoryPieChart';
 import UserPhoto from '../components/UserPhoto';
 
 const Dashboard = () => {
   const location = useLocation();
-  const [groups, setGroups] = useState([]);
   const [balances, setBalances] = useState({ balances: [], summary: {} });
-  const [optimizationInfo, setOptimizationInfo] = useState(null);
   const [useOptimized, setUseOptimized] = useState(true); // Default to optimized
   const [settlements, setSettlements] = useState([]);
-  const [recentExpenses, setRecentExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -26,40 +22,20 @@ const Dashboard = () => {
       const userRes = await api.get('/api/users/profile');
       console.log('👤 Dashboard: Current user loaded:', userRes.data);
 
-      // Fetch all data in parallel
-      console.log('📊 Dashboard: Fetching groups, balances, settlements, and recent expenses...');
-      const [groupsResponse, balancesResponse, settlementsResponse, expensesResponse] = await Promise.all([
-        api.get('/api/groups'),
+      // Fetch balances and settlements
+      console.log('📊 Dashboard: Fetching balances and settlements...');
+      const [balancesResponse, settlementsResponse] = await Promise.all([
         api.get(`/api/balances${useOptimized ? '?optimized=true' : ''}`),
         api.get('/api/settlements').catch(err => {
           console.error('❌ Dashboard: Error fetching settlements:', err);
           return { data: [] }; // Return empty array on error to prevent breaking
-        }),
-        api.get('/api/expenses?limit=50').catch(err => {
-          console.error('❌ Dashboard: Error fetching recent expenses:', err);
-          return { data: [] }; // Return empty array on error
         })
       ]);
 
-      console.log('🏠 Dashboard: Groups loaded:', groupsResponse.data.length);
       console.log('💰 Dashboard: Balances loaded:', balancesResponse.data.balances?.length || 0);
       console.log('💵 Dashboard: Settlements loaded:', settlementsResponse.data?.length || 0);
-      console.log('📊 Dashboard: Recent expenses loaded:', expensesResponse.data?.length || 0);
-      console.log('Settlement data:', settlementsResponse.data);
       
-      setGroups(groupsResponse.data);
       setBalances(balancesResponse.data);
-      setRecentExpenses(Array.isArray(expensesResponse.data) ? expensesResponse.data : []);
-      
-      // Store optimization info if available
-      if (balancesResponse.data.optimizedTransfers) {
-        setOptimizationInfo({
-          transferCount: balancesResponse.data.transferCount,
-          originalTransferCount: balancesResponse.data.originalTransferCount,
-          optimizedTransfers: balancesResponse.data.optimizedTransfers
-        });
-      }
-      
       setSettlements(Array.isArray(settlementsResponse.data) ? settlementsResponse.data : []);
       setError('');
       setLastRefresh(new Date());
@@ -133,10 +109,6 @@ const Dashboard = () => {
     return <div className="error-message">{error}</div>;
   }
 
-  const totalOwed = balances.summary.totalOwed || 0;
-  const totalOwing = balances.summary.totalOwing || 0;
-  const netBalance = totalOwed - totalOwing;
-
   // Get recent settlements (last 5)
   // const recentSettlements = settlements.slice(0, 5);
   console.log('Dashboard render - settlements data:', settlements);
@@ -154,131 +126,8 @@ const Dashboard = () => {
           <small>Last updated: {lastRefresh.toLocaleTimeString()}</small>
         </div>
       )}
-      
-      <div className="dashboard-summary grid grid-2">
-        <div className="summary-card card">
-          <h3>💚 Money Owed to You</h3>
-          <div className="balance-details">
-            <p className="owed">${totalOwed.toFixed(2)}</p>
-            <small>Amount others owe you</small>
-          </div>
-        </div>
-        
-        <div className="summary-card card">
-          <h3>💸 Money You Owe</h3>
-          <div className="balance-details">
-            <p className="owing">${totalOwing.toFixed(2)}</p>
-            <small>Amount you owe others</small>
-          </div>
-        </div>
-        
-        <div className="summary-card card">
-          <h3>⚖️ Net Balance</h3>
-          <div className="balance-details">
-            <p className={netBalance >= 0 ? 'owed' : 'owing'}>
-              {netBalance >= 0 ? '+' : ''}${netBalance.toFixed(2)}
-            </p>
-            <small>
-              {netBalance >= 0 ? 'You are owed overall' : 'You owe overall'}
-            </small>
-          </div>
-        </div>
-      </div>
 
-      <div className="dashboard-grid grid dashboard-main">
-        <div className="groups-section">
-          <div className="card-header">
-            <h2><i className="fi fi-rr-home"></i> Your Groups</h2>
-            <span className="card-subtitle">{groups.length} groups</span>
-          </div>
-          
-          {groups.length === 0 ? (
-            <div className="no-groups">
-              <h3><i className="fi fi-rr-target"></i> Ready to start splitting expenses?</h3>
-              <p>Create your first group to begin tracking shared expenses with friends, family, or roommates.</p>
-              <Link to="/groups/create" className="button primary large mt-lg">
-                🚀 Create Your First Group
-              </Link>
-            </div>
-          ) : (
-            <div className="groups-grid">
-              {groups.map(group => (
-                <Link 
-                  to={`/groups/${group.id}`} 
-                  key={group.id} 
-                  className="group-card"
-                >
-                  <h3><i className="fi fi-rr-home"></i> {group.name}</h3>
-                  <p>{group.description || 'No description provided'}</p>
-                  <div className="group-meta">
-                    <span><i className="fi fi-rr-users"></i> {group.members.length} members</span>
-                    {group.isActive && <span className="active-badge"><i className="fi fi-rr-check"></i> Active</span>}
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Category Pie Chart Section */}
-        {recentExpenses.length > 0 && (
-          <div className="chart-section">
-            <div className="card">
-              <CategoryPieChart 
-                expenses={recentExpenses} 
-                title="Recent Expenses by Category"
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="settlements-section">
-          <div className="card">
-            <div className="card-header">
-              <h2><i className="fi fi-rr-hand-holding-usd"></i> Recent Settlements</h2>
-              <Link to="/settlements" className="view-all-link">View All</Link>
-            </div>
-            
-            {settlements && settlements.length > 0 ? (
-              <div className="settlements-list">
-                {settlements.slice(0, 5).map((settlement, index) => (
-                  <div key={settlement.id || index} className="settlement-item-compact">
-                    <div className="settlement-info">
-                      <div className="settlement-amount">
-                        {settlement.currency} {typeof settlement.amount === 'number' ? settlement.amount.toFixed(2) : parseFloat(settlement.amount || 0).toFixed(2)}
-                      </div>
-                      <div className="settlement-users">
-                        <span className="from-user">From: {settlement.fromName || settlement.from}</span>
-                        <span className="to-user">To: {settlement.toName || settlement.to}</span>
-                      </div>
-                    </div>
-                    <div className="settlement-meta">
-                      <span className="settlement-date">
-                        {new Date(settlement.settledAt).toLocaleDateString()}
-                      </span>
-                      <span className="settlement-method">{settlement.method}</span>
-                    </div>
-                  </div>
-                ))}
-                <div className="view-all-settlements">
-                  <Link to="/settlements" className="button secondary">
-                    View All Settlements
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div className="no-settlements">
-                <p>No settlements recorded yet.</p>
-                <Link to="/settlements" className="button secondary">
-                  Record a Settlement
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {balances.balances.length > 0 && (
+      {balances.balances.length > 0 ? (
         <div className="balances-section">
           <div className="card">
             <div className="card-header">
@@ -330,32 +179,27 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
-      )}
-
-      <div className="quick-actions">
-        <div className="card">
-          <div className="card-header">
-            <h3>⚡ Quick Actions</h3>
-          </div>
-          <div className="actions-grid">
-            <Link to="/groups/create" className="action-card">
-              <div className="action-icon"><i className="fi fi-rr-home"></i></div>
-              <h4>Create Group</h4>
-              <p>Start a new expense group</p>
-            </Link>
-            <Link to="/settlements" className="action-card">
-              <div className="action-icon"><i className="fi fi-rr-calculator"></i></div>
-              <h4>Record Settlement</h4>
-              <p>Mark a debt as paid</p>
-            </Link>
-            <div className="action-card disabled">
-              <div className="action-icon"><i className="fi fi-rr-chart-pie"></i></div>
-              <h4>Reports</h4>
-              <p>Coming soon...</p>
+      ) : (
+        <div className="no-balances">
+          <div className="card">
+            <div className="empty-state">
+              <div className="empty-icon">
+                <i className="fi fi-rr-credit-card"></i>
+              </div>
+              <h3>No Outstanding Balances</h3>
+              <p>You're all settled up! When you have shared expenses, they'll appear here.</p>
+              <div className="empty-actions">
+                <Link to="/groups" className="button primary">
+                  <i className="fi fi-rr-home"></i> View Groups
+                </Link>
+                <Link to="/groups/create" className="button secondary">
+                  <i className="fi fi-rr-plus"></i> Create Group
+                </Link>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
