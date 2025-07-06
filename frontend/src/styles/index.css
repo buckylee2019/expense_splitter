@@ -4874,8 +4874,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .total-owed-amount {
   font-size: 2rem;
   font-weight: 700;
-  color: var(--success-color);
   margin: 0;
+}
+
+.total-owed-amount.positive {
+  color: var(--success-color);
+}
+
+.total-owed-amount.negative {
+  color: var(--danger-color);
+}
+
+.total-owed-amount.neutral {
+  color: var(--text-secondary);
 }
 
 .balance-items-list {

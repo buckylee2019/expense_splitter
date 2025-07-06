@@ -149,10 +149,41 @@ const Dashboard = () => {
             <div className="balances-container">
               {/* Balance Summary */}
               <div className="balance-summary-header">
-                <h3>Overall, you are owed</h3>
-                <div className="total-owed-amount">
-                  TWD {balances.summary.totalOwed ? balances.summary.totalOwed.toFixed(2) : '0.00'}
-                </div>
+                {(() => {
+                  // Calculate net balance
+                  const totalOwed = balances.summary.totalOwed || 0;
+                  const totalOwing = balances.summary.totalOwing || 0;
+                  const netBalance = totalOwed - totalOwing;
+                  
+                  if (netBalance > 0) {
+                    return (
+                      <>
+                        <h3>Overall, you are owed</h3>
+                        <div className="total-owed-amount positive">
+                          TWD {netBalance.toFixed(2)}
+                        </div>
+                      </>
+                    );
+                  } else if (netBalance < 0) {
+                    return (
+                      <>
+                        <h3>Overall, you owe</h3>
+                        <div className="total-owed-amount negative">
+                          TWD {Math.abs(netBalance).toFixed(2)}
+                        </div>
+                      </>
+                    );
+                  } else {
+                    return (
+                      <>
+                        <h3>You're all settled up</h3>
+                        <div className="total-owed-amount neutral">
+                          TWD 0.00
+                        </div>
+                      </>
+                    );
+                  }
+                })()}
               </div>
 
               {/* Individual Balance Items */}
