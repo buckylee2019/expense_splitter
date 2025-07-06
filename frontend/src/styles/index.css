@@ -1351,6 +1351,11 @@ p {
     box-sizing: border-box;
   }
 
+  /* Hide Monthly Expense Report banner on mobile */
+  .reports .page-header {
+    display: none;
+  }
+
   .form-actions {
     flex-direction: column;
   }
