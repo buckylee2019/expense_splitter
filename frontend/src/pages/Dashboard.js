@@ -297,31 +297,36 @@ const Dashboard = () => {
               </div>
             </div>
             
-            <div className="balances-list">
-              {balances.balances.map((balance, index) => (
-                <div key={index} className={`balance-item card ${balance.type}`}>
-                  <div className="balance-info-with-photo">
-                    <UserPhoto user={balance.user} size="small" />
-                    <div className="balance-text-content">
-                      <span className="user">
-                        {balance.type === 'owes_you' ? 
-                          `${balance.user.name} owes you` : 
-                          `You owe ${balance.user.name}`}
+            <div className="balances-container">
+              {/* Balance Summary */}
+              <div className="balance-summary-header">
+                <h3>Overall, you are owed</h3>
+                <div className="total-owed-amount">
+                  TWD {balances.summary.totalOwed ? balances.summary.totalOwed.toFixed(2) : '0.00'}
+                </div>
+              </div>
+
+              {/* Individual Balance Items */}
+              <div className="balance-items-list">
+                {balances.balances.map((balance, index) => (
+                  <div key={index} className={`balance-item-modern ${balance.type}`}>
+                    <div className="balance-user-info">
+                      <UserPhoto user={balance.user} size="small" />
+                      <div className="balance-user-details">
+                        <span className="user-name">{balance.user.name}</span>
+                        <span className="balance-description">
+                          {balance.type === 'owes_you' ? 'owes you' : 'you owe'}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="balance-amount-modern">
+                      <span className={`amount-value ${balance.type}`}>
+                        {balance.currency || 'TWD'} {balance.amount.toFixed(2)}
                       </span>
-                      <small className="balance-note">
-                        {balance.type === 'owes_you' ? 
-                          'They should pay you' : 
-                          'You should pay them'}
-                      </small>
                     </div>
                   </div>
-                  <div className="balance-amount">
-                    <span className="amount">
-                      {balance.currency || 'TWD'} {balance.amount.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
         </div>

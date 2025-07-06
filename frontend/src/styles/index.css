@@ -4847,3 +4847,144 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   margin-top: 2px;
   font-weight: normal;
 }
+
+/* Modern Balance Block Styling */
+.balances-container {
+  background: var(--card-background);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-xl);
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border-light);
+}
+
+.balance-summary-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.balance-summary-header h3 {
+  margin: 0 0 var(--spacing-sm) 0;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.total-owed-amount {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--success-color);
+  margin: 0;
+}
+
+.balance-items-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+.balance-item-modern {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing);
+  background: var(--background-primary);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.balance-item-modern:hover {
+  background: var(--background-secondary);
+  transform: translateY(-1px);
+}
+
+.balance-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+  flex: 1;
+}
+
+.balance-user-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.balance-description {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.balance-amount-modern {
+  text-align: right;
+}
+
+.amount-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.amount-value.owes_you {
+  color: var(--success-color);
+}
+
+.amount-value.you_owe {
+  color: var(--danger-color);
+}
+
+/* User Photo Enhancements for Modern Design */
+.user-photo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid var(--border-light);
+  flex-shrink: 0;
+}
+
+/* Mobile Responsive for Modern Balance */
+@media (max-width: 768px) {
+  .balances-container {
+    padding: var(--spacing);
+  }
+  
+  .balance-summary-header h3 {
+    font-size: 0.9rem;
+  }
+  
+  .total-owed-amount {
+    font-size: 1.75rem;
+  }
+  
+  .balance-item-modern {
+    padding: var(--spacing-sm);
+  }
+  
+  .user-name {
+    font-size: 0.9rem;
+  }
+  
+  .balance-description {
+    font-size: 0.8rem;
+  }
+  
+  .amount-value {
+    font-size: 1rem;
+  }
+  
+  .user-photo {
+    width: 36px;
+    height: 36px;
+  }
+}
