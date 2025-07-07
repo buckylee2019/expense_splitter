@@ -21,7 +21,6 @@ const GroupDetails = () => {
   const [lastRefresh, setLastRefresh] = useState(null);
   const [showAddMember, setShowAddMember] = useState(false);
   const [showGroupSettings, setShowGroupSettings] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest'
 
   const fetchGroupData = useCallback(async () => {
@@ -147,10 +146,8 @@ const GroupDetails = () => {
     }
 
     try {
-      // Use the correct API endpoint for removing a member
-      await api.post(`/api/groups/${groupId}/remove-member`, {
-        userId: memberUserId
-      });
+      // Use the correct API endpoint: DELETE /api/groups/:id/members/:memberId
+      await api.delete(`/api/groups/${groupId}/members/${memberUserId}`);
       // Refresh group data
       fetchGroupData();
     } catch (err) {
@@ -175,6 +172,13 @@ const GroupDetails = () => {
       return;
     }
 
+    // Temporarily show message that feature is not yet available
+    alert('Photo upload feature is coming soon! The backend API endpoint needs to be implemented.');
+    
+    // Reset the file input
+    event.target.value = '';
+    
+    /* TODO: Implement when backend route is ready
     setUploadingPhoto(true);
     
     try {
@@ -199,6 +203,7 @@ const GroupDetails = () => {
     } finally {
       setUploadingPhoto(false);
     }
+    */
   };
 
   // Sort expenses by date
@@ -524,11 +529,11 @@ const GroupDetails = () => {
                     />
                     <button 
                       onClick={() => document.getElementById('group-photo-upload').click()}
-                      className="btn btn-primary"
-                      disabled={uploadingPhoto}
+                      className="btn btn-secondary"
+                      title="Photo upload feature coming soon"
                     >
                       <i className="fi fi-rr-camera"></i> 
-                      {uploadingPhoto ? 'Uploading...' : 'Change Photo'}
+                      Change Photo (Coming Soon)
                     </button>
                     {group.photo && (
                       <button 
