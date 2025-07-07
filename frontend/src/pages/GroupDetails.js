@@ -21,6 +21,7 @@ const GroupDetails = () => {
   const [lastRefresh, setLastRefresh] = useState(null);
   const [showAddMember, setShowAddMember] = useState(false);
   const [showGroupSettings, setShowGroupSettings] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest'
 
   const fetchGroupData = useCallback(async () => {
@@ -158,6 +159,48 @@ const GroupDetails = () => {
     }
   };
 
+  const handlePhotoUpload = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      
+      const response = await api.post(`/api/groups/${groupId}/upload-photo`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      // Update group data with new photo
+      setGroup(prev => ({
+        ...prev,
+        photo: response.data.photoUrl
+      }));
+      
+    } catch (err) {
+      console.error('Error uploading photo:', err);
+      alert('Failed to upload photo: ' + (err.response?.data?.error || err.message));
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
   // Sort expenses by date
   const sortExpenses = (expensesList, order) => {
     return [...expensesList].sort((a, b) => {
@@ -202,19 +245,31 @@ const GroupDetails = () => {
       )}
       
       <div className="group-info-compact">
-        <div className="group-header-with-settings">
-          <h1 className="group-name">
-            {group.name}
-            {isGroupAdmin() && (
-              <button 
-                onClick={() => setShowGroupSettings(true)}
-                className="btn btn-small btn-secondary settings-btn"
-                title="Group settings"
-              >
-                <i className="fi fi-rr-settings"></i> Settings
-              </button>
-            )}
-          </h1>
+        {/* Group Banner */}
+        <div className="group-banner">
+          <div 
+            className="banner-image"
+            style={{
+              backgroundImage: `url(${group.photo || '/background.png'})`,
+            }}
+          >
+            <div className="banner-overlay">
+              {isGroupAdmin() && (
+                <button 
+                  onClick={() => setShowGroupSettings(true)}
+                  className="settings-btn-banner"
+                  title="Group settings"
+                >
+                  <i className="fi fi-rr-settings"></i>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Group Name */}
+        <div className="group-name-section">
+          <h1 className="group-name-large">{group.name}</h1>
         </div>
 
         {balances.length > 0 ? (
@@ -447,6 +502,50 @@ const GroupDetails = () => {
             </div>
             
             <div className="modal-body">
+              {/* Group Photo Section */}
+              <div className="settings-section">
+                <h4><i className="fi fi-rr-picture"></i> Group Photo</h4>
+                <p>Upload a photo for your group banner</p>
+                <div className="photo-upload-section">
+                  <div className="current-photo-preview">
+                    <img 
+                      src={group.photo || '/background.png'} 
+                      alt="Group banner preview"
+                      className="photo-preview"
+                    />
+                  </div>
+                  <div className="photo-upload-controls">
+                    <input
+                      type="file"
+                      id="group-photo-upload"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      style={{ display: 'none' }}
+                    />
+                    <button 
+                      onClick={() => document.getElementById('group-photo-upload').click()}
+                      className="btn btn-primary"
+                      disabled={uploadingPhoto}
+                    >
+                      <i className="fi fi-rr-camera"></i> 
+                      {uploadingPhoto ? 'Uploading...' : 'Change Photo'}
+                    </button>
+                    {group.photo && (
+                      <button 
+                        onClick={() => {
+                          if (window.confirm('Remove group photo and use default background?')) {
+                            setGroup(prev => ({ ...prev, photo: null }));
+                          }
+                        }}
+                        className="btn btn-secondary"
+                      >
+                        <i className="fi fi-rr-trash"></i> Remove Photo
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               {/* Add Member Section */}
               <div className="settings-section">
                 <h4><i className="fi fi-rr-user-add"></i> Add Member</h4>
