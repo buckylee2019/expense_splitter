@@ -20,6 +20,7 @@ const GroupDetails = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [showAddMember, setShowAddMember] = useState(false);
+  const [showGroupSettings, setShowGroupSettings] = useState(false);
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest'
 
   const fetchGroupData = useCallback(async () => {
@@ -139,6 +140,21 @@ const GroupDetails = () => {
     fetchGroupData();
   };
 
+  const handleRemoveMember = async (memberUserId) => {
+    if (!window.confirm('Are you sure you want to remove this member from the group?')) {
+      return;
+    }
+
+    try {
+      await api.delete(`/api/groups/${groupId}/members/${memberUserId}`);
+      // Refresh group data
+      fetchGroupData();
+    } catch (err) {
+      console.error('Error removing member:', err);
+      alert('Failed to remove member: ' + (err.response?.data?.error || err.message));
+    }
+  };
+
   // Sort expenses by date
   const sortExpenses = (expensesList, order) => {
     return [...expensesList].sort((a, b) => {
@@ -201,11 +217,11 @@ const GroupDetails = () => {
               <strong>Members: </strong>
               {isGroupAdmin() && (
                 <button 
-                  onClick={() => setShowAddMember(true)}
-                  className="btn btn-small btn-primary"
-                  title="Add new member"
+                  onClick={() => setShowGroupSettings(true)}
+                  className="btn btn-small btn-secondary"
+                  title="Group settings"
                 >
-                  + Add Member
+                  <i className="fi fi-rr-settings"></i> Settings
                 </button>
               )}
             </div>
@@ -435,6 +451,120 @@ const GroupDetails = () => {
           </div>
         )}
       </div>
+
+      {/* Group Settings Modal */}
+      {showGroupSettings && (
+        <div className="modal-overlay">
+          <div className="modal-content group-settings-modal">
+            <div className="modal-header">
+              <h3><i className="fi fi-rr-settings"></i> Group Settings</h3>
+              <button 
+                onClick={() => setShowGroupSettings(false)}
+                className="close-btn"
+                title="Close"
+              >
+                <i className="fi fi-rr-cross"></i>
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              {/* Add Member Section */}
+              <div className="settings-section">
+                <h4><i className="fi fi-rr-user-add"></i> Add Member</h4>
+                <p>Invite new members to join this group</p>
+                <button 
+                  onClick={() => {
+                    setShowGroupSettings(false);
+                    setShowAddMember(true);
+                  }}
+                  className="btn btn-primary"
+                >
+                  <i className="fi fi-rr-plus"></i> Add New Member
+                </button>
+              </div>
+
+              {/* Remove Member Section */}
+              <div className="settings-section">
+                <h4><i className="fi fi-rr-user-remove"></i> Remove Members</h4>
+                <p>Remove members from this group</p>
+                <div className="members-management-list">
+                  {group.members.map(member => {
+                    const isCurrentUser = member.user === currentUser?.id;
+                    const isAdmin = member.role === 'admin';
+                    const canRemove = isGroupAdmin() && !isCurrentUser && group.members.length > 1;
+                    
+                    return (
+                      <div key={member.user} className="member-management-item">
+                        <div className="member-info">
+                          <span className="member-name">
+                            {member.userName || member.user}
+                            {isCurrentUser && <span className="you-indicator"> (You)</span>}
+                            {isAdmin && <span className="admin-indicator">★ Admin</span>}
+                          </span>
+                        </div>
+                        {canRemove && (
+                          <button 
+                            onClick={() => handleRemoveMember(member.user)}
+                            className="btn btn-small btn-danger"
+                            title="Remove member"
+                          >
+                            <i className="fi fi-rr-trash"></i> Remove
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Expense Splitting Settings */}
+              <div className="settings-section">
+                <h4><i className="fi fi-rr-calculator"></i> Expense Splitting</h4>
+                <p>Configure how expenses are split by default</p>
+                <div className="splitting-options">
+                  <label className="setting-option">
+                    <input 
+                      type="radio" 
+                      name="defaultSplitType" 
+                      value="equal"
+                      defaultChecked
+                    />
+                    <span>Equal Split (Default)</span>
+                    <small>Split expenses equally among all members</small>
+                  </label>
+                  <label className="setting-option">
+                    <input 
+                      type="radio" 
+                      name="defaultSplitType" 
+                      value="weight"
+                    />
+                    <span>Weight-based Split</span>
+                    <small>Split based on custom weights for each member</small>
+                  </label>
+                  <label className="setting-option">
+                    <input 
+                      type="radio" 
+                      name="defaultSplitType" 
+                      value="custom"
+                    />
+                    <span>Custom Split</span>
+                    <small>Manually set amounts for each member</small>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button 
+                onClick={() => setShowGroupSettings(false)}
+                className="btn btn-secondary"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Add Member Modal */}
       {showAddMember && (

@@ -5067,6 +5067,132 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   }
 }
 
+/* Group Settings Modal */
+.group-settings-modal {
+  max-width: 600px;
+  width: 90vw;
+}
+
+.settings-section {
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: 1px solid var(--border-light);
+}
+
+.settings-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.settings-section h4 {
+  margin: 0 0 var(--spacing-xs) 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.settings-section p {
+  margin: 0 0 var(--spacing) 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* Members Management */
+.members-management-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.member-management-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-sm);
+  background: var(--background-secondary);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-light);
+}
+
+.member-info {
+  flex: 1;
+}
+
+.member-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.you-indicator {
+  color: var(--primary-color);
+  font-size: 0.85rem;
+}
+
+.admin-indicator {
+  color: var(--warning-color);
+  font-size: 0.85rem;
+  margin-left: var(--spacing-xs);
+}
+
+/* Splitting Options */
+.splitting-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+.setting-option {
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.setting-option:hover {
+  border-color: var(--primary-color);
+  background: var(--background-secondary);
+}
+
+.setting-option input[type="radio"] {
+  margin-right: var(--spacing-xs);
+}
+
+.setting-option span {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.setting-option small {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-left: 20px;
+}
+
+/* Mobile responsive for group settings */
+@media (max-width: 768px) {
+  .group-settings-modal {
+    width: 95vw;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .member-management-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+  
+  .member-management-item .btn {
+    align-self: flex-end;
+  }
+}
+
 /* User Photo Enhancements for Modern Design */
 .user-photo {
   width: 40px;
