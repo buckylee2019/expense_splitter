@@ -108,7 +108,7 @@ const EditGroup = () => {
     reader.onload = (e) => {
       console.log('Preview created, data length:', e.target.result.length);
       // Check base64 size (should be under 300KB for DynamoDB)
-      if (e.target.result.length > 300000) {
+      if (e.target.result.length > 3 * 1024 * 1024) {
         alert('Image is too large when converted. Please choose a smaller image.');
         setPhotoFile(null);
         setPhotoPreview(group.photo || '');
@@ -344,7 +344,7 @@ const EditGroup = () => {
                       disabled={uploadingPhoto}
                     >
                       <i className="fi fi-rr-trash"></i> 
-                      {uploadingPhoto ? 'Removing...' : 'Remove Photo'}
+                      {uploadingPhoto ? 'Removing...' : 'Remove'}
                     </button>
                   )}
                 </div>
@@ -359,7 +359,7 @@ const EditGroup = () => {
               className="btn btn-primary"
               disabled={saving}
             >
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? 'Saving...' : 'Save'}
             </button>
           </form>
         </div>
@@ -379,7 +379,7 @@ const EditGroup = () => {
                   placeholder="Enter email address"
                 />
                 <button type="submit" className="btn btn-primary">
-                  Add Member
+                  Add
                 </button>
               </div>
             </div>

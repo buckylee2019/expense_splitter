@@ -210,6 +210,11 @@ const GroupDetails = () => {
             }}
           >
             <div className="banner-overlay">
+              {/* Group Name Overlay */}
+              <div className="group-name-overlay">
+                <h1 className="group-name-large">{group.name}</h1>
+              </div>
+              
               {isGroupAdmin() && (
                 <button 
                   onClick={() => setShowGroupSettings(true)}
@@ -221,11 +226,6 @@ const GroupDetails = () => {
               )}
             </div>
           </div>
-        </div>
-
-        {/* Group Name */}
-        <div className="group-name-section">
-          <h1 className="group-name-large">{group.name}</h1>
         </div>
 
         {balances.length > 0 ? (
@@ -467,7 +467,7 @@ const GroupDetails = () => {
                   className="btn btn-primary"
                   onClick={() => setShowGroupSettings(false)}
                 >
-                  <i className="fi fi-rr-edit"></i> Edit Group
+                  <i className="fi fi-rr-edit"></i> Edit
                 </Link>
               </div>
 
@@ -482,7 +482,7 @@ const GroupDetails = () => {
                   }}
                   className="btn btn-primary"
                 >
-                  <i className="fi fi-rr-plus"></i> Add Member
+                  <i className="fi fi-rr-plus"></i> Add
                 </button>
               </div>
 
