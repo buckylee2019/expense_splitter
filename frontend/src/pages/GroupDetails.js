@@ -146,7 +146,10 @@ const GroupDetails = () => {
     }
 
     try {
-      await api.delete(`/api/groups/${groupId}/members/${memberUserId}`);
+      // Use the correct API endpoint for removing a member
+      await api.post(`/api/groups/${groupId}/remove-member`, {
+        userId: memberUserId
+      });
       // Refresh group data
       fetchGroupData();
     } catch (err) {
@@ -199,48 +202,24 @@ const GroupDetails = () => {
       )}
       
       <div className="group-info-compact">
-        <div className="group-summary card">
-          <div className="group-basic-info">
-            <p className="group-description">{group.description}</p>
-            <div className="group-stats">
-              <span className="stat">
-                <strong>{group.members.length}</strong> members
-              </span>
-              <span className="stat">
-                <strong>{expenses.length}</strong> expenses
-              </span>
-            </div>
-          </div>
-          
-          <div className="members-compact">
-            <div className="members-header">
-              <strong>Members: </strong>
-              {isGroupAdmin() && (
-                <button 
-                  onClick={() => setShowGroupSettings(true)}
-                  className="btn btn-small btn-secondary"
-                  title="Group settings"
-                >
-                  <i className="fi fi-rr-settings"></i> Settings
-                </button>
-              )}
-            </div>
-            <div className="members-list">
-              {group.members.map((member, index) => (
-                <span key={member.user} className="member-tag">
-                  {member.userName || member.user}
-                  {member.role === 'admin' && <span className="admin-indicator">★</span>}
-                  {index < group.members.length - 1 && ', '}
-                </span>
-              ))}
-            </div>
-          </div>
+        <div className="group-header-with-settings">
+          <h1 className="group-name">
+            {group.name}
+            {isGroupAdmin() && (
+              <button 
+                onClick={() => setShowGroupSettings(true)}
+                className="btn btn-small btn-secondary settings-btn"
+                title="Group settings"
+              >
+                <i className="fi fi-rr-settings"></i> Settings
+              </button>
+            )}
+          </h1>
         </div>
 
         {balances.length > 0 ? (
           <div className="balances-compact card">
             <div className="balances-header">
-              <h4>Quick Balances</h4>
               <button 
                 onClick={toggleOptimization}
                 className={`button ${useOptimized ? 'primary' : 'secondary'} small`}
@@ -519,36 +498,30 @@ const GroupDetails = () => {
 
               {/* Expense Splitting Settings */}
               <div className="settings-section">
-                <h4><i className="fi fi-rr-calculator"></i> Expense Splitting</h4>
-                <p>Configure how expenses are split by default</p>
+                <h4><i className="fi fi-rr-target"></i> Debt Optimization</h4>
+                <p>Configure how balances are calculated and displayed</p>
                 <div className="splitting-options">
                   <label className="setting-option">
                     <input 
                       type="radio" 
-                      name="defaultSplitType" 
-                      value="equal"
-                      defaultChecked
+                      name="debtOptimization" 
+                      value="optimized"
+                      checked={useOptimized}
+                      onChange={() => setUseOptimized(true)}
                     />
-                    <span>Equal Split (Default)</span>
-                    <small>Split expenses equally among all members</small>
+                    <span>Optimized Transfers</span>
+                    <small>Minimize the number of transactions needed to settle all debts</small>
                   </label>
                   <label className="setting-option">
                     <input 
                       type="radio" 
-                      name="defaultSplitType" 
-                      value="weight"
+                      name="debtOptimization" 
+                      value="direct"
+                      checked={!useOptimized}
+                      onChange={() => setUseOptimized(false)}
                     />
-                    <span>Weight-based Split</span>
-                    <small>Split based on custom weights for each member</small>
-                  </label>
-                  <label className="setting-option">
-                    <input 
-                      type="radio" 
-                      name="defaultSplitType" 
-                      value="custom"
-                    />
-                    <span>Custom Split</span>
-                    <small>Manually set amounts for each member</small>
+                    <span>Direct Transfers</span>
+                    <small>Show direct transfers between each pair of people</small>
                   </label>
                 </div>
               </div>

@@ -5114,15 +5114,19 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   background: var(--background-secondary);
   border-radius: var(--radius);
   border: 1px solid var(--border-light);
+  min-height: 50px; /* Ensure consistent height */
 }
 
 .member-info {
   flex: 1;
+  display: flex;
+  align-items: center;
 }
 
 .member-name {
   font-weight: 500;
   color: var(--text-primary);
+  line-height: 1.4;
 }
 
 .you-indicator {
@@ -5134,6 +5138,12 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: var(--warning-color);
   font-size: 0.85rem;
   margin-left: var(--spacing-xs);
+}
+
+/* Ensure buttons don't affect height */
+.member-management-item .btn {
+  flex-shrink: 0;
+  height: 32px; /* Fixed button height */
 }
 
 /* Splitting Options */
@@ -5186,9 +5196,58 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--spacing-xs);
+    min-height: 70px; /* Slightly taller for mobile stacked layout */
+  }
+  
+  .member-info {
+    width: 100%;
   }
   
   .member-management-item .btn {
+    align-self: flex-end;
+    height: 32px; /* Maintain consistent button height */
+  }
+}
+
+/* Group Header with Settings */
+.group-header-with-settings {
+  margin-bottom: var(--spacing-lg);
+}
+
+.group-name {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.settings-btn {
+  margin-left: var(--spacing);
+  flex-shrink: 0;
+}
+
+/* Balances header without title */
+.balances-header {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: var(--spacing);
+}
+
+/* Mobile responsive for group header */
+@media (max-width: 768px) {
+  .group-name {
+    font-size: 1.5rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs);
+  }
+  
+  .settings-btn {
+    margin-left: 0;
     align-self: flex-end;
   }
 }
