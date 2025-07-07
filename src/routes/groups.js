@@ -351,21 +351,34 @@ router.delete('/:id/members/:memberId', authMiddleware, async (req, res) => {
 // Update group photo
 router.put('/:id/photo', authMiddleware, async (req, res) => {
   try {
+    console.log('Photo upload request received for group:', req.params.id);
+    
     const group = await Group.findById(req.params.id);
     if (!group) {
+      console.log('Group not found:', req.params.id);
       return res.status(404).json({ error: 'Group not found' });
     }
 
     // Check if user is admin
     if (!group.isAdmin(req.user.id)) {
+      console.log('User not admin:', req.user.id);
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
     const { photo } = req.body;
+    console.log('Photo data received, length:', photo ? photo.length : 'null');
+    
+    // Check if photo is too large (DynamoDB has 400KB item limit)
+    if (photo && photo.length > 350000) { // 350KB limit to be safe
+      console.log('Photo too large for DynamoDB:', photo.length);
+      return res.status(400).json({ error: 'Photo is too large. Please choose a smaller image.' });
+    }
     
     // Update group with new photo
     group.photo = photo;
+    console.log('Saving group with photo...');
     await group.save();
+    console.log('Group saved successfully');
 
     const populatedGroup = await populateMemberNames(group);
     
@@ -375,6 +388,11 @@ router.put('/:id/photo', authMiddleware, async (req, res) => {
       photoUrl: photo
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.error('Error updating group photo:', error);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      details: process.env.NODE_ENV === 'dev' ? error.stack : undefined
+    });
   }
 });

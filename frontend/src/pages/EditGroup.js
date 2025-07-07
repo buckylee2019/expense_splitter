@@ -57,10 +57,10 @@ const EditGroup = () => {
       return;
     }
 
-    // Validate file size (max 2MB)
-    if (file.size > 2 * 1024 * 1024) {
+    // Validate file size (max 1MB to ensure base64 stays under DynamoDB limit)
+    if (file.size > 1 * 1024 * 1024) {
       console.log('File too large:', file.size);
-      alert('Image size should be less than 2MB');
+      alert('Image size should be less than 1MB for optimal performance');
       return;
     }
 
@@ -71,6 +71,13 @@ const EditGroup = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       console.log('Preview created, data length:', e.target.result.length);
+      // Check base64 size
+      if (e.target.result.length > 350000) {
+        alert('Image is too large when converted. Please choose a smaller image.');
+        setPhotoFile(null);
+        setPhotoPreview(group.photo || '');
+        return;
+      }
       setPhotoPreview(e.target.result);
     };
     reader.readAsDataURL(file);
@@ -306,7 +313,7 @@ const EditGroup = () => {
                   )}
                 </div>
                 <small className="form-help">
-                  Upload a group photo (max 2MB). Supported formats: JPG, PNG, GIF
+                  Upload a group photo (max 1MB). Supported formats: JPG, PNG, GIF
                 </small>
               </div>
             </div>

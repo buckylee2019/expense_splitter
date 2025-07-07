@@ -467,7 +467,7 @@ const GroupDetails = () => {
                   className="btn btn-primary"
                   onClick={() => setShowGroupSettings(false)}
                 >
-                  <i className="fi fi-rr-edit"></i> Edit Group Details
+                  <i className="fi fi-rr-edit"></i> Edit Group
                 </Link>
               </div>
 
@@ -482,7 +482,7 @@ const GroupDetails = () => {
                   }}
                   className="btn btn-primary"
                 >
-                  <i className="fi fi-rr-plus"></i> Add New Member
+                  <i className="fi fi-rr-plus"></i> Add Member
                 </button>
               </div>
 
@@ -511,7 +511,7 @@ const GroupDetails = () => {
                             className="btn btn-small btn-danger"
                             title="Remove member"
                           >
-                            <i className="fi fi-rr-trash"></i> Remove
+                            <i className="fi fi-rr-trash"></i>
                           </button>
                         )}
                       </div>
