@@ -369,9 +369,13 @@ router.put('/:id/photo', authMiddleware, async (req, res) => {
     console.log('Photo data received, length:', photo ? photo.length : 'null');
     
     // Check if photo is too large (DynamoDB has 400KB item limit)
-    if (photo && photo.length > 350000) { // 350KB limit to be safe
-      console.log('Photo too large for DynamoDB:', photo.length);
-      return res.status(400).json({ error: 'Photo is too large. Please choose a smaller image.' });
+    // Base64 data should be under 300KB to leave room for other group data
+    if (photo && photo.length > 300000) { // 300KB limit to be safe
+      console.log('Photo too large for DynamoDB:', photo.length, 'bytes');
+      return res.status(400).json({ 
+        error: 'Photo is too large for storage. Please choose a smaller image or compress it.',
+        details: `Image size: ${Math.round(photo.length / 1024)}KB, Maximum: 300KB`
+      });
     }
     
     // Update group with new photo

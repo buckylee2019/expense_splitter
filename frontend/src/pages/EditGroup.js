@@ -40,6 +40,33 @@ const EditGroup = () => {
     }
   };
 
+  // Image compression function
+  const compressImage = (file, maxWidth = 1200, quality = 0.8) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        // Calculate new dimensions
+        let { width, height } = img;
+        if (width > maxWidth) {
+          height = (height * maxWidth) / width;
+          width = maxWidth;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        
+        // Draw and compress
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(resolve, 'image/jpeg', quality);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  };
+
   const handlePhotoUpload = async (event) => {
     console.log('handlePhotoUpload called', event);
     const file = event.target.files[0];
@@ -57,22 +84,31 @@ const EditGroup = () => {
       return;
     }
 
-    // Validate file size (max 1MB to ensure base64 stays under DynamoDB limit)
-    if (file.size > 1 * 1024 * 1024) {
+    // Validate file size (max 5MB, will be compressed automatically)
+    if (file.size > 5 * 1024 * 1024) {
       console.log('File too large:', file.size);
-      alert('Image size should be less than 1MB for optimal performance');
+      alert('Image size should be less than 5MB');
       return;
     }
 
-    console.log('File validation passed, creating preview...');
-    setPhotoFile(file);
+    console.log('File validation passed, processing...');
+    
+    // Compress image if it's larger than 1MB
+    let processedFile = file;
+    if (file.size > 1 * 1024 * 1024) {
+      console.log('Compressing large image...');
+      processedFile = await compressImage(file);
+      console.log('Image compressed from', file.size, 'to', processedFile.size);
+    }
+    
+    setPhotoFile(processedFile);
     
     // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
       console.log('Preview created, data length:', e.target.result.length);
-      // Check base64 size
-      if (e.target.result.length > 350000) {
+      // Check base64 size (should be under 300KB for DynamoDB)
+      if (e.target.result.length > 300000) {
         alert('Image is too large when converted. Please choose a smaller image.');
         setPhotoFile(null);
         setPhotoPreview(group.photo || '');
@@ -80,7 +116,7 @@ const EditGroup = () => {
       }
       setPhotoPreview(e.target.result);
     };
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(processedFile);
   };
 
   const saveGroupPhoto = async () => {
@@ -313,7 +349,7 @@ const EditGroup = () => {
                   )}
                 </div>
                 <small className="form-help">
-                  Upload a group photo (max 1MB). Supported formats: JPG, PNG, GIF
+                  Upload a group photo (max 5MB, automatically compressed). Supported formats: JPG, PNG, GIF
                 </small>
               </div>
             </div>
