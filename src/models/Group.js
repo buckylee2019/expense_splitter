@@ -106,6 +106,12 @@ class Group {
     }
   }
 
+  removeMember(userId) {
+    this.members = this.members.filter(member => 
+      typeof member === 'object' ? member.user !== userId : member !== userId
+    );
+  }
+
   isAdmin(userId) {
     const member = this.members.find(member => 
       typeof member === 'object' ? member.user === userId : member === userId
