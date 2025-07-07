@@ -11,9 +11,13 @@ const EditGroup = () => {
   const [group, setGroup] = useState({
     name: '',
     description: '',
+    photo: null,
     members: []
   });
   const [newMemberEmail, setNewMemberEmail] = useState('');
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
   useEffect(() => {
     fetchGroup();
@@ -24,11 +28,119 @@ const EditGroup = () => {
       setLoading(true);
       const response = await api.get(`/api/groups/${id}`);
       setGroup(response.data);
+      // Set initial photo preview if group has a photo
+      if (response.data.photo) {
+        setPhotoPreview(response.data.photo);
+      }
     } catch (error) {
       console.error('Error fetching group:', error);
       setError('Failed to load group details');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePhotoUpload = async (event) => {
+    console.log('handlePhotoUpload called', event);
+    const file = event.target.files[0];
+    console.log('Selected file:', file);
+    
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      console.log('Invalid file type:', file.type);
+      alert('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      console.log('File too large:', file.size);
+      alert('Image size should be less than 2MB');
+      return;
+    }
+
+    console.log('File validation passed, creating preview...');
+    setPhotoFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      console.log('Preview created, data length:', e.target.result.length);
+      setPhotoPreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const saveGroupPhoto = async () => {
+    if (!photoFile) return;
+
+    setUploadingPhoto(true);
+    
+    try {
+      // Convert photo to base64
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const photoData = {
+          photo: e.target.result
+        };
+        
+        console.log('Uploading photo to:', `/api/groups/${id}/photo`);
+        console.log('Photo data size:', e.target.result.length);
+        
+        const response = await api.put(`/api/groups/${id}/photo`, photoData);
+        
+        console.log('Upload response:', response.data);
+        
+        // Update group data with new photo
+        setGroup(prev => ({
+          ...prev,
+          photo: response.data.photoUrl || e.target.result
+        }));
+        
+        // Clear the photo file after successful upload
+        setPhotoFile(null);
+        
+        alert('Group photo updated successfully!');
+        setUploadingPhoto(false);
+      };
+      reader.readAsDataURL(photoFile);
+      
+    } catch (err) {
+      console.error('Error uploading photo:', err);
+      alert('Failed to upload photo: ' + (err.response?.data?.error || err.message));
+      setUploadingPhoto(false);
+    }
+  };
+
+  const removeGroupPhoto = async () => {
+    try {
+      setUploadingPhoto(true);
+      
+      const response = await api.put(`/api/groups/${id}/photo`, {
+        photo: null
+      });
+      
+      // Update group data to remove photo
+      setGroup(prev => ({
+        ...prev,
+        photo: null
+      }));
+      
+      // Clear preview states
+      setPhotoFile(null);
+      setPhotoPreview('');
+      
+      alert('Group photo removed successfully!');
+      setUploadingPhoto(false);
+    } catch (err) {
+      console.error('Error removing photo:', err);
+      alert('Failed to remove photo: ' + (err.response?.data?.error || err.message));
+      setUploadingPhoto(false);
     }
   };
 
@@ -126,6 +238,77 @@ const EditGroup = () => {
                 placeholder="Enter group description (optional)"
                 rows="3"
               />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="group-photo">Group Photo</label>
+              <div className="photo-upload-section">
+                <div className="current-photo-preview">
+                  <img 
+                    src={photoPreview || group.photo || '/background.png'} 
+                    alt="Group banner preview"
+                    className="photo-preview"
+                  />
+                </div>
+                <div className="photo-upload-controls">
+                  <input
+                    type="file"
+                    id="group-photo-upload"
+                    accept="image/*"
+                    onChange={handlePhotoUpload}
+                    className="photo-input"
+                    style={{ display: 'none' }}
+                  />
+                  <label 
+                    htmlFor="group-photo-upload" 
+                    className="btn btn-primary photo-upload-btn"
+                  >
+                    <i className="fi fi-rr-camera"></i> 
+                    Choose Photo
+                  </label>
+                  {(photoPreview || photoFile) && (
+                    <>
+                      <button 
+                        type="button"
+                        onClick={saveGroupPhoto}
+                        className="btn btn-success"
+                        disabled={uploadingPhoto}
+                      >
+                        <i className="fi fi-rr-check"></i> 
+                        {uploadingPhoto ? 'Saving...' : 'Save Photo'}
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={() => {
+                          setPhotoFile(null);
+                          setPhotoPreview(group.photo || '');
+                        }}
+                        className="btn btn-secondary"
+                      >
+                        <i className="fi fi-rr-cross"></i> Cancel
+                      </button>
+                    </>
+                  )}
+                  {group.photo && !photoFile && (
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm('Remove group photo and use default background?')) {
+                          removeGroupPhoto();
+                        }
+                      }}
+                      className="btn btn-danger"
+                      disabled={uploadingPhoto}
+                    >
+                      <i className="fi fi-rr-trash"></i> 
+                      {uploadingPhoto ? 'Removing...' : 'Remove Photo'}
+                    </button>
+                  )}
+                </div>
+                <small className="form-help">
+                  Upload a group photo (max 2MB). Supported formats: JPG, PNG, GIF
+                </small>
+              </div>
             </div>
 
             <button 
