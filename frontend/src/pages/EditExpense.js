@@ -53,10 +53,23 @@ const EditExpense = () => {
           notes: expense.notes || ''
         });
         
-        setSplits((expense.splits || []).map(split => ({
-          ...split,
-          included: split.amount > 0 // If amount > 0, consider it included
-        })));
+        // Create splits for all group members, not just those in the original expense
+        const allMemberSplits = groupRes.data.members.map(member => {
+          const existingSplit = expense.splits?.find(split => 
+            (split.userId || split.user) === member.user
+          );
+          
+          return {
+            userId: member.user,
+            user: member.user,
+            userName: member.userName,
+            amount: existingSplit ? existingSplit.amount : 0,
+            weight: existingSplit ? (existingSplit.weight || 1) : 1,
+            included: existingSplit ? existingSplit.amount > 0 : false
+          };
+        });
+        
+        setSplits(allMemberSplits);
         setError('');
       } catch (err) {
         setError('Failed to load expense details');
