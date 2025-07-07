@@ -185,16 +185,6 @@ const GroupDetails = () => {
     reader.readAsDataURL(file);
   };
 
-  const removeGroupPhoto = () => {
-    setPhotoFile(null);
-    setPhotoPreview('');
-    // Update group data to remove photo
-    setGroup(prev => ({
-      ...prev,
-      photo: null
-    }));
-  };
-
   const saveGroupPhoto = async () => {
     if (!photoFile) return;
 
@@ -208,7 +198,12 @@ const GroupDetails = () => {
           photo: e.target.result
         };
         
+        console.log('Uploading photo to:', `/api/groups/${groupId}/photo`);
+        console.log('Photo data size:', e.target.result.length);
+        
         const response = await api.put(`/api/groups/${groupId}/photo`, photoData);
+        
+        console.log('Upload response:', response.data);
         
         // Update group data with new photo
         setGroup(prev => ({
@@ -228,6 +223,33 @@ const GroupDetails = () => {
     } catch (err) {
       console.error('Error uploading photo:', err);
       alert('Failed to upload photo: ' + (err.response?.data?.error || err.message));
+      setUploadingPhoto(false);
+    }
+  };
+
+  const removeGroupPhoto = async () => {
+    try {
+      setUploadingPhoto(true);
+      
+      const response = await api.put(`/api/groups/${groupId}/photo`, {
+        photo: null
+      });
+      
+      // Update group data to remove photo
+      setGroup(prev => ({
+        ...prev,
+        photo: null
+      }));
+      
+      // Clear preview states
+      setPhotoFile(null);
+      setPhotoPreview('');
+      
+      alert('Group photo removed successfully!');
+      setUploadingPhoto(false);
+    } catch (err) {
+      console.error('Error removing photo:', err);
+      alert('Failed to remove photo: ' + (err.response?.data?.error || err.message));
       setUploadingPhoto(false);
     }
   };
@@ -584,12 +606,13 @@ const GroupDetails = () => {
                         onClick={() => {
                           if (window.confirm('Remove group photo and use default background?')) {
                             removeGroupPhoto();
-                            saveGroupPhoto();
                           }
                         }}
                         className="btn btn-danger"
+                        disabled={uploadingPhoto}
                       >
-                        <i className="fi fi-rr-trash"></i> Remove Photo
+                        <i className="fi fi-rr-trash"></i> 
+                        {uploadingPhoto ? 'Removing...' : 'Remove Photo'}
                       </button>
                     )}
                   </div>
