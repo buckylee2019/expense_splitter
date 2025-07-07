@@ -418,7 +418,7 @@ const EditExpense = () => {
                       <label>Weight:</label>
                       <input
                         type="number"
-                        value={split.weight || 1}
+                        value={split.weight !== undefined ? split.weight : 1}
                         onChange={(e) => handleWeightChange(split.userId || split.user, e.target.value)}
                         step="0.1"
                         min="0"

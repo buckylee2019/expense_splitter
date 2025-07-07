@@ -425,7 +425,8 @@ const AddExpense = () => {
           <div className="splits-list">
             {splits.map((split, index) => {
               const member = group.members.find(m => m.user === split.userId);
-              const weight = weights.find(w => w.userId === split.userId)?.weight || 1;
+              const weightObj = weights.find(w => w.userId === split.userId);
+              const weight = weightObj?.weight !== undefined ? weightObj.weight : 1;
               
               return (
                 <div key={split.userId} className={`split-item ${formData.splitType === 'equal' && !split.included ? 'excluded' : ''}`}>
