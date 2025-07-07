@@ -84,6 +84,8 @@ const GroupDetails = () => {
 
   useEffect(() => {
     fetchGroupData();
+    console.log('GroupDetails component mounted');
+    console.log('handlePhotoUpload function:', typeof handlePhotoUpload);
   }, [fetchGroupData]);
 
   // Add event listeners for automatic refresh
@@ -160,26 +162,36 @@ const GroupDetails = () => {
   };
 
   const handlePhotoUpload = async (event) => {
+    console.log('handlePhotoUpload called', event);
     const file = event.target.files[0];
-    if (!file) return;
+    console.log('Selected file:', file);
+    
+    if (!file) {
+      console.log('No file selected');
+      return;
+    }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
+      console.log('Invalid file type:', file.type);
       alert('Please select a valid image file');
       return;
     }
 
     // Validate file size (max 2MB like Profile.js)
     if (file.size > 2 * 1024 * 1024) {
+      console.log('File too large:', file.size);
       alert('Image size should be less than 2MB');
       return;
     }
 
+    console.log('File validation passed, creating preview...');
     setPhotoFile(file);
     
     // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
+      console.log('Preview created, data length:', e.target.result.length);
       setPhotoPreview(e.target.result);
     };
     reader.readAsDataURL(file);
@@ -583,6 +595,15 @@ const GroupDetails = () => {
                       <i className="fi fi-rr-camera"></i> 
                       Choose Photo
                     </label>
+                    <button 
+                      onClick={() => {
+                        console.log('Test button clicked');
+                        document.getElementById('group-photo-upload').click();
+                      }}
+                      className="btn btn-secondary"
+                    >
+                      Test Upload
+                    </button>
                     {(photoPreview || photoFile) && (
                       <>
                         <button 
