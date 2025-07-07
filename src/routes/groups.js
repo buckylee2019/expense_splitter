@@ -347,3 +347,34 @@ router.delete('/:id/members/:memberId', authMiddleware, async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
+// Update group photo
+router.put('/:id/photo', authMiddleware, async (req, res) => {
+  try {
+    const group = await Group.findById(req.params.id);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    // Check if user is admin
+    if (!group.isAdmin(req.user.id)) {
+      return res.status(403).json({ error: 'Insufficient permissions' });
+    }
+
+    const { photo } = req.body;
+    
+    // Update group with new photo
+    group.photo = photo;
+    await group.save();
+
+    const populatedGroup = await populateMemberNames(group);
+    
+    res.json({
+      message: 'Group photo updated successfully',
+      group: populatedGroup,
+      photoUrl: photo
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});

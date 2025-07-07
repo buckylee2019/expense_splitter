@@ -21,6 +21,9 @@ const GroupDetails = () => {
   const [lastRefresh, setLastRefresh] = useState(null);
   const [showAddMember, setShowAddMember] = useState(false);
   const [showGroupSettings, setShowGroupSettings] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest'
 
   const fetchGroupData = useCallback(async () => {
@@ -162,48 +165,71 @@ const GroupDetails = () => {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      alert('Please select an image file');
+      alert('Please select a valid image file');
       return;
     }
 
-    // Validate file size (max 5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('Image size should be less than 5MB');
+    // Validate file size (max 2MB like Profile.js)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image size should be less than 2MB');
       return;
     }
 
-    // Temporarily show message that feature is not yet available
-    alert('Photo upload feature is coming soon! The backend API endpoint needs to be implemented.');
+    setPhotoFile(file);
     
-    // Reset the file input
-    event.target.value = '';
-    
-    /* TODO: Implement when backend route is ready
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPhotoPreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeGroupPhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview('');
+    // Update group data to remove photo
+    setGroup(prev => ({
+      ...prev,
+      photo: null
+    }));
+  };
+
+  const saveGroupPhoto = async () => {
+    if (!photoFile) return;
+
     setUploadingPhoto(true);
     
     try {
-      const formData = new FormData();
-      formData.append('photo', file);
-      
-      const response = await api.post(`/api/groups/${groupId}/upload-photo`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      
-      // Update group data with new photo
-      setGroup(prev => ({
-        ...prev,
-        photo: response.data.photoUrl
-      }));
+      // Convert photo to base64 like Profile.js
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const photoData = {
+          photo: e.target.result
+        };
+        
+        const response = await api.put(`/api/groups/${groupId}/photo`, photoData);
+        
+        // Update group data with new photo
+        setGroup(prev => ({
+          ...prev,
+          photo: response.data.photoUrl || e.target.result
+        }));
+        
+        // Clear the photo file after successful upload
+        setPhotoFile(null);
+        setPhotoPreview('');
+        
+        alert('Group photo updated successfully!');
+        setUploadingPhoto(false);
+      };
+      reader.readAsDataURL(photoFile);
       
     } catch (err) {
       console.error('Error uploading photo:', err);
       alert('Failed to upload photo: ' + (err.response?.data?.error || err.message));
-    } finally {
       setUploadingPhoto(false);
     }
-    */
   };
 
   // Sort expenses by date
@@ -514,7 +540,7 @@ const GroupDetails = () => {
                 <div className="photo-upload-section">
                   <div className="current-photo-preview">
                     <img 
-                      src={group.photo || '/background.png'} 
+                      src={photoPreview || group.photo || '/background.png'} 
                       alt="Group banner preview"
                       className="photo-preview"
                     />
@@ -525,29 +551,51 @@ const GroupDetails = () => {
                       id="group-photo-upload"
                       accept="image/*"
                       onChange={handlePhotoUpload}
+                      className="photo-input"
                       style={{ display: 'none' }}
                     />
-                    <button 
-                      onClick={() => document.getElementById('group-photo-upload').click()}
-                      className="btn btn-secondary"
-                      title="Photo upload feature coming soon"
+                    <label 
+                      htmlFor="group-photo-upload" 
+                      className="btn btn-primary photo-upload-btn"
                     >
                       <i className="fi fi-rr-camera"></i> 
-                      Change Photo (Coming Soon)
-                    </button>
-                    {group.photo && (
+                      Choose Photo
+                    </label>
+                    {(photoPreview || photoFile) && (
+                      <>
+                        <button 
+                          onClick={saveGroupPhoto}
+                          className="btn btn-success"
+                          disabled={uploadingPhoto}
+                        >
+                          <i className="fi fi-rr-check"></i> 
+                          {uploadingPhoto ? 'Saving...' : 'Save Photo'}
+                        </button>
+                        <button 
+                          onClick={removeGroupPhoto}
+                          className="btn btn-secondary"
+                        >
+                          <i className="fi fi-rr-cross"></i> Cancel
+                        </button>
+                      </>
+                    )}
+                    {group.photo && !photoPreview && (
                       <button 
                         onClick={() => {
                           if (window.confirm('Remove group photo and use default background?')) {
-                            setGroup(prev => ({ ...prev, photo: null }));
+                            removeGroupPhoto();
+                            saveGroupPhoto();
                           }
                         }}
-                        className="btn btn-secondary"
+                        className="btn btn-danger"
                       >
                         <i className="fi fi-rr-trash"></i> Remove Photo
                       </button>
                     )}
                   </div>
+                  <small className="form-help">
+                    Upload a group photo (max 2MB). Supported formats: JPG, PNG, GIF
+                  </small>
                 </div>
               </div>
 

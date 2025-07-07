@@ -9,6 +9,7 @@ class Group {
     this.id = data.id || uuidv4();
     this.name = data.name;
     this.description = data.description;
+    this.photo = data.photo || null;
     this.members = data.members || [];
     this.createdBy = data.createdBy;
     this.isActive = data.isActive !== undefined ? data.isActive : true;

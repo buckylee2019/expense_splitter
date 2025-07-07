@@ -5323,6 +5323,24 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   display: flex;
   gap: var(--spacing-xs);
   flex-wrap: wrap;
+  align-items: center;
+}
+
+.photo-input {
+  display: none;
+}
+
+.photo-upload-btn {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.form-help {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin-top: var(--spacing-xs);
 }
 
 /* Balances header without title */
