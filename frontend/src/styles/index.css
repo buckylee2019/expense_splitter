@@ -1714,7 +1714,8 @@ p {
 /* Compact Group Layout Styles */
 .group-info-compact {
   display: flex;
-  gap: var(--spacing-lg);
+  flex-direction: column; /* Always stack vertically */
+  gap: var(--spacing-sm);
   margin-bottom: var(--spacing-xl);
 }
 
@@ -2224,11 +2225,6 @@ p {
 
 /* Responsive Design */
 @media (max-width: 768px) {
-  .group-info-compact {
-    flex-direction: column;
-    gap: var(--spacing);
-  }
-  
   .balances-compact, .all-settled-message {
     min-width: auto;
   }
