@@ -60,10 +60,6 @@ const GroupDetails = () => {
     }
   }, [groupId, useOptimized]);
 
-  // Toggle between optimized and original balance calculation
-  const toggleOptimization = () => {
-    setUseOptimized(!useOptimized);
-  };
 
   // Handle settle button click
   const handleSettleClick = (balance) => {
@@ -230,16 +226,6 @@ const GroupDetails = () => {
 
         {balances.length > 0 ? (
           <div className="balances-compact card">
-            <div className="balances-header">
-              <button 
-                onClick={toggleOptimization}
-                className={`button ${useOptimized ? 'primary' : 'secondary'} small`}
-                title={useOptimized ? 'Using optimized transfers (fewer transactions)' : 'Using direct transfers'}
-              >
-                {useOptimized ? '🎯 Optimized' : '📊 Direct'}
-              </button>
-            </div>
-            
             <div className="balances-summary">
               {(() => {
                 // Helper function to get currency symbol
@@ -467,7 +453,7 @@ const GroupDetails = () => {
                   className="btn btn-primary"
                   onClick={() => setShowGroupSettings(false)}
                 >
-                  <i className="fi fi-rr-edit"></i> Edit
+                  <i className="fi fi-rr-edit"></i>&nbsp;Edit
                 </Link>
               </div>
 
@@ -482,7 +468,7 @@ const GroupDetails = () => {
                   }}
                   className="btn btn-primary"
                 >
-                  <i className="fi fi-rr-plus"></i> Add
+                  <i className="fi fi-rr-plus"></i>&nbsp;Add
                 </button>
               </div>
 

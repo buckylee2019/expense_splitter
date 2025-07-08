@@ -328,7 +328,7 @@ const EditGroup = () => {
                         }}
                         className="btn btn-secondary"
                       >
-                        <i className="fi fi-rr-cross"></i> Cancel
+                        <i className="fi fi-rr-cross"></i>&nbsp;Cancel
                       </button>
                     </>
                   )}
