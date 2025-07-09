@@ -328,12 +328,38 @@ const getGroupOptimizedTransfers = async (groupId) => {
     // Generate optimized transfers
     const optimizedTransfers = optimizeTransfers(netBalances);
     
+    // Populate user names for transfers
+    const transfersWithNames = [];
+    for (const transfer of optimizedTransfers) {
+      try {
+        const fromUser = await User.findById(transfer.from);
+        const toUser = await User.findById(transfer.to);
+        
+        transfersWithNames.push({
+          ...transfer,
+          fromName: fromUser ? fromUser.name : 'Unknown User',
+          fromEmail: fromUser ? fromUser.email : 'Unknown Email',
+          toName: toUser ? toUser.name : 'Unknown User',
+          toEmail: toUser ? toUser.email : 'Unknown Email'
+        });
+      } catch (error) {
+        console.error('Error fetching user details for transfer:', error);
+        transfersWithNames.push({
+          ...transfer,
+          fromName: 'Unknown User',
+          fromEmail: 'Unknown Email',
+          toName: 'Unknown User',
+          toEmail: 'Unknown Email'
+        });
+      }
+    }
+    
     // Calculate statistics
     const totalTransferAmount = optimizedTransfers.reduce((sum, t) => sum + t.amount, 0);
     const originalTransferCount = Math.max(0, allUserIds.size * (allUserIds.size - 1) / 2);
     
     return {
-      optimizedTransfers,
+      optimizedTransfers: transfersWithNames,
       transferCount: optimizedTransfers.length,
       originalTransferCount,
       totalTransferAmount: Math.round(totalTransferAmount * 100) / 100,

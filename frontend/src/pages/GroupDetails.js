@@ -66,13 +66,13 @@ const GroupDetails = () => {
   const fetchGroupDebts = async () => {
     try {
       const response = await api.get(`/api/balances/group/${groupId}/optimized`);
-      const optimizedData = response.data;
+      console.log('Group optimized transfers response:', response.data);
       
-      // Convert the optimized transfers to a format suitable for display
+      const optimizedData = response.data;
       const detailedDebts = [];
       
-      if (optimizedData.transfers) {
-        optimizedData.transfers.forEach(transfer => {
+      if (optimizedData.optimizedTransfers) {
+        optimizedData.optimizedTransfers.forEach(transfer => {
           detailedDebts.push({
             debtor: {
               id: transfer.from,
@@ -81,7 +81,7 @@ const GroupDetails = () => {
             },
             creditor: {
               id: transfer.to,
-              name: transfer.toName || 'Unknown User', 
+              name: transfer.toName || 'Unknown User',
               email: transfer.toEmail || 'Unknown Email'
             },
             amount: transfer.amount,
@@ -90,6 +90,7 @@ const GroupDetails = () => {
         });
       }
       
+      console.log('Processed detailed debts:', detailedDebts);
       setGroupDebts(detailedDebts);
     } catch (error) {
       console.error('Error fetching group debts:', error);
