@@ -5298,6 +5298,149 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: var(--text-primary);
 }
 
+/* Detailed Debts Modal */
+.detailed-debts-modal {
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+}
+
+.detailed-debts-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.currency-debt-group {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  background: var(--background-secondary);
+}
+
+.currency-header {
+  margin: 0 0 var(--spacing) 0;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.debt-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing);
+}
+
+.detailed-debt-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-sm);
+  background: var(--background-primary);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
+.debt-user-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
+}
+
+.debt-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.debt-user-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.debt-group-name {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.debt-amount-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  text-align: right;
+}
+
+.debt-amount {
+  font-weight: 600;
+  font-size: 1rem;
+}
+
+.debt-amount.owes_you {
+  color: var(--success-color);
+}
+
+.debt-amount.you_owe {
+  color: var(--error-color);
+}
+
+.debt-type-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.currency-summary {
+  border-top: 1px solid var(--border-color);
+  padding-top: var(--spacing-sm);
+  margin-top: var(--spacing-sm);
+}
+
+.currency-net-balance {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+}
+
+.net-label {
+  color: var(--text-primary);
+}
+
+.net-amount {
+  font-size: 1.1rem;
+}
+
+.net-amount.positive {
+  color: var(--success-color);
+}
+
+.net-amount.negative {
+  color: var(--error-color);
+}
+
+.no-debts-detail {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+}
+
+.no-debts-detail i {
+  font-size: 3rem;
+  color: var(--success-color);
+  margin-bottom: var(--spacing);
+}
+
+/* Balance controls spacing */
+.balance-controls {
+  display: flex;
+  gap: var(--spacing-sm);
+}
+
 /* Photo Upload Section */
 .photo-upload-section {
   display: flex;
