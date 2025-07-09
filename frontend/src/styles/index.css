@@ -5557,6 +5557,52 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: var(--text-primary);
 }
 
+/* Expense User Balance Display */
+.expense-user-balance {
+  margin-top: var(--spacing-sm);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.expense-user-balance.credit {
+  background-color: var(--success-background);
+  border: 1px solid var(--success-border);
+}
+
+.expense-user-balance.debt {
+  background-color: var(--error-background);
+  border: 1px solid var(--error-border);
+}
+
+.balance-credit {
+  color: var(--success-color);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.balance-debt {
+  color: var(--error-color);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+}
+
+.balance-credit i,
+.balance-debt i {
+  font-size: 0.8rem;
+}
+
+/* Success/Error background colors */
+:root {
+  --success-background: #f0f9f0;
+  --success-border: #c3e6c3;
+  --error-background: #fef2f2;
+  --error-border: #fecaca;
+}
+
 /* Info colors */
 :root {
   --info-background: #e3f2fd;

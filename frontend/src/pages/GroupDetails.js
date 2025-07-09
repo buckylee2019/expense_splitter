@@ -42,6 +42,9 @@ const GroupDetails = () => {
       setExpenses(expensesRes.data);
       setBalances(balancesRes.data.balances);
       
+      // Validate balance calculation
+      setTimeout(() => validateBalanceCalculation(), 100);
+      
       // Store optimization info if available
       if (balancesRes.data.optimizedTransfers) {
         setOptimizationInfo({
@@ -61,6 +64,121 @@ const GroupDetails = () => {
       setLoading(false);
     }
   }, [groupId, useOptimized]);
+
+  useEffect(() => {
+    fetchGroupData();
+  }, [groupId, useOptimized]);
+
+  // Calculate user's debt/credit for a specific expense
+  const calculateUserExpenseBalance = (expense) => {
+    if (!currentUser) return null;
+    
+    const userPaid = expense.paidBy === currentUser.id;
+    const userSplit = expense.splits.find(split => 
+      split.user === currentUser.id || split.userId === currentUser.id
+    );
+    
+    if (!userSplit) return null;
+    
+    const userOwes = userSplit.amount;
+    
+    if (userPaid) {
+      // User paid for this expense, calculate how much others owe them
+      const totalOwedToUser = expense.splits
+        .filter(split => (split.user || split.userId) !== currentUser.id)
+        .reduce((sum, split) => sum + split.amount, 0);
+      
+      return {
+        type: 'credit', // User gets money back
+        amount: totalOwedToUser,
+        currency: expense.currency || 'TWD',
+        message: `You get back ${totalOwedToUser.toFixed(2)} ${expense.currency || 'TWD'}`
+      };
+    } else {
+      // Someone else paid, user owes their share
+      return {
+        type: 'debt', // User owes money
+        amount: userOwes,
+        currency: expense.currency || 'TWD',
+        message: `You owe ${userOwes.toFixed(2)} ${expense.currency || 'TWD'}`
+      };
+    }
+  };
+
+  // Validate balance calculation by checking if totals match
+  const validateBalanceCalculation = () => {
+    console.log('🔍 Validating Balance Calculation...');
+    
+    if (!currentUser || expenses.length === 0) {
+      console.log('❌ Cannot validate: No current user or expenses');
+      return;
+    }
+    
+    // Calculate expected balances manually
+    const expectedBalances = {};
+    
+    expenses.forEach(expense => {
+      const userPaid = expense.paidBy === currentUser.id;
+      const userSplit = expense.splits.find(split => 
+        split.user === currentUser.id || split.userId === currentUser.id
+      );
+      
+      if (!userSplit) return;
+      
+      const currency = expense.currency || 'TWD';
+      
+      if (userPaid) {
+        // User paid, others owe them
+        expense.splits.forEach(split => {
+          const splitUserId = split.user || split.userId;
+          if (splitUserId !== currentUser.id) {
+            if (!expectedBalances[splitUserId]) expectedBalances[splitUserId] = {};
+            if (!expectedBalances[splitUserId][currency]) expectedBalances[splitUserId][currency] = 0;
+            expectedBalances[splitUserId][currency] += split.amount; // Others owe user
+          }
+        });
+      } else {
+        // Someone else paid, user owes them
+        const payerId = expense.paidBy;
+        if (!expectedBalances[payerId]) expectedBalances[payerId] = {};
+        if (!expectedBalances[payerId][currency]) expectedBalances[payerId][currency] = 0;
+        expectedBalances[payerId][currency] -= userSplit.amount; // User owes payer
+      }
+    });
+    
+    console.log('📊 Expected Balances (calculated manually):', expectedBalances);
+    console.log('📊 API Balances:', balances);
+    
+    // Compare with API balances
+    let isValid = true;
+    const apiBalanceMap = {};
+    
+    balances.forEach(balance => {
+      const userId = balance.user.id;
+      const currency = balance.currency;
+      if (!apiBalanceMap[userId]) apiBalanceMap[userId] = {};
+      apiBalanceMap[userId][currency] = balance.type === 'owes_you' ? balance.amount : -balance.amount;
+    });
+    
+    // Check if expected matches API
+    for (const [userId, currencies] of Object.entries(expectedBalances)) {
+      for (const [currency, expectedAmount] of Object.entries(currencies)) {
+        const apiAmount = apiBalanceMap[userId]?.[currency] || 0;
+        if (Math.abs(expectedAmount - apiAmount) > 0.01) {
+          console.log(`❌ Mismatch for user ${userId} in ${currency}: Expected ${expectedAmount}, API ${apiAmount}`);
+          isValid = false;
+        }
+      }
+    }
+    
+    if (isValid) {
+      console.log('✅ Balance calculation is VALID - Manual calculation matches API');
+    } else {
+      console.log('❌ Balance calculation has DISCREPANCIES');
+    }
+    
+    return isValid;
+  };
 
   // Fetch detailed group debts (all members)
   const fetchGroupDebts = async () => {
@@ -417,6 +535,16 @@ const GroupDetails = () => {
               <i className="fi fi-rr-plus"></i>
               <span className="hide-mobile">Add Expense</span>
             </Link>
+            
+            {/* Balance Validation Button */}
+            <button 
+              onClick={validateBalanceCalculation}
+              className="button secondary small"
+              title="Validate balance calculations (check console)"
+            >
+              <i className="fi fi-rr-calculator"></i>&nbsp;Validate
+            </button>
+            
             {expenses.length > 0 && (
               <div className="sort-controls">
                 <label htmlFor="sort-select">Sort by date:</label>
@@ -440,50 +568,71 @@ const GroupDetails = () => {
           </p>
         ) : (
           <div className="expenses-list">
-            {sortedExpenses.map(expense => (
-              <div key={expense.id} className="expense-card-compact card">
-                <div className="expense-main">
-                  <div className="expense-info">
-                    <h4 className="expense-title">{expense.description}</h4>
-                    {expense.project && (
-                      <div className="expense-project">📁 {expense.project}</div>
-                    )}
-                    <div className="expense-meta">
-                      <span className="expense-date">
-                        {new Date(expense.date).toLocaleDateString()}
-                      </span>
-                      <span className="expense-payer">
-                        by {expense.paidByName || 'Unknown'}
-                      </span>
-                      <CategoryBadge category={expense.category} />
+            {sortedExpenses.map(expense => {
+              const userBalance = calculateUserExpenseBalance(expense);
+              
+              return (
+                <div key={expense.id} className="expense-card-compact card">
+                  <div className="expense-main">
+                    <div className="expense-info">
+                      <h4 className="expense-title">{expense.description}</h4>
+                      {expense.project && (
+                        <div className="expense-project">📁 {expense.project}</div>
+                      )}
+                      <div className="expense-meta">
+                        <span className="expense-date">
+                          {new Date(expense.date).toLocaleDateString()}
+                        </span>
+                        <span className="expense-payer">
+                          by {expense.paidByName || 'Unknown'}
+                        </span>
+                        <CategoryBadge category={expense.category} />
+                      </div>
+                      
+                      {/* User's debt/credit for this expense */}
+                      {userBalance && (
+                        <div className={`expense-user-balance ${userBalance.type}`}>
+                          {userBalance.type === 'credit' ? (
+                            <span className="balance-credit">
+                              <i className="fi fi-rr-arrow-up"></i>
+                              You get back {userBalance.amount.toFixed(2)} {userBalance.currency}
+                            </span>
+                          ) : (
+                            <span className="balance-debt">
+                              <i className="fi fi-rr-arrow-down"></i>
+                              You owe {userBalance.amount.toFixed(2)} {userBalance.currency}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="expense-amount">
+                      <span className="currency">{expense.currency}</span>
+                      <span className="amount">{expense.amount.toFixed(2)}</span>
                     </div>
                   </div>
                   
-                  <div className="expense-amount">
-                    <span className="currency">{expense.currency}</span>
-                    <span className="amount">{expense.amount.toFixed(2)}</span>
+                  <div className="expense-actions">
+                    <Link 
+                      to={`/groups/${groupId}/expenses/${expense.id}`}
+                      className="view-details-btn"
+                    >
+                      View Details
+                    </Link>
+                    {currentUser && expense.paidBy === currentUser.id && (
+                      <button 
+                        onClick={() => handleDeleteExpense(expense.id)}
+                        className="delete-button-small"
+                        title="Delete expense"
+                      >
+                        <i className="fi fi-rr-trash"></i>
+                      </button>
+                    )}
                   </div>
                 </div>
-                
-                <div className="expense-actions">
-                  <Link 
-                    to={`/groups/${groupId}/expenses/${expense.id}`}
-                    className="view-details-btn"
-                  >
-                    View Details
-                  </Link>
-                  {currentUser && expense.paidBy === currentUser.id && (
-                    <button 
-                      onClick={() => handleDeleteExpense(expense.id)}
-                      className="delete-button-small"
-                      title="Delete expense"
-                    >
-                      <i className="fi fi-rr-trash"></i>
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
