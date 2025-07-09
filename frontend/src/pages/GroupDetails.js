@@ -65,8 +65,32 @@ const GroupDetails = () => {
   // Fetch detailed group debts (all members)
   const fetchGroupDebts = async () => {
     try {
-      const response = await api.get(`/api/groups/${groupId}/debts`);
-      setGroupDebts(response.data || []);
+      const response = await api.get(`/api/balances/group/${groupId}/optimized`);
+      const optimizedData = response.data;
+      
+      // Convert the optimized transfers to a format suitable for display
+      const detailedDebts = [];
+      
+      if (optimizedData.transfers) {
+        optimizedData.transfers.forEach(transfer => {
+          detailedDebts.push({
+            debtor: {
+              id: transfer.from,
+              name: transfer.fromName || 'Unknown User',
+              email: transfer.fromEmail || 'Unknown Email'
+            },
+            creditor: {
+              id: transfer.to,
+              name: transfer.toName || 'Unknown User', 
+              email: transfer.toEmail || 'Unknown Email'
+            },
+            amount: transfer.amount,
+            currency: transfer.currency || 'TWD'
+          });
+        });
+      }
+      
+      setGroupDebts(detailedDebts);
     } catch (error) {
       console.error('Error fetching group debts:', error);
       setGroupDebts([]);
@@ -656,7 +680,22 @@ const GroupDetails = () => {
                         
                         <div className="debt-amount-large">
                           <span className="amount">
-                            NT$ {debt.amount.toFixed(2)}
+                            {(() => {
+                              const getCurrencySymbol = (currency) => {
+                                const symbols = {
+                                  'TWD': 'NT$',
+                                  'USD': '$',
+                                  'JPY': '¥',
+                                  'EUR': '€',
+                                  'GBP': '£',
+                                  'CNY': '¥',
+                                  'HKD': 'HK$',
+                                  'SGD': 'S$'
+                                };
+                                return symbols[currency] || currency;
+                              };
+                              return `${getCurrencySymbol(debt.currency)} ${debt.amount.toFixed(2)}`;
+                            })()}
                           </span>
                         </div>
                       </div>
@@ -676,7 +715,36 @@ const GroupDetails = () => {
                       <div className="stat-item">
                         <span className="stat-label">Total Amount:</span>
                         <span className="stat-value">
-                          NT$ {groupDebts.reduce((sum, debt) => sum + debt.amount, 0).toFixed(2)}
+                          {(() => {
+                            const getCurrencySymbol = (currency) => {
+                              const symbols = {
+                                'TWD': 'NT$',
+                                'USD': '$',
+                                'JPY': '¥',
+                                'EUR': '€',
+                                'GBP': '£',
+                                'CNY': '¥',
+                                'HKD': 'HK$',
+                                'SGD': 'S$'
+                              };
+                              return symbols[currency] || currency;
+                            };
+                            
+                            // Group by currency and sum
+                            const currencyTotals = {};
+                            groupDebts.forEach(debt => {
+                              const currency = debt.currency || 'TWD';
+                              if (!currencyTotals[currency]) {
+                                currencyTotals[currency] = 0;
+                              }
+                              currencyTotals[currency] += debt.amount;
+                            });
+                            
+                            // Display all currency totals
+                            return Object.keys(currencyTotals).map(currency => 
+                              `${getCurrencySymbol(currency)} ${currencyTotals[currency].toFixed(2)}`
+                            ).join(', ');
+                          })()}
                         </span>
                       </div>
                     </div>
