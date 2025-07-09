@@ -11,7 +11,6 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [showDetailedDebts, setShowDetailedDebts] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
 
   const fetchData = async () => {
@@ -137,13 +136,6 @@ const Dashboard = () => {
                 <span className="card-subtitle">{balances.balances.length} pending</span>
               </div>
               <div className="balance-controls">
-                <button 
-                  onClick={() => setShowDetailedDebts(true)}
-                  className="button secondary small"
-                  title="View detailed debt breakdown"
-                >
-                  <i className="fi fi-rr-list"></i>&nbsp;Details
-                </button>
                 <button 
                   onClick={toggleOptimization}
                   className={`button ${useOptimized ? 'primary' : 'secondary'} small`}
@@ -365,129 +357,6 @@ const Dashboard = () => {
                   <i className="fi fi-rr-plus"></i> Create Group
                 </Link>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Detailed Debts Modal */}
-      {showDetailedDebts && (
-        <div className="modal-overlay">
-          <div className="modal-content detailed-debts-modal">
-            <div className="modal-header">
-              <h3><i className="fi fi-rr-list"></i>&nbsp;Detailed Debt Breakdown</h3>
-              <button 
-                onClick={() => setShowDetailedDebts(false)}
-                className="close-btn"
-                title="Close"
-              >
-                <i className="fi fi-rr-cross"></i>
-              </button>
-            </div>
-            
-            <div className="modal-body">
-              {balances.balances.length > 0 ? (
-                <div className="detailed-debts-container">
-                  {/* Group debts by currency */}
-                  {(() => {
-                    const getCurrencySymbol = (currency) => {
-                      const symbols = {
-                        'TWD': 'NT$',
-                        'USD': '$',
-                        'JPY': '¥',
-                        'EUR': '€',
-                        'GBP': '£',
-                        'CNY': '¥',
-                        'HKD': 'HK$',
-                        'SGD': 'S$'
-                      };
-                      return symbols[currency] || currency;
-                    };
-
-                    // Group by currency
-                    const currencyGroups = {};
-                    balances.balances.forEach(balance => {
-                      const currency = balance.currency || 'TWD';
-                      if (!currencyGroups[currency]) {
-                        currencyGroups[currency] = [];
-                      }
-                      currencyGroups[currency].push(balance);
-                    });
-
-                    return Object.keys(currencyGroups).map(currency => (
-                      <div key={currency} className="currency-debt-group">
-                        <h4 className="currency-header">
-                          <i className="fi fi-rr-coins"></i>&nbsp;{currency} Debts
-                        </h4>
-                        
-                        <div className="debt-list">
-                          {currencyGroups[currency].map((balance, index) => (
-                            <div key={index} className="detailed-debt-item">
-                              <div className="debt-user-info">
-                                <UserPhoto user={balance.user} size="small" />
-                                <div className="debt-details">
-                                  <span className="debt-user-name">{balance.user.name}</span>
-                                  <span className="debt-group-name">
-                                    {balance.groupName ? `in ${balance.groupName}` : 'Direct debt'}
-                                  </span>
-                                </div>
-                              </div>
-                              
-                              <div className="debt-amount-detail">
-                                <span className={`debt-amount ${balance.type}`}>
-                                  {balance.type === 'owes_you' ? '+' : '-'}
-                                  {getCurrencySymbol(currency)} {balance.amount.toFixed(2)}
-                                </span>
-                                <span className="debt-type-label">
-                                  {balance.type === 'owes_you' ? 'owes you' : 'you owe'}
-                                </span>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                        
-                        {/* Currency Summary */}
-                        <div className="currency-summary">
-                          {(() => {
-                            const currencyBalances = currencyGroups[currency];
-                            const totalOwed = currencyBalances
-                              .filter(b => b.type === 'owes_you')
-                              .reduce((sum, b) => sum + b.amount, 0);
-                            const totalOwing = currencyBalances
-                              .filter(b => b.type === 'you_owe')
-                              .reduce((sum, b) => sum + b.amount, 0);
-                            const netAmount = totalOwed - totalOwing;
-                            
-                            return (
-                              <div className="currency-net-balance">
-                                <span className="net-label">Net Balance:</span>
-                                <span className={`net-amount ${netAmount >= 0 ? 'positive' : 'negative'}`}>
-                                  {netAmount >= 0 ? '+' : ''}
-                                  {getCurrencySymbol(currency)} {netAmount.toFixed(2)}
-                                </span>
-                              </div>
-                            );
-                          })()}
-                        </div>
-                      </div>
-                    ));
-                  })()}
-                </div>
-              ) : (
-                <div className="no-debts-detail">
-                  <i className="fi fi-rr-check-circle"></i>
-                  <p>No outstanding debts found.</p>
-                </div>
-              )}
-            </div>
-            
-            <div className="modal-footer">
-              <button 
-                onClick={() => setShowDetailedDebts(false)}
-                className="btn btn-secondary"
-              >
-                Close
-              </button>
             </div>
           </div>
         </div>

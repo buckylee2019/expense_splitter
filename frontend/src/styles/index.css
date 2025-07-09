@@ -5441,6 +5441,130 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   gap: var(--spacing-sm);
 }
 
+/* Group Debt Details Modal */
+.group-debts-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing);
+}
+
+.group-debt-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing);
+  background: var(--background-secondary);
+  border-radius: var(--radius);
+  border: 1px solid var(--border-color);
+}
+
+.debt-relationship {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+  flex: 1;
+}
+
+.debtor-info, .creditor-info {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.user-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.user-role {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.debt-arrow {
+  color: var(--primary-color);
+  font-size: 1.2rem;
+  margin: 0 var(--spacing-sm);
+}
+
+.debt-amount-large {
+  text-align: right;
+}
+
+.debt-amount-large .amount {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--error-color);
+}
+
+.debt-explanation {
+  background: var(--info-background);
+  border: 1px solid var(--info-border);
+  border-radius: var(--radius);
+  padding: var(--spacing);
+  margin-bottom: var(--spacing-lg);
+  color: var(--info-text);
+}
+
+.debt-explanation i {
+  color: var(--info-color);
+}
+
+.debt-summary {
+  margin-top: var(--spacing-lg);
+  padding-top: var(--spacing);
+  border-top: 1px solid var(--border-color);
+}
+
+.summary-header {
+  margin-bottom: var(--spacing);
+}
+
+.summary-header h4 {
+  margin: 0;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+}
+
+.summary-stats {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--spacing);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  flex: 1;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.stat-value {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Info colors */
+:root {
+  --info-background: #e3f2fd;
+  --info-border: #90caf9;
+  --info-text: #1565c0;
+  --info-color: #2196f3;
+}
+
 /* Photo Upload Section */
 .photo-upload-section {
   display: flex;

@@ -21,6 +21,8 @@ const GroupDetails = () => {
   const [lastRefresh, setLastRefresh] = useState(null);
   const [showAddMember, setShowAddMember] = useState(false);
   const [showGroupSettings, setShowGroupSettings] = useState(false);
+  const [showDetailedDebts, setShowDetailedDebts] = useState(false);
+  const [groupDebts, setGroupDebts] = useState([]);
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest'
 
   const fetchGroupData = useCallback(async () => {
@@ -59,6 +61,23 @@ const GroupDetails = () => {
       setLoading(false);
     }
   }, [groupId, useOptimized]);
+
+  // Fetch detailed group debts (all members)
+  const fetchGroupDebts = async () => {
+    try {
+      const response = await api.get(`/api/groups/${groupId}/debts`);
+      setGroupDebts(response.data || []);
+    } catch (error) {
+      console.error('Error fetching group debts:', error);
+      setGroupDebts([]);
+    }
+  };
+
+  // Fetch group debts when modal opens
+  const handleShowDetailedDebts = () => {
+    setShowDetailedDebts(true);
+    fetchGroupDebts();
+  };
 
 
   // Handle settle button click
@@ -226,6 +245,22 @@ const GroupDetails = () => {
 
         {balances.length > 0 ? (
           <div className="balances-compact card">
+            <div className="card-header">
+              <div>
+                <h3><i className="fi fi-rr-credit-card"></i>&nbsp;Group Balances</h3>
+                <span className="card-subtitle">{balances.length} pending</span>
+              </div>
+              <div className="balance-controls">
+                <button 
+                  onClick={handleShowDetailedDebts}
+                  className="button secondary small"
+                  title="View detailed debt breakdown for this group"
+                >
+                  <i className="fi fi-rr-list"></i>&nbsp;Details
+                </button>
+              </div>
+            </div>
+            
             <div className="balances-summary">
               {(() => {
                 // Helper function to get currency symbol
@@ -570,6 +605,102 @@ const GroupDetails = () => {
           onComplete={handleSettlementComplete}
           onCancel={() => setShowSettlementModal(false)}
         />
+      )}
+
+      {/* Detailed Group Debts Modal */}
+      {showDetailedDebts && (
+        <div className="modal-overlay">
+          <div className="modal-content detailed-debts-modal">
+            <div className="modal-header">
+              <h3><i className="fi fi-rr-list"></i>&nbsp;Group Debt Details</h3>
+              <button 
+                onClick={() => setShowDetailedDebts(false)}
+                className="close-btn"
+                title="Close"
+              >
+                <i className="fi fi-rr-cross"></i>
+              </button>
+            </div>
+            
+            <div className="modal-body">
+              {groupDebts.length > 0 ? (
+                <div className="detailed-debts-container">
+                  <div className="debt-explanation">
+                    <p><i className="fi fi-rr-info"></i>&nbsp;This shows who owes money to whom within this group.</p>
+                  </div>
+                  
+                  <div className="group-debts-list">
+                    {groupDebts.map((debt, index) => (
+                      <div key={index} className="group-debt-item">
+                        <div className="debt-relationship">
+                          <div className="debtor-info">
+                            <UserPhoto user={debt.debtor} size="small" />
+                            <div className="user-details">
+                              <span className="user-name">{debt.debtor.name}</span>
+                              <span className="user-role">owes</span>
+                            </div>
+                          </div>
+                          
+                          <div className="debt-arrow">
+                            <i className="fi fi-rr-arrow-right"></i>
+                          </div>
+                          
+                          <div className="creditor-info">
+                            <UserPhoto user={debt.creditor} size="small" />
+                            <div className="user-details">
+                              <span className="user-name">{debt.creditor.name}</span>
+                              <span className="user-role">receives</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="debt-amount-large">
+                          <span className="amount">
+                            NT$ {debt.amount.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  {/* Summary */}
+                  <div className="debt-summary">
+                    <div className="summary-header">
+                      <h4><i className="fi fi-rr-calculator"></i>&nbsp;Summary</h4>
+                    </div>
+                    <div className="summary-stats">
+                      <div className="stat-item">
+                        <span className="stat-label">Total Debts:</span>
+                        <span className="stat-value">{groupDebts.length}</span>
+                      </div>
+                      <div className="stat-item">
+                        <span className="stat-label">Total Amount:</span>
+                        <span className="stat-value">
+                          NT$ {groupDebts.reduce((sum, debt) => sum + debt.amount, 0).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="no-debts-detail">
+                  <i className="fi fi-rr-check-circle"></i>
+                  <p>No outstanding debts in this group.</p>
+                  <small>All members are settled up!</small>
+                </div>
+              )}
+            </div>
+            
+            <div className="modal-footer">
+              <button 
+                onClick={() => setShowDetailedDebts(false)}
+                className="btn btn-secondary"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

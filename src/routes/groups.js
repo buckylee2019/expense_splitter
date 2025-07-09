@@ -252,6 +252,83 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   }
 });
 
+// Get detailed group debts (all members' debts within the group)
+router.get('/:id/debts', authMiddleware, async (req, res) => {
+  try {
+    const groupId = req.params.id;
+    
+    // Verify user is member of the group
+    const group = await Group.findByUserIdAndGroupId(req.user.id, groupId);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found or access denied' });
+    }
+
+    // Get all expenses for this group
+    const expenses = await Expense.findByGroupId(groupId);
+    
+    // Calculate debts between all members
+    const memberDebts = {};
+    
+    // Initialize debt tracking for all members
+    group.members.forEach(member => {
+      memberDebts[member.user] = {};
+      group.members.forEach(otherMember => {
+        if (member.user !== otherMember.user) {
+          memberDebts[member.user][otherMember.user] = 0;
+        }
+      });
+    });
+
+    // Process each expense to calculate debts
+    expenses.forEach(expense => {
+      const totalAmount = expense.amount;
+      const splitCount = expense.splitWith.length;
+      const amountPerPerson = totalAmount / splitCount;
+      
+      // Each person in splitWith owes the payer
+      expense.splitWith.forEach(debtor => {
+        if (debtor !== expense.paidBy) {
+          memberDebts[debtor][expense.paidBy] += amountPerPerson;
+        }
+      });
+    });
+
+    // Convert to array format with user details
+    const detailedDebts = [];
+    
+    for (const debtorId in memberDebts) {
+      for (const creditorId in memberDebts[debtorId]) {
+        const amount = memberDebts[debtorId][creditorId];
+        if (amount > 0.01) { // Only include significant debts
+          // Get user details
+          const debtor = await User.findById(debtorId);
+          const creditor = await User.findById(creditorId);
+          
+          detailedDebts.push({
+            debtor: {
+              id: debtorId,
+              name: debtor ? debtor.name : 'Unknown User',
+              email: debtor ? debtor.email : 'Unknown Email'
+            },
+            creditor: {
+              id: creditorId,
+              name: creditor ? creditor.name : 'Unknown User',
+              email: creditor ? creditor.email : 'Unknown Email'
+            },
+            amount: Math.round(amount * 100) / 100, // Round to 2 decimal places
+            currency: 'TWD' // Default currency, could be made dynamic
+          });
+        }
+      }
+    }
+
+    res.json(detailedDebts);
+  } catch (error) {
+    console.error('Error fetching group debts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 module.exports = router;
 // Update group
 router.put('/:id', authMiddleware, async (req, res) => {
