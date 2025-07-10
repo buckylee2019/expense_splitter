@@ -124,6 +124,98 @@ Resources:
         - Key: Application
           Value: ExpenseSplitter
 
+  # S3 Bucket for Group Photos
+  GroupPhotosBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub 'expense-splitter-photos-${Environment}-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      VersioningConfiguration:
+        Status: Enabled
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteOldVersions
+            Status: Enabled
+            NoncurrentVersionExpirationInDays: 30
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: ExpenseSplitter
+
+  # CloudFront Origin Access Control for S3
+  CloudFrontOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub 'expense-splitter-photos-oac-${Environment}'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+
+  # CloudFront Distribution for Photos
+  PhotosCloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - Id: S3Origin
+            DomainName: !GetAtt GroupPhotosBucket.RegionalDomainName
+            S3OriginConfig:
+              OriginAccessIdentity: ''
+            OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
+        Enabled: true
+        Comment: !Sub 'CloudFront distribution for group photos - ${Environment}'
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+          CachedMethods:
+            - GET
+            - HEAD
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          Compress: true
+          DefaultTTL: 86400
+          MaxTTL: 31536000
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+      Tags:
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Application
+          Value: ExpenseSplitter
+
+  # S3 Bucket Policy to allow CloudFront access only
+  GroupPhotosBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref GroupPhotosBucket
+      PolicyDocument:
+        Statement:
+          - Sid: AllowCloudFrontServicePrincipal
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub '${GroupPhotosBucket}/*'
+            Condition:
+              StringEquals:
+                'AWS:SourceArn': !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${PhotosCloudFrontDistribution}'
+
   # IAM Role for Lambda
   LambdaExecutionRole:
     Type: AWS::IAM::Role
@@ -159,6 +251,21 @@ Resources:
                   - !Sub '${UsersTable.Arn}/index/*'
                   - !Sub '${ExpensesTable.Arn}/index/*'
                   - !Sub '${SettlementsTable.Arn}/index/*'
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:PutObjectAcl
+                  - s3:GetObject
+                  - s3:DeleteObject
+                Resource: !Sub '${GroupPhotosBucket}/*'
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !GetAtt GroupPhotosBucket.Arn
         - PolicyName: KMSAccess
           PolicyDocument:
             Version: '2012-10-17'
@@ -192,6 +299,8 @@ Resources:
           GROUPS_TABLE_NAME: !Ref GroupsTable
           EXPENSES_TABLE_NAME: !Ref ExpensesTable
           SETTLEMENTS_TABLE_NAME: !Ref SettlementsTable
+          PHOTOS_BUCKET_NAME: !Ref GroupPhotosBucket
+          PHOTOS_CLOUDFRONT_DOMAIN: !GetAtt PhotosCloudFrontDistribution.DomainName
       Timeout: 30
       MemorySize: 512
       Tags:
@@ -312,3 +421,21 @@ Outputs:
     Value: !Ref ExpenseSplitterFunction
     Export:
       Name: !Sub '${AWS::StackName}-LambdaFunction'
+
+  PhotosBucketName:
+    Description: S3 Bucket Name for Group Photos
+    Value: !Ref GroupPhotosBucket
+    Export:
+      Name: !Sub '${AWS::StackName}-PhotosBucket'
+
+  PhotosCloudFrontDomain:
+    Description: CloudFront Domain for Group Photos
+    Value: !GetAtt PhotosCloudFrontDistribution.DomainName
+    Export:
+      Name: !Sub '${AWS::StackName}-PhotosCloudFrontDomain'
+
+  PhotosCloudFrontDistributionId:
+    Description: CloudFront Distribution ID for Group Photos
+    Value: !Ref PhotosCloudFrontDistribution
+    Export:
+      Name: !Sub '${AWS::StackName}-PhotosCloudFrontDistributionId'

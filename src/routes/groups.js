@@ -3,6 +3,7 @@ const Group = require('../models/Group');
 const User = require('../models/User');
 const Expense = require('../models/Expense');
 const { authMiddleware } = require('../utils/auth');
+const s3Service = require('../utils/s3');
 
 const router = express.Router();
 
@@ -352,6 +353,101 @@ router.delete('/:id/members/:memberId', authMiddleware, async (req, res) => {
 router.put('/:id/photo', authMiddleware, async (req, res) => {
   try {
     console.log('Photo upload request received for group:', req.params.id);
+    console.log('Request user:', req.user?.id);
+    
+    const group = await Group.findById(req.params.id);
+    if (!group) {
+      console.log('Group not found:', req.params.id);
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    console.log('Group found:', group.id, 'Members:', group.members?.length);
+
+    // Check if user is admin
+    if (!group.isAdmin(req.user.id)) {
+      console.log('User not admin:', req.user.id, 'Group members:', group.members);
+      return res.status(403).json({ error: 'Insufficient permissions. Only group admins can update photos.' });
+    }
+
+    const { photo } = req.body;
+    console.log('Photo data received, length:', photo ? photo.length : 'null');
+    
+    if (!photo) {
+      console.log('No photo data provided');
+      return res.status(400).json({ error: 'No photo data provided' });
+    }
+    
+    // Validate image using S3 service
+    const validation = s3Service.validateImage(photo);
+    if (!validation.isValid) {
+      console.log('Photo validation failed:', validation.error);
+      return res.status(400).json({ 
+        error: 'Invalid image',
+        details: validation.error
+      });
+    }
+
+    console.log('Photo validation passed, size:', Math.round(validation.sizeInBytes / 1024), 'KB');
+    
+    try {
+      // Delete old photo if it exists
+      if (group.photoUrl && group.photoUrl.includes(process.env.PHOTOS_CLOUDFRONT_DOMAIN)) {
+        console.log('Deleting old photo:', group.photoUrl);
+        await s3Service.deleteGroupPhoto(group.photoUrl);
+      }
+
+      // Upload new photo to S3
+      console.log('Uploading photo to S3...');
+      const photoUrl = await s3Service.uploadGroupPhoto(
+        photo, 
+        group.id, 
+        validation.contentType
+      );
+      console.log('Photo uploaded successfully:', photoUrl);
+
+      // Update group with new photo URL (not base64 data)
+      group.photoUrl = photoUrl;
+      // Remove old photo field if it exists
+      if (group.photo) {
+        delete group.photo;
+      }
+      
+      console.log('Saving group with photo URL...');
+      await group.save();
+      console.log('Group saved successfully');
+
+      const populatedGroup = await populateMemberNames(group);
+      console.log('Group populated successfully');
+      
+      res.json({
+        message: 'Group photo updated successfully',
+        group: populatedGroup,
+        photoUrl: photoUrl
+      });
+
+    } catch (uploadError) {
+      console.error('Error uploading photo to S3:', uploadError);
+      return res.status(500).json({ 
+        error: 'Failed to upload photo',
+        details: uploadError.message
+      });
+    }
+
+  } catch (error) {
+    console.error('Error updating group photo:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Internal server error',
+      message: error.message,
+      details: process.env.NODE_ENV === 'dev' ? error.stack : undefined
+    });
+  }
+});
+
+// Delete group photo
+router.delete('/:id/photo', authMiddleware, async (req, res) => {
+  try {
+    console.log('Photo delete request received for group:', req.params.id);
     
     const group = await Group.findById(req.params.id);
     if (!group) {
@@ -362,41 +458,37 @@ router.put('/:id/photo', authMiddleware, async (req, res) => {
     // Check if user is admin
     if (!group.isAdmin(req.user.id)) {
       console.log('User not admin:', req.user.id);
-      return res.status(403).json({ error: 'Insufficient permissions' });
+      return res.status(403).json({ error: 'Insufficient permissions. Only group admins can delete photos.' });
     }
 
-    const { photo } = req.body;
-    console.log('Photo data received, length:', photo ? photo.length : 'null');
-    
-    // Check if photo is too large (DynamoDB has 400KB item limit)
-    // Base64 data should be under 300KB to leave room for other group data
-    if (photo && photo.length > 300000) { // 300KB limit to be safe
-      console.log('Photo too large for DynamoDB:', photo.length, 'bytes');
-      return res.status(400).json({ 
-        error: 'Photo is too large for storage. Please choose a smaller image or compress it.',
-        details: `Image size: ${Math.round(photo.length / 1024)}KB, Maximum: 300KB`
-      });
+    // Delete photo from S3 if it exists
+    if (group.photoUrl && group.photoUrl.includes(process.env.PHOTOS_CLOUDFRONT_DOMAIN)) {
+      console.log('Deleting photo from S3:', group.photoUrl);
+      await s3Service.deleteGroupPhoto(group.photoUrl);
+    }
+
+    // Remove photo URL from group
+    group.photoUrl = null;
+    // Remove old photo field if it exists
+    if (group.photo) {
+      delete group.photo;
     }
     
-    // Update group with new photo
-    group.photo = photo;
-    console.log('Saving group with photo...');
     await group.save();
-    console.log('Group saved successfully');
+    console.log('Group photo deleted successfully');
 
     const populatedGroup = await populateMemberNames(group);
     
     res.json({
-      message: 'Group photo updated successfully',
-      group: populatedGroup,
-      photoUrl: photo
+      message: 'Group photo deleted successfully',
+      group: populatedGroup
     });
+
   } catch (error) {
-    console.error('Error updating group photo:', error);
+    console.error('Error deleting group photo:', error);
     res.status(500).json({ 
       error: 'Internal server error',
-      message: error.message,
-      details: process.env.NODE_ENV === 'dev' ? error.stack : undefined
+      message: error.message
     });
   }
 });

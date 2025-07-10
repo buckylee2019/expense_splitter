@@ -28,8 +28,10 @@ const EditGroup = () => {
       setLoading(true);
       const response = await api.get(`/api/groups/${id}`);
       setGroup(response.data);
-      // Set initial photo preview if group has a photo
-      if (response.data.photo) {
+      // Set initial photo preview if group has a photo URL or legacy photo
+      if (response.data.photoUrl) {
+        setPhotoPreview(response.data.photoUrl);
+      } else if (response.data.photo) {
         setPhotoPreview(response.data.photo);
       }
     } catch (error) {
@@ -84,10 +86,10 @@ const EditGroup = () => {
       return;
     }
 
-    // Validate file size (max 5MB, will be compressed automatically)
-    if (file.size > 5 * 1024 * 1024) {
+    // Validate file size (max 10MB for S3)
+    if (file.size > 10 * 1024 * 1024) {
       console.log('File too large:', file.size);
-      alert('Image size should be less than 5MB');
+      alert('Image size should be less than 10MB');
       return;
     }
 
@@ -107,13 +109,7 @@ const EditGroup = () => {
     const reader = new FileReader();
     reader.onload = (e) => {
       console.log('Preview created, data length:', e.target.result.length);
-      // Check base64 size (should be under 300KB for DynamoDB)
-      if (e.target.result.length > 3 * 1024 * 1024) {
-        alert('Image is too large when converted. Please choose a smaller image.');
-        setPhotoFile(null);
-        setPhotoPreview(group.photo || '');
-        return;
-      }
+      // S3 can handle much larger files, so we don't need the strict size limit
       setPhotoPreview(e.target.result);
     };
     reader.readAsDataURL(processedFile);
@@ -139,10 +135,11 @@ const EditGroup = () => {
         
         console.log('Upload response:', response.data);
         
-        // Update group data with new photo
+        // Update group data with new photo URL
         setGroup(prev => ({
           ...prev,
-          photo: response.data.photoUrl || e.target.result
+          photoUrl: response.data.photoUrl,
+          photo: null // Clear legacy photo field
         }));
         
         // Clear the photo file after successful upload
@@ -164,13 +161,12 @@ const EditGroup = () => {
     try {
       setUploadingPhoto(true);
       
-      const response = await api.put(`/api/groups/${id}/photo`, {
-        photo: null
-      });
+      const response = await api.delete(`/api/groups/${id}/photo`);
       
       // Update group data to remove photo
       setGroup(prev => ({
         ...prev,
+        photoUrl: null,
         photo: null
       }));
       
@@ -288,7 +284,7 @@ const EditGroup = () => {
               <div className="photo-upload-section">
                 <div className="current-photo-preview">
                   <img 
-                    src={photoPreview || group.photo || '/background.png'} 
+                    src={photoPreview || group.photoUrl || group.photo || '/background.png'} 
                     alt="Group banner preview"
                     className="photo-preview"
                   />
@@ -324,7 +320,7 @@ const EditGroup = () => {
                         type="button"
                         onClick={() => {
                           setPhotoFile(null);
-                          setPhotoPreview(group.photo || '');
+                          setPhotoPreview(group.photoUrl || group.photo || '');
                         }}
                         className="btn btn-secondary"
                       >
@@ -332,7 +328,7 @@ const EditGroup = () => {
                       </button>
                     </>
                   )}
-                  {group.photo && !photoFile && (
+                  {(group.photoUrl || group.photo) && !photoFile && (
                     <button 
                       type="button"
                       onClick={() => {
@@ -349,7 +345,7 @@ const EditGroup = () => {
                   )}
                 </div>
                 <small className="form-help">
-                  Upload a group photo (max 5MB, automatically compressed). Supported formats: JPG, PNG, GIF
+                  Upload a group photo (max 10MB). Supported formats: JPG, PNG, GIF, WebP. Photos are stored securely and served via CDN.
                 </small>
               </div>
             </div>

@@ -9,7 +9,8 @@ class Group {
     this.id = data.id || uuidv4();
     this.name = data.name;
     this.description = data.description;
-    this.photo = data.photo || null;
+    this.photo = data.photo || null; // Legacy field for backward compatibility
+    this.photoUrl = data.photoUrl || null; // New field for S3 URLs
     this.members = data.members || [];
     this.createdBy = data.createdBy;
     this.isActive = data.isActive !== undefined ? data.isActive : true;
