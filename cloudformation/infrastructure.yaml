@@ -255,11 +255,11 @@ Resources:
                   - s3:PutObjectAcl
                   - s3:GetObject
                   - s3:DeleteObject
-                Resource: !Sub '${GroupPhotosBucket.Arn}/*'
+                Resource: !Sub 'arn:aws:s3:::expense-splitter-photos-${Environment}-${AWS::AccountId}/*'
               - Effect: Allow
                 Action:
                   - s3:ListBucket
-                Resource: !GetAtt GroupPhotosBucket.Arn
+                Resource: !Sub 'arn:aws:s3:::expense-splitter-photos-${Environment}-${AWS::AccountId}'
         - PolicyName: KMSAccess
           PolicyDocument:
             Version: '2012-10-17'
