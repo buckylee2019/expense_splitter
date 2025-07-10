@@ -169,8 +169,7 @@ Resources:
         Origins:
           - Id: S3Origin
             DomainName: !GetAtt GroupPhotosBucket.RegionalDomainName
-            S3OriginConfig:
-              OriginAccessIdentity: ''
+            S3OriginConfig: {}
             OriginAccessControlId: !GetAtt CloudFrontOriginAccessControl.Id
         Enabled: true
         Comment: !Sub 'CloudFront distribution for group photos - ${Environment}'
@@ -183,13 +182,8 @@ Resources:
           CachedMethods:
             - GET
             - HEAD
-          ForwardedValues:
-            QueryString: false
-            Cookies:
-              Forward: none
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad  # Managed-CachingOptimized
           Compress: true
-          DefaultTTL: 86400
-          MaxTTL: 31536000
         PriceClass: PriceClass_100
         ViewerCertificate:
           CloudFrontDefaultCertificate: true
