@@ -205,10 +205,10 @@ Resources:
             Principal:
               Service: cloudfront.amazonaws.com
             Action: s3:GetObject
-            Resource: !Sub '${GroupPhotosBucket}/*'
+            Resource: !Sub '${GroupPhotosBucket.Arn}/*'
             Condition:
               StringEquals:
-                'AWS:SourceArn': !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${PhotosCloudFrontDistribution}'
+                'AWS:SourceArn': !Sub 'arn:aws:cloudfront::${AWS::AccountId}:distribution/${PhotosCloudFrontDistribution.Id}'
 
   # IAM Role for Lambda
   LambdaExecutionRole:
