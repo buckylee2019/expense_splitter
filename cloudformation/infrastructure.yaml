@@ -255,7 +255,7 @@ Resources:
                   - s3:PutObjectAcl
                   - s3:GetObject
                   - s3:DeleteObject
-                Resource: !Sub '${GroupPhotosBucket}/*'
+                Resource: !Sub '${GroupPhotosBucket.Arn}/*'
               - Effect: Allow
                 Action:
                   - s3:ListBucket
