@@ -6,7 +6,7 @@ import UserPhoto from '../components/UserPhoto';
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, updateUser } = useAuth();
   const [user, setUser] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
@@ -119,6 +119,7 @@ const Profile = () => {
           
           const response = await api.put('/api/users/profile', updatedFormData);
           setUser(response.data.user);
+          updateUser(response.data.user); // Update AuthContext with fresh user data
           // Update form data with the new avatarUrl from response
           setFormData(prev => ({
             ...prev,
@@ -140,6 +141,7 @@ const Profile = () => {
       } else {
         const response = await api.put('/api/users/profile', updatedFormData);
         setUser(response.data.user);
+        updateUser(response.data.user); // Update AuthContext with fresh user data
         setSuccess('Profile updated successfully!');
         
         // Clear success message after 3 seconds

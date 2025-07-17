@@ -6,7 +6,8 @@ import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
   const location = useLocation();
-  const { user } = useAuth();
+  const { user: authUser, updateUser } = useAuth();
+  const [user, setUser] = useState(authUser); // Local user state for updated profile data
   const [balances, setBalances] = useState({ balances: [], summary: {} });
   const [useOptimized, setUseOptimized] = useState(true); // Default to optimized
   const [settlements, setSettlements] = useState([]);
@@ -23,6 +24,8 @@ const Dashboard = () => {
       // Get current user info
       const userRes = await api.get('/api/users/profile');
       console.log('👤 Dashboard: Current user loaded:', userRes.data);
+      setUser(userRes.data); // Update local user state with fresh data
+      updateUser(userRes.data); // Also update AuthContext with fresh data
 
       // Fetch balances and settlements
       console.log('📊 Dashboard: Fetching balances and settlements...');
