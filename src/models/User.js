@@ -12,7 +12,8 @@ class User {
     this.email = data.email;
     this.password = data.password;
     this.phone = data.phone || '';
-    this.avatar = data.avatar || '';
+    this.avatar = data.avatar || ''; // Legacy field for backward compatibility
+    this.avatarUrl = data.avatarUrl || null; // New S3 CloudFront URL field
     this.friends = data.friends || [];
     this.groups = data.groups || [];
     this.createdAt = data.createdAt || new Date().toISOString();

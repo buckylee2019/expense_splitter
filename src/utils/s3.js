@@ -59,16 +59,64 @@ class S3Service {
   }
 
   /**
-   * Delete a group photo from S3
-   * @param {string} photoUrl - CloudFront URL of the photo to delete
+   * Upload a user avatar to S3
+   * @param {string} base64Data - Base64 encoded image data (with or without data URL prefix)
+   * @param {string} userId - User ID for organizing avatars
+   * @param {string} contentType - MIME type of the image (e.g., 'image/jpeg')
+   * @returns {Promise<string>} - CloudFront URL of the uploaded avatar
+   */
+  async uploadUserAvatar(base64Data, userId, contentType = 'image/jpeg') {
+    try {
+      // Remove data URL prefix if present (data:image/jpeg;base64,)
+      const base64Content = base64Data.replace(/^data:image\/[a-z]+;base64,/, '');
+      
+      // Convert base64 to buffer
+      const buffer = Buffer.from(base64Content, 'base64');
+      
+      // Generate unique filename
+      const timestamp = Date.now();
+      const randomString = crypto.randomBytes(8).toString('hex');
+      const extension = this.getFileExtension(contentType);
+      const key = `users/${userId}/avatar-${timestamp}-${randomString}.${extension}`;
+      
+      // Upload to S3
+      const command = new PutObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+        CacheControl: 'max-age=31536000', // 1 year cache
+        Metadata: {
+          userId: userId,
+          uploadedAt: new Date().toISOString()
+        }
+      });
+
+      await this.s3Client.send(command);
+      
+      // Return CloudFront URL
+      const cloudFrontUrl = `https://${this.cloudFrontDomain}/${key}`;
+      
+      console.log(`Avatar uploaded successfully: ${cloudFrontUrl}`);
+      return cloudFrontUrl;
+      
+    } catch (error) {
+      console.error('Error uploading avatar to S3:', error);
+      throw new Error(`Failed to upload avatar: ${error.message}`);
+    }
+  }
+
+  /**
+   * Delete a user avatar from S3
+   * @param {string} avatarUrl - CloudFront URL of the avatar to delete
    * @returns {Promise<void>}
    */
-  async deleteGroupPhoto(photoUrl) {
+  async deleteUserAvatar(avatarUrl) {
     try {
       // Extract S3 key from CloudFront URL
-      const key = this.extractS3KeyFromUrl(photoUrl);
+      const key = this.extractS3KeyFromUrl(avatarUrl);
       if (!key) {
-        console.warn('Could not extract S3 key from URL:', photoUrl);
+        console.warn('Could not extract S3 key from avatar URL:', avatarUrl);
         return;
       }
 
@@ -78,11 +126,11 @@ class S3Service {
       });
 
       await this.s3Client.send(command);
-      console.log(`Photo deleted successfully: ${key}`);
+      console.log(`Avatar deleted successfully: ${key}`);
       
     } catch (error) {
-      console.error('Error deleting photo from S3:', error);
-      // Don't throw error for delete operations to avoid breaking group updates
+      console.error('Error deleting avatar from S3:', error);
+      // Don't throw error for delete operations to avoid breaking profile updates
     }
   }
 

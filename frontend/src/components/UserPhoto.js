@@ -13,10 +13,13 @@ const UserPhoto = ({ user, size = 'small', className = '' }) => {
 
   const sizeClass = size === 'large' ? 'profile-avatar' : 'user-photo';
 
+  // Use avatarUrl (S3) first, then fallback to legacy avatar field
+  const avatarSrc = user?.avatarUrl || user?.avatar;
+
   return (
     <div className={`${sizeClass} ${className}`}>
-      {user?.avatar ? (
-        <img src={user.avatar} alt={user.name || 'User'} />
+      {avatarSrc ? (
+        <img src={avatarSrc} alt={user.name || 'User'} />
       ) : (
         <div className={size === 'large' ? 'avatar-placeholder' : 'user-photo-placeholder'}>
           {getInitials(user?.name)}

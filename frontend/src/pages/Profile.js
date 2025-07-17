@@ -34,8 +34,10 @@ const Profile = () => {
       setFormData({
         name: userData.name || '',
         phone: userData.phone || '',
-        avatar: userData.avatar || ''
+        avatar: userData.avatarUrl || userData.avatar || '' // Use avatarUrl first, then fallback to legacy avatar
       });
+      // Set photo preview from S3 URL or legacy avatar
+      setPhotoPreview(userData.avatarUrl || userData.avatar || '');
       setLoading(false);
     } catch (err) {
       console.error('Error fetching profile:', err);
@@ -117,6 +119,14 @@ const Profile = () => {
           
           const response = await api.put('/api/users/profile', updatedFormData);
           setUser(response.data.user);
+          // Update form data with the new avatarUrl from response
+          setFormData(prev => ({
+            ...prev,
+            avatar: response.data.user.avatarUrl || response.data.user.avatar || ''
+          }));
+          // Update photo preview with the new S3 URL
+          setPhotoPreview(response.data.user.avatarUrl || response.data.user.avatar || '');
+          setPhotoFile(null); // Clear the file input
           setSuccess('Profile updated successfully!');
           
           // Clear the photo file after successful upload
@@ -168,7 +178,8 @@ const Profile = () => {
             <UserPhoto 
               user={{ 
                 name: formData.name, 
-                avatar: photoPreview || formData.avatar 
+                avatarUrl: photoPreview || formData.avatar, // Use avatarUrl field for UserPhoto component
+                avatar: !photoPreview && !formData.avatar ? '' : undefined // Legacy fallback
               }} 
               size="large" 
             />
