@@ -30,12 +30,16 @@ const populateUserNames = async (expenses) => {
         const user = await User.findById(userId);
         populatedSplits.push({
           ...split,
-          userName: user ? user.name : 'Unknown User'
+          userName: user ? user.name : 'Unknown User',
+          userAvatarUrl: user ? user.avatarUrl : null,
+          userAvatar: user ? user.avatar : null
         });
       } catch (error) {
         populatedSplits.push({
           ...split,
-          userName: 'Unknown User'
+          userName: 'Unknown User',
+          userAvatarUrl: null,
+          userAvatar: null
         });
       }
     }

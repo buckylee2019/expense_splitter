@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import UserPhoto from '../components/UserPhoto';
 import { parseCategoryString, getCategoryIcon, getCategoryColor } from '../data/expenseCategories';
 
 const ExpenseDetails = () => {
@@ -158,10 +159,21 @@ const ExpenseDetails = () => {
             {expense.splits.map((split, index) => (
               <div key={index} className="split-detail-item">
                 <div className="split-user">
-                  <span className="user-name">{split.userName || 'Unknown User'}</span>
-                  {(split.user === expense.paidBy || split.userId === expense.paidBy) && (
-                    <span className="payer-badge">Payer</span>
-                  )}
+                  <UserPhoto 
+                    user={{
+                      name: split.userName,
+                      avatarUrl: split.userAvatarUrl,
+                      avatar: split.userAvatar
+                    }} 
+                    size="small" 
+                    className="split-user-photo" 
+                  />
+                  <div className="split-user-info">
+                    <span className="user-name">{split.userName || 'Unknown User'}</span>
+                    {(split.user === expense.paidBy || split.userId === expense.paidBy) && (
+                      <span className="payer-badge">Payer</span>
+                    )}
+                  </div>
                 </div>
                 <div className="split-amount">
                   <span className="currency">{expense.currency}</span>
