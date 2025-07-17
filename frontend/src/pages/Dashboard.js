@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import UserPhoto from '../components/UserPhoto';
+import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
   const location = useLocation();
+  const { user } = useAuth();
   const [balances, setBalances] = useState({ balances: [], summary: {} });
   const [useOptimized, setUseOptimized] = useState(true); // Default to optimized
   const [settlements, setSettlements] = useState([]);
@@ -115,6 +117,17 @@ const Dashboard = () => {
 
   return (
     <div className="dashboard">
+      {/* Welcome Header */}
+      <div className="dashboard-welcome">
+        <div className="welcome-content">
+          <UserPhoto user={user} size="small" className="welcome-user-photo" />
+          <div className="welcome-text">
+            <h1>Welcome back, {user?.name?.split(' ')[0] || 'User'}!</h1>
+            <p>Here's your expense overview</p>
+          </div>
+        </div>
+      </div>
+
       {successMessage && (
         <div className="success-message">
           <i className="fi fi-rr-check"></i> {successMessage}

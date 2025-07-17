@@ -470,6 +470,75 @@ p {
   font-family: var(--font-family);
 }
 
+/* Dashboard Welcome Section */
+.dashboard-welcome {
+  margin-bottom: var(--spacing-xl);
+  padding: var(--spacing-lg);
+  background: linear-gradient(135deg, var(--card-background) 0%, var(--background-secondary) 100%);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border-light);
+}
+
+.welcome-content {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing);
+}
+
+.welcome-user-photo {
+  flex-shrink: 0;
+}
+
+.welcome-user-photo .user-photo,
+.welcome-user-photo .user-photo-placeholder {
+  width: 48px;
+  height: 48px;
+  border: 2px solid var(--border-light);
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.welcome-text h1 {
+  margin: 0 0 var(--spacing-xs) 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.welcome-text p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+@media (max-width: 768px) {
+  .dashboard-welcome {
+    padding: var(--spacing);
+  }
+  
+  .welcome-content {
+    gap: var(--spacing-sm);
+  }
+  
+  .welcome-user-photo .user-photo,
+  .welcome-user-photo .user-photo-placeholder {
+    width: 40px;
+    height: 40px;
+    font-size: 0.875rem;
+  }
+  
+  .welcome-text h1 {
+    font-size: 1.25rem;
+  }
+  
+  .welcome-text p {
+    font-size: 0.8rem;
+  }
+}
+
 .dashboard-header {
   display: flex;
   justify-content: space-between;

@@ -111,6 +111,29 @@
   border-left: 1px solid var(--border-light);
 }
 
+/* Navigation User Photo */
+.nav-user-photo {
+  flex-shrink: 0;
+}
+
+.nav-user-photo .user-photo {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--border-light);
+  transition: border-color 0.2s ease;
+}
+
+.nav-user-photo .user-photo:hover {
+  border-color: var(--primary);
+}
+
+.nav-user-photo .user-photo-placeholder {
+  width: 32px;
+  height: 32px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .user-info {
   display: flex;
   flex-direction: column;
@@ -215,6 +238,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Mobile Tab User Photo */
+.mobile-tab-photo .user-photo,
+.mobile-tab-photo .user-photo-placeholder {
+  width: 24px;
+  height: 24px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  border: 2px solid var(--text-light);
+  transition: border-color 0.2s ease;
+}
+
+.tab-item.active .mobile-tab-photo .user-photo,
+.tab-item.active .mobile-tab-photo .user-photo-placeholder {
+  border-color: var(--primary-color);
+}
+
+.tab-item:hover .mobile-tab-photo .user-photo,
+.tab-item:hover .mobile-tab-photo .user-photo-placeholder {
+  border-color: var(--primary-color);
 }
 
 .tab-icon i {

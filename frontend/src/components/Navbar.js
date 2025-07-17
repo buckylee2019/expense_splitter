@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import UserPhoto from './UserPhoto';
 
 const Navbar = () => {
   const { isAuthenticated, logout, user } = useAuth();
@@ -91,6 +92,7 @@ const Navbar = () => {
             </div>
             
             <div className="nav-user">
+              <UserPhoto user={user} size="small" className="nav-user-photo" />
               <div className="user-info">
                 <span className="user-name">{user?.name || 'User'}</span>
                 <span className="user-email">{user?.email}</span>
@@ -149,7 +151,7 @@ const Navbar = () => {
           className={`tab-item ${isActiveLink('/profile') ? 'active' : ''}`}
         >
           <div className="tab-icon">
-            <i className="fi fi-rr-user"></i>
+            <UserPhoto user={user} size="small" className="mobile-tab-photo" />
           </div>
           <span className="tab-label">Profile</span>
         </Link>
