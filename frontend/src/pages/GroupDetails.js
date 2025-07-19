@@ -11,6 +11,8 @@ const GroupDetails = () => {
   const [group, setGroup] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [balances, setBalances] = useState([]);
+  const [globalBalances, setGlobalBalances] = useState([]);
+  const [showGlobalComparison, setShowGlobalComparison] = useState(false);
   const [optimizationInfo, setOptimizationInfo] = useState(null);
   const [useOptimized, setUseOptimized] = useState(true); // Default to optimized for groups
   const [showSettlementModal, setShowSettlementModal] = useState(false);
@@ -32,15 +34,17 @@ const GroupDetails = () => {
       const userRes = await api.get('/api/users/profile');
       setCurrentUser(userRes.data);
 
-      const [groupRes, expensesRes, balancesRes] = await Promise.all([
+      const [groupRes, expensesRes, balancesRes, globalBalancesRes] = await Promise.all([
         api.get(`/api/groups/${groupId}`),
         api.get(`/api/expenses?groupId=${groupId}`),
-        api.get(`/api/balances?groupId=${groupId}${useOptimized ? '&optimized=true' : ''}`)
+        api.get(`/api/balances?groupId=${groupId}${useOptimized ? '&optimized=true' : ''}`),
+        api.get(`/api/balances${useOptimized ? '?optimized=true' : ''}`) // Global balances for comparison
       ]);
 
       setGroup(groupRes.data);
       setExpenses(expensesRes.data);
       setBalances(balancesRes.data.balances);
+      setGlobalBalances(globalBalancesRes.data.balances);
       
       // Validate balance calculation
       setTimeout(() => validateBalanceCalculation(), 100);
@@ -223,6 +227,11 @@ const GroupDetails = () => {
   };
 
 
+  // Toggle global balance comparison
+  const toggleGlobalComparison = () => {
+    setShowGlobalComparison(!showGlobalComparison);
+  };
+
   // Handle settle button click
   const handleSettleClick = (balance) => {
     setSelectedBalance(balance);
@@ -391,7 +400,11 @@ const GroupDetails = () => {
             <div className="card-header">
               <div>
                 <h3><i className="fi fi-rr-credit-card"></i>&nbsp;Group Balances</h3>
-                <span className="card-subtitle">{balances.length} pending</span>
+                <span className="card-subtitle">{balances.length} pending in this group</span>
+                <div className="balance-scope-info">
+                  <i className="fi fi-rr-info"></i>
+                  <span>These balances show only expenses within this group</span>
+                </div>
               </div>
               <div className="balance-controls">
                 <button 
@@ -400,6 +413,13 @@ const GroupDetails = () => {
                   title="View detailed debt breakdown for this group"
                 >
                   <i className="fi fi-rr-list"></i>&nbsp;Details
+                </button>
+                <button 
+                  onClick={toggleGlobalComparison}
+                  className={`button ${showGlobalComparison ? 'primary' : 'secondary'} small`}
+                  title="Compare group balances with global balances"
+                >
+                  <i className="fi fi-rr-globe"></i> {showGlobalComparison ? 'Hide Global' : 'Show Global'}
                 </button>
               </div>
             </div>
@@ -520,6 +540,40 @@ const GroupDetails = () => {
             <div className="settled-icon">✅</div>
             <h4>All Settled!</h4>
             <p>Great news! All expenses in this group are settled. No outstanding balances.</p>
+          </div>
+        )}
+
+        {/* Global Balance Comparison */}
+        {showGlobalComparison && globalBalances.length > 0 && (
+          <div className="global-comparison card">
+            <div className="card-header">
+              <div>
+                <h3><i className="fi fi-rr-globe"></i>&nbsp;Global vs Group Balances</h3>
+                <span className="card-subtitle">Compare balances across all groups vs this group only</span>
+              </div>
+            </div>
+            <div className="comparison-content">
+              <div className="comparison-explanation">
+                <div className="comparison-info">
+                  <i className="fi fi-rr-info"></i>
+                  <div>
+                    <strong>Why balances might differ:</strong>
+                    <p>Global balances combine all your expenses across different groups, while group balances show only expenses within this specific group. If you share expenses with the same person in multiple groups, the totals will be different.</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="balance-comparison-grid">
+                <div className="comparison-column">
+                  <h4>This Group Only</h4>
+                  <div className="balance-count">{balances.length} balances</div>
+                </div>
+                <div className="comparison-column">
+                  <h4>All Groups Combined</h4>
+                  <div className="balance-count">{globalBalances.length} balances</div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>

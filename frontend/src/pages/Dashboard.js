@@ -149,7 +149,11 @@ const Dashboard = () => {
             <div className="card-header">
               <div>
                 <h2><i className="fi fi-rr-credit-card"></i> Outstanding Balances</h2>
-                <span className="card-subtitle">{balances.balances.length} pending</span>
+                <span className="card-subtitle">{balances.balances.length} pending across all groups</span>
+                <div className="balance-scope-info">
+                  <i className="fi fi-rr-info"></i>
+                  <span>These balances combine all your shared expenses across different groups</span>
+                </div>
               </div>
               <div className="balance-controls">
                 <button 

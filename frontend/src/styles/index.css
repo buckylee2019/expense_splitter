@@ -2233,6 +2233,103 @@ p {
   border-radius: 6px;
 }
 
+.global-comparison {
+  margin-top: 1rem;
+}
+
+.comparison-content {
+  padding: 1rem;
+}
+
+.comparison-explanation {
+  margin-bottom: 1.5rem;
+}
+
+.comparison-info {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  color: #856404;
+}
+
+.comparison-info i {
+  font-size: 1.2rem;
+  color: #f39c12;
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.comparison-info strong {
+  color: #856404;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.comparison-info p {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.balance-comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.comparison-column {
+  text-align: center;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px solid #e9ecef;
+}
+
+.comparison-column h4 {
+  margin: 0 0 1rem 0;
+  color: #495057;
+  font-size: 1rem;
+}
+
+.balance-count {
+  font-size: 2rem;
+  font-weight: bold;
+  color: #007bff;
+}
+
+@media (max-width: 768px) {
+  .balance-comparison-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .comparison-info {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+.balance-scope-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f0f8ff;
+  border: 1px solid #e1f5fe;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  color: #1976d2;
+}
+
+.balance-scope-info i {
+  font-size: 0.9rem;
+  color: #1976d2;
+}
+
 .split-user {
   display: flex;
   align-items: center;
