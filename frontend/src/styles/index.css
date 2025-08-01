@@ -4037,9 +4037,70 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: var(--text-muted);
 }
 
-/* Weight input positioning for weight mode */
-.split-item .weight-input {
-  margin-right: var(--spacing);
+/* Weight controls */
+.weight-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.weight-btn {
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: bold;
+  transition: background-color 0.2s ease;
+}
+
+.weight-btn:hover {
+  background: var(--primary-dark);
+}
+
+.weight-btn:active {
+  transform: scale(0.95);
+}
+
+.weight-controls .weight-value,
+.weight-controls .split-weight {
+  width: 60px;
+  text-align: center;
+  margin: 0 2px;
+}
+
+/* Remaining amount display */
+.remaining-amount {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.remaining-amount.positive {
+  color: #28a745;
+}
+
+.remaining-amount.negative {
+  color: #dc3545;
+}
+
+/* Split summary improvements */
+.split-summary p,
+.split-total p {
+  margin: 4px 0;
+}
+
+.split-total {
+  margin-top: 12px;
+  padding: 8px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border-left: 3px solid var(--primary-color);
 }
 
 /* Mobile responsive */

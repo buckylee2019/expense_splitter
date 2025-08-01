@@ -301,7 +301,7 @@ const AddExpense = () => {
               onChange={handleChange}
               required
               min="0"
-              step="0.01"
+              step="1"
               placeholder="0.00"
             />
           </div>
@@ -453,14 +453,30 @@ const AddExpense = () => {
                   {formData.splitType === 'weight' && (
                     <div className="weight-input">
                       <label>Weight:</label>
-                      <input
-                        type="number"
-                        value={weight}
-                        onChange={(e) => handleWeightChange(split.userId, e.target.value)}
-                        min="0"
-                        step="0.1"
-                        className="weight-value"
-                      />
+                      <div className="weight-controls">
+                        <button
+                          type="button"
+                          className="weight-btn weight-decrease"
+                          onClick={() => handleWeightChange(split.userId, Math.max(0, weight - 0.5))}
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          value={weight}
+                          onChange={(e) => handleWeightChange(split.userId, e.target.value)}
+                          min="0"
+                          step="0.5"
+                          className="weight-value"
+                        />
+                        <button
+                          type="button"
+                          className="weight-btn weight-increase"
+                          onClick={() => handleWeightChange(split.userId, weight + 0.5)}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   )}
                   
@@ -472,7 +488,7 @@ const AddExpense = () => {
                       onChange={(e) => handleSplitChange(split.userId, e.target.value)}
                       disabled={formData.splitType === 'equal' || formData.splitType === 'weight'}
                       min="0"
-                      step="0.01"
+                      step="1"
                       className="split-amount"
                     />
                   </div>
@@ -490,6 +506,11 @@ const AddExpense = () => {
           <div className="split-summary">
             <p>Total: ${totalAmount.toFixed(2)}</p>
             <p>Split Total: ${totalSplits.toFixed(2)}</p>
+            {formData.splitType === 'custom' && (
+              <p className={`remaining-amount ${totalAmount - totalSplits >= 0 ? 'positive' : 'negative'}`}>
+                Remaining: ${(totalAmount - totalSplits).toFixed(2)}
+              </p>
+            )}
             {!isValid && (
               <p className="error">Splits don't match total amount!</p>
             )}

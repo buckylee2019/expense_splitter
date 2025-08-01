@@ -353,7 +353,7 @@ const Settlements = () => {
                       }))}
                       required
                       min="0"
-                      step="0.01"
+                      step="1"
                       disabled={loading}
                     />
                   </div>

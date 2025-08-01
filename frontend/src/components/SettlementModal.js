@@ -92,7 +92,7 @@ const SettlementModal = ({ balance, groupId, currentUser, onComplete, onCancel }
                 name="amount"
                 value={formData.amount}
                 onChange={handleChange}
-                step="0.01"
+                step="1"
                 min="0"
                 required
                 placeholder="0.00"

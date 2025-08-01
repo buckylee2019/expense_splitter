@@ -296,7 +296,7 @@ const EditExpense = () => {
               name="amount"
               value={formData.amount}
               onChange={handleChange}
-              step="0.01"
+              step="1"
               min="0"
               required
               placeholder="0.00"
@@ -429,14 +429,30 @@ const EditExpense = () => {
                   {formData.splitType === 'weight' && (
                     <div className="weight-input">
                       <label>Weight:</label>
-                      <input
-                        type="number"
-                        value={split.weight !== undefined ? split.weight : 1}
-                        onChange={(e) => handleWeightChange(split.userId || split.user, e.target.value)}
-                        step="0.1"
-                        min="0"
-                        className="split-weight"
-                      />
+                      <div className="weight-controls">
+                        <button
+                          type="button"
+                          className="weight-btn weight-decrease"
+                          onClick={() => handleWeightChange(split.userId || split.user, Math.max(0, (split.weight !== undefined ? split.weight : 1) - 0.5))}
+                        >
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          value={split.weight !== undefined ? split.weight : 1}
+                          onChange={(e) => handleWeightChange(split.userId || split.user, e.target.value)}
+                          step="0.5"
+                          min="0"
+                          className="split-weight"
+                        />
+                        <button
+                          type="button"
+                          className="weight-btn weight-increase"
+                          onClick={() => handleWeightChange(split.userId || split.user, (split.weight !== undefined ? split.weight : 1) + 0.5)}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   )}
                   
@@ -447,7 +463,7 @@ const EditExpense = () => {
                       value={split.amount}
                       onChange={(e) => handleSplitChange(split.userId || split.user, e.target.value)}
                       disabled={formData.splitType === 'equal' || formData.splitType === 'weight'}
-                      step="0.01"
+                      step="1"
                       min="0"
                       className="split-amount"
                     />
@@ -458,7 +474,12 @@ const EditExpense = () => {
           </div>
           
           <div className="split-total">
-            Total: ${splits.reduce((sum, split) => sum + split.amount, 0).toFixed(2)} / ${formData.amount || '0.00'}
+            <p>Total: ${splits.reduce((sum, split) => sum + split.amount, 0).toFixed(2)} / ${formData.amount || '0.00'}</p>
+            {formData.splitType === 'custom' && (
+              <p className={`remaining-amount ${(parseFloat(formData.amount) || 0) - splits.reduce((sum, split) => sum + split.amount, 0) >= 0 ? 'positive' : 'negative'}`}>
+                Remaining: ${((parseFloat(formData.amount) || 0) - splits.reduce((sum, split) => sum + split.amount, 0)).toFixed(2)}
+              </p>
+            )}
           </div>
         </div>
 
