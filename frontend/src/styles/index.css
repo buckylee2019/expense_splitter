@@ -4089,18 +4089,88 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   color: #dc3545;
 }
 
-/* Split summary improvements */
-.split-summary p,
-.split-total p {
-  margin: 4px 0;
+/* Group Spending Summary */
+.group-spending-summary {
+  margin-bottom: 20px;
 }
 
-.split-total {
-  margin-top: 12px;
-  padding: 8px;
+.group-spending-summary .card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.group-spending-summary .card-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-weight: normal;
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.summary-item {
+  padding: 12px;
   background: #f8f9fa;
-  border-radius: 4px;
-  border-left: 3px solid var(--primary-color);
+  border-radius: 8px;
+  border-left: 3px solid var(--border-color);
+}
+
+.summary-item:first-child {
+  border-left-color: var(--primary-color);
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.summary-value {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+
+.summary-value.primary {
+  color: var(--primary-color);
+  font-size: 1.5rem;
+}
+
+.summary-value.positive {
+  color: #28a745;
+}
+
+.summary-value.negative {
+  color: #dc3545;
+}
+
+.summary-note {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .summary-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .summary-value {
+    font-size: 1.1rem;
+  }
+  
+  .summary-value.primary {
+    font-size: 1.3rem;
+  }
 }
 
 /* Mobile responsive */

@@ -345,6 +345,50 @@ const GroupDetails = () => {
     setSortOrder(newSortOrder);
   };
 
+  // Calculate group spending summary
+  const calculateGroupSummary = () => {
+    if (!currentUser || !expenses.length) return null;
+
+    const currentUserId = currentUser.id;
+    let totalGroupSpending = 0;
+    let totalUserPaid = 0;
+    let totalUserShare = 0;
+    let paymentsMade = 0; // This would come from settlements data
+    let paymentsReceived = 0; // This would come from settlements data
+
+    expenses.forEach(expense => {
+      const amount = parseFloat(expense.amount) || 0;
+      totalGroupSpending += amount;
+
+      // Check if current user paid for this expense
+      if (expense.paidBy === currentUserId) {
+        totalUserPaid += amount;
+      }
+
+      // Find user's split amount
+      const userSplit = expense.splits.find(split => 
+        (split.user === currentUserId || split.userId === currentUserId)
+      );
+      if (userSplit) {
+        totalUserShare += parseFloat(userSplit.amount) || 0;
+      }
+    });
+
+    // Calculate net balance change (what user paid - what user owes)
+    const netBalanceChange = totalUserPaid - totalUserShare;
+
+    return {
+      totalGroupSpending,
+      totalUserPaid,
+      totalUserShare,
+      paymentsMade, // TODO: Get from settlements API
+      paymentsReceived, // TODO: Get from settlements API
+      netBalanceChange
+    };
+  };
+
+  const groupSummary = calculateGroupSummary();
+
   const isGroupAdmin = () => {
     if (!currentUser || !group) return false;
     const member = group.members.find(m => m.user === currentUser.id);
@@ -394,6 +438,45 @@ const GroupDetails = () => {
             </div>
           </div>
         </div>
+
+        {/* Group Spending Summary */}
+        {groupSummary && (
+          <div className="group-spending-summary card">
+            <div className="card-header">
+              <h3><i className="fi fi-rr-chart-pie"></i>&nbsp;Group Spending Summary</h3>
+              <span className="card-subtitle">{group.name} • {group.currency || 'TWD'}</span>
+            </div>
+            <div className="summary-grid">
+              <div className="summary-item">
+                <div className="summary-label">Total group spending</div>
+                <div className="summary-value primary">
+                  {group.currency || 'TWD'} {groupSummary.totalGroupSpending.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </div>
+              <div className="summary-item">
+                <div className="summary-label">Total you paid for</div>
+                <div className="summary-value">
+                  {group.currency || 'TWD'} {groupSummary.totalUserPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </div>
+              <div className="summary-item">
+                <div className="summary-label">Your total share</div>
+                <div className="summary-value">
+                  {group.currency || 'TWD'} {groupSummary.totalUserShare.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+              </div>
+              <div className="summary-item">
+                <div className="summary-label">Net balance</div>
+                <div className={`summary-value ${groupSummary.netBalanceChange >= 0 ? 'positive' : 'negative'}`}>
+                  {groupSummary.netBalanceChange >= 0 ? '+' : ''}{group.currency || 'TWD'} {groupSummary.netBalanceChange.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <div className="summary-note">
+                  {groupSummary.netBalanceChange >= 0 ? 'You are owed money' : 'You owe money'}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {balances.length > 0 ? (
           <div className="balances-compact card">
