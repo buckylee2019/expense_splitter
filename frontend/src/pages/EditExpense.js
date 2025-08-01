@@ -140,8 +140,11 @@ const EditExpense = () => {
         amount: amount / splits.length // Equal amount initially
       })));
     } else if (newSplitType === 'custom') {
-      // Keep current amounts but allow manual editing
-      // No automatic calculation needed
+      // Set all amounts to zero for custom split
+      setSplits(prev => prev.map(split => ({
+        ...split,
+        amount: 0
+      })));
     }
   };
 

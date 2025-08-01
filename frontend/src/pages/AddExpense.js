@@ -152,6 +152,12 @@ const AddExpense = () => {
       calculateEqualSplits(amount);
     } else if (splitType === 'weight') {
       calculateWeightedSplits(amount);
+    } else if (splitType === 'custom') {
+      // Set all amounts to zero for custom split
+      setSplits(prev => prev.map(split => ({
+        ...split,
+        amount: 0
+      })));
     }
   };
 
