@@ -18,6 +18,7 @@ class Settlement {
     this.createdAt = data.createdAt || new Date().toISOString();
     this.updatedAt = data.updatedAt || new Date().toISOString();
     this.recordedBy = data.recordedBy; // Track who recorded the settlement
+    this.isMultiGroupSettlement = data.isMultiGroupSettlement || false; // Flag for multi-group settlements
   }
 
   static async create(settlementData) {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import api from '../services/api';
 import UserPhoto from '../components/UserPhoto';
+import MultiGroupSettlementModal from '../components/MultiGroupSettlementModal';
 import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard = () => {
@@ -11,6 +12,8 @@ const Dashboard = () => {
   const [balances, setBalances] = useState({ balances: [], summary: {} });
   const [useOptimized, setUseOptimized] = useState(true); // Default to optimized for proper debt aggregation
   const [settlements, setSettlements] = useState([]);
+  const [showSettlementModal, setShowSettlementModal] = useState(false);
+  const [selectedUserBalance, setSelectedUserBalance] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -104,6 +107,22 @@ const Dashboard = () => {
     setUseOptimized(!useOptimized);
     // Refresh data with new optimization setting
     setTimeout(() => fetchData(), 100);
+  };
+
+  // Handle settle button click
+  const handleSettleClick = (userBalance) => {
+    setSelectedUserBalance(userBalance);
+    setShowSettlementModal(true);
+  };
+
+  // Handle settlement completion
+  const handleSettlementComplete = () => {
+    setShowSettlementModal(false);
+    setSelectedUserBalance(null);
+    // Refresh dashboard data to update balances
+    fetchData();
+    setSuccessMessage('Settlement recorded successfully!');
+    setTimeout(() => setSuccessMessage(''), 5000);
   };
 
   if (loading) {
@@ -351,6 +370,17 @@ const Dashboard = () => {
                               </span>
                             ))}
                           </div>
+                          <button 
+                            className="settle-btn"
+                            onClick={() => handleSettleClick({
+                              user: userBalance.user,
+                              currencies: userCurrencies
+                            })}
+                            title="Record settlement for all balances with this user"
+                          >
+                            <i className="fi fi-rr-hand-holding-usd"></i>
+                            Settle
+                          </button>
                         </div>
                       </div>
                     );
@@ -380,6 +410,16 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Multi-Group Settlement Modal */}
+      {showSettlementModal && selectedUserBalance && (
+        <MultiGroupSettlementModal
+          userBalance={selectedUserBalance}
+          currentUser={user}
+          onComplete={handleSettlementComplete}
+          onCancel={() => setShowSettlementModal(false)}
+        />
       )}
     </div>
   );

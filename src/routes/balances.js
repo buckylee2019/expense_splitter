@@ -52,4 +52,47 @@ router.get('/group/:groupId/optimized', authMiddleware, async (req, res) => {
   }
 });
 
+// Get group breakdown for a specific user balance
+router.get('/breakdown/:userId', authMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const currentUserId = req.user.id;
+    
+    // Get all groups where both users are members
+    const groups = await Group.findByUserId(currentUserId);
+    const breakdown = [];
+    
+    for (const group of groups) {
+      // Check if the target user is also in this group
+      const isTargetUserInGroup = group.members.some(m => m.user === userId);
+      if (!isTargetUserInGroup) continue;
+      
+      // Calculate balances for this specific group
+      const groupBalances = await balanceService.calculateBalances(group.id, false);
+      
+      // Find the balance between current user and target user
+      const relevantBalance = groupBalances.balances.find(balance => 
+        balance.user.id === userId
+      );
+      
+      if (relevantBalance && Math.abs(relevantBalance.amount) > 0.01) {
+        breakdown.push({
+          groupId: group.id,
+          groupName: group.name,
+          currencies: [{
+            currency: relevantBalance.currency || 'TWD',
+            amount: relevantBalance.amount,
+            type: relevantBalance.type
+          }]
+        });
+      }
+    }
+    
+    res.json({ groups: breakdown });
+  } catch (error) {
+    console.error('Group breakdown error:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
 module.exports = router;

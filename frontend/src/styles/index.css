@@ -6119,3 +6119,149 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     max-width: 200px;
   }
 }
+/* Multi-Group Settlement Modal */
+.multi-group-settlement {
+  max-width: 600px;
+}
+
+.multi-group-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--info-bg);
+  color: var(--info-text);
+  padding: 12px;
+  border-radius: 8px;
+  margin-top: 16px;
+  font-size: 14px;
+}
+
+.multi-group-notice i {
+  color: var(--info-color);
+}
+
+.group-breakdown {
+  margin: 20px 0;
+  padding: 16px;
+  background: var(--card-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.group-breakdown h4 {
+  margin: 0 0 12px 0;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+}
+
+.group-name {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.group-amounts {
+  display: flex;
+  gap: 8px;
+}
+
+.breakdown-amount {
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.loading-breakdown {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  color: var(--text-secondary);
+}
+
+.loading-breakdown i {
+  animation: spin 1s linear infinite;
+}
+
+.multi-currency-amounts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.currency-separator {
+  color: var(--text-secondary);
+  font-weight: normal;
+}
+
+/* Settlement Button in Balance Items */
+.balance-amount-modern {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.settle-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.settle-btn:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.settle-btn i {
+  font-size: 14px;
+}
+
+/* Form help text */
+.form-help {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Color variables for info styling */
+:root {
+  --info-bg: #e3f2fd;
+  --info-text: #1565c0;
+  --info-color: #2196f3;
+}
+
+[data-theme="dark"] {
+  --info-bg: #1a237e20;
+  --info-text: #90caf9;
+  --info-color: #64b5f6;
+}
