@@ -23,8 +23,16 @@ const User = require('../models/User');
  */
 const calculateOptimizedBalances = async (userId, groupId = null) => {
   try {
-    // Step 1: Calculate raw net balances for all users in the group(s)
-    const netBalances = await calculateNetBalances(userId, groupId);
+    let netBalances;
+    
+    if (groupId) {
+      // For group-specific calculations, use the existing logic
+      netBalances = await calculateNetBalances(userId, groupId);
+    } else {
+      // For global calculations, aggregate balances from all groups
+      console.log('🌍 Calculating global balances by aggregating from all groups...');
+      netBalances = await calculateGlobalNetBalances(userId);
+    }
     
     // Step 2: Generate optimized transfers
     const optimizedTransfers = optimizeTransfers(netBalances);
@@ -55,21 +63,61 @@ const calculateOptimizedBalances = async (userId, groupId = null) => {
 };
 
 /**
+ * Calculate global net balances by aggregating from all groups the user is involved in
+ * @param {string} userId - Current user ID
+ * @returns {Object} - Aggregated net balances by user and currency
+ */
+const calculateGlobalNetBalances = async (userId) => {
+  // Get all groups the user is involved in
+  const Group = require('../models/Group');
+  const allGroups = await Group.findByUserId(userId);
+  
+  // Initialize global net balances
+  const globalNetBalances = {};
+  
+  // Process each group separately and aggregate the results
+  for (const group of allGroups) {
+    // Calculate net balances for this specific group
+    const groupNetBalances = await calculateNetBalances(userId, group.id);
+    
+    // Aggregate into global balances
+    Object.entries(groupNetBalances).forEach(([uid, currencies]) => {
+      if (!globalNetBalances[uid]) {
+        globalNetBalances[uid] = {};
+      }
+      
+      Object.entries(currencies).forEach(([currency, balance]) => {
+        if (!globalNetBalances[uid][currency]) {
+          globalNetBalances[uid][currency] = 0;
+        }
+        globalNetBalances[uid][currency] += balance;
+      });
+    });
+  }
+  
+  return globalNetBalances;
+};
+
+/**
  * Calculate net balance for each user (what they're owed minus what they owe)
  * @param {string} userId - Current user ID
  * @param {string} groupId - Optional group ID
  * @returns {Object} - Net balances by user and currency
  */
 const calculateNetBalances = async (userId, groupId = null) => {
-  // Get all expenses for the user or group
-  const expenses = await Expense.findByUserId(userId);
-  const filteredExpenses = groupId 
-    ? expenses.filter(expense => expense.group === groupId)
-    : expenses;
+  // Get expenses based on scope
+  let expenses;
+  if (groupId) {
+    // For group-specific calculations, get all expenses in the group
+    expenses = await Expense.findByGroupId(groupId);
+  } else {
+    // For global calculations, get all expenses involving the current user
+    expenses = await Expense.findByUserId(userId);
+  }
 
   // Get all users involved in these expenses
   const allUserIds = new Set();
-  filteredExpenses.forEach(expense => {
+  expenses.forEach(expense => {
     allUserIds.add(expense.paidBy);
     expense.splits.forEach(split => {
       allUserIds.add(split.user || split.userId);
@@ -83,7 +131,7 @@ const calculateNetBalances = async (userId, groupId = null) => {
   });
 
   // Calculate net balances from expenses
-  filteredExpenses.forEach(expense => {
+  expenses.forEach(expense => {
     const currency = expense.currency || 'TWD';
     const payerId = expense.paidBy;
     
@@ -105,12 +153,15 @@ const calculateNetBalances = async (userId, groupId = null) => {
   });
 
   // Apply settlements to adjust net balances
-  const settlements = await Settlement.findByUserId(userId);
-  const filteredSettlements = groupId
-    ? settlements.filter(settlement => settlement.group === groupId)
-    : settlements;
+  let settlements;
+  if (groupId) {
+    settlements = await Settlement.findByGroupId(groupId);
+  } else {
+    // For global view, get all settlements involving the current user
+    settlements = await Settlement.findByUserId(userId);
+  }
 
-  filteredSettlements.forEach(settlement => {
+  settlements.forEach(settlement => {
     const currency = settlement.currency || 'TWD';
     const fromUser = settlement.from;
     const toUser = settlement.to;

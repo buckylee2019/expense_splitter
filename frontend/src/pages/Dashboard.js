@@ -9,7 +9,7 @@ const Dashboard = () => {
   const { user: authUser, updateUser } = useAuth();
   const [user, setUser] = useState(authUser); // Local user state for updated profile data
   const [balances, setBalances] = useState({ balances: [], summary: {} });
-  const [useOptimized, setUseOptimized] = useState(true); // Default to optimized
+  const [useOptimized, setUseOptimized] = useState(true); // Default to optimized for proper debt aggregation
   const [settlements, setSettlements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -159,7 +159,7 @@ const Dashboard = () => {
                 <button 
                   onClick={toggleOptimization}
                   className={`button ${useOptimized ? 'primary' : 'secondary'} small`}
-                  title={useOptimized ? 'Using optimized transfers (fewer transactions)' : 'Using direct transfers'}
+                  title={useOptimized ? 'Using optimized transfers (aggregates debts across groups for fewer transactions)' : 'Using direct transfers (shows individual debt per expense)'}
                 >
                   {useOptimized ? <><i className="fi fi-rr-target"></i> Optimized</> : <><i className="fi fi-rr-chart-pie"></i> Direct</>}
                 </button>
