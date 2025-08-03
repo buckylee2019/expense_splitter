@@ -339,13 +339,6 @@ const GroupDetails = () => {
     });
   };
 
-  // Get sorted expenses
-  const sortedExpenses = sortExpenses(expenses, sortOrder);
-
-  const handleSortChange = (newSortOrder) => {
-    setSortOrder(newSortOrder);
-  };
-
   // Helper function to check if expense is from current month
   const isCurrentMonth = (expenseDate) => {
     const now = new Date();
@@ -363,6 +356,13 @@ const GroupDetails = () => {
   const getFilteredExpenses = () => {
     if (!showCurrentMonthOnly) return expenses;
     return expenses.filter(expense => isCurrentMonth(expense.date));
+  };
+
+  // Get sorted expenses (now using filtered expenses)
+  const sortedExpenses = sortExpenses(getFilteredExpenses(), sortOrder);
+
+  const handleSortChange = (newSortOrder) => {
+    setSortOrder(newSortOrder);
   };
 
   // Calculate group spending summary
@@ -727,8 +727,30 @@ const GroupDetails = () => {
 
       <div className="expenses-section">
         <div className="expenses-header">
-          <h2>Expenses</h2>
+          <div className="expenses-title-section">
+            <h2>Expenses</h2>
+            <span className="expenses-subtitle">
+              {showCurrentMonthOnly ? (
+                <span className="current-month-indicator">
+                  <i className="fi fi-rr-calendar"></i> {getCurrentMonthName()} ({getFilteredExpenses().length} of {expenses.length} expenses)
+                </span>
+              ) : (
+                <span className="all-time-indicator">
+                  <i className="fi fi-rr-time-past"></i> All Time ({expenses.length} expenses)
+                </span>
+              )}
+            </span>
+          </div>
           <div className="expenses-header-actions">
+            <button 
+              onClick={() => setShowCurrentMonthOnly(!showCurrentMonthOnly)}
+              className={`button ${showCurrentMonthOnly ? 'secondary' : 'primary'} small`}
+              title={showCurrentMonthOnly ? 'Show all expenses' : 'Show current month only'}
+            >
+              <i className={`fi ${showCurrentMonthOnly ? 'fi-rr-time-past' : 'fi-rr-calendar'}`}></i>
+              {showCurrentMonthOnly ? 'Show All Time' : 'Current Month'}
+            </button>
+            
             <Link 
               to={`/groups/${groupId}/expenses/add`}
               className="button primary"
@@ -767,6 +789,21 @@ const GroupDetails = () => {
           <p className="no-expenses">
             No expenses yet. Add one to get started!
           </p>
+        ) : showCurrentMonthOnly && getFilteredExpenses().length === 0 ? (
+          <div className="no-current-month-expenses">
+            <div className="empty-state">
+              <i className="fi fi-rr-calendar-exclamation"></i>
+              <h4>No expenses this month</h4>
+              <p>There are no expenses recorded for {getCurrentMonthName()}.</p>
+              <button 
+                onClick={() => setShowCurrentMonthOnly(false)}
+                className="button secondary small"
+              >
+                <i className="fi fi-rr-time-past"></i>
+                View All Expenses
+              </button>
+            </div>
+          </div>
         ) : (
           <div className="expenses-list">
             {sortedExpenses.map(expense => {

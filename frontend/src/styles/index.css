@@ -1919,15 +1919,29 @@ p {
 .expenses-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: var(--spacing-lg);
   flex-wrap: wrap;
   gap: var(--spacing);
 }
 
+.expenses-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .expenses-header h2 {
   margin: 0;
   color: var(--text-primary);
+}
+
+.expenses-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .expenses-header-actions {
