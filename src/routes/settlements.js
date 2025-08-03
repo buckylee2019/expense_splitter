@@ -90,6 +90,7 @@ router.post('/', authMiddleware, async (req, res) => {
 router.post('/multi-group', authMiddleware, async (req, res) => {
   try {
     const {
+      fromUserId,
       toUserId,
       amount,
       method,
@@ -97,8 +98,10 @@ router.post('/multi-group', authMiddleware, async (req, res) => {
       currencies
     } = req.body;
 
+    console.log('Multi-group settlement request:', { fromUserId, toUserId, amount, method, currencies });
+
     // Validate required fields
-    if (!toUserId || !amount || !currencies || !Array.isArray(currencies)) {
+    if (!fromUserId || !toUserId || !amount || !currencies || !Array.isArray(currencies)) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -107,24 +110,49 @@ router.post('/multi-group', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'Amount must be a positive number' });
     }
 
-    const fromUserId = req.user.id;
+    // Ensure the current user is either the payer or payee
+    if (req.user.id !== fromUserId && req.user.id !== toUserId) {
+      return res.status(403).json({ error: 'You can only record settlements you are involved in' });
+    }
+
     const createdSettlements = [];
     
+    console.log(`Processing multi-group settlement from ${fromUserId} to ${toUserId}`);
+    
+    // Import Group model inside function to avoid circular dependency
+    const Group = require('../models/Group');
+    
     // Get all groups where both users are members
-    const groups = await Group.findByUserId(fromUserId);
+    const groups = await Group.findByUserId(req.user.id);
+    console.log(`Found ${groups.length} groups for current user`);
+    
     const relevantGroups = [];
     
     for (const group of groups) {
-      const isTargetUserInGroup = group.members.some(m => m.user === toUserId);
-      if (isTargetUserInGroup) {
-        // Calculate current balances for this group
+      const isFromUserInGroup = group.members.some(m => m.user === fromUserId);
+      const isToUserInGroup = group.members.some(m => m.user === toUserId);
+      
+      if (!isFromUserInGroup || !isToUserInGroup) {
+        console.log(`Skipping group ${group.name} - one or both users not members`);
+        continue;
+      }
+      
+      console.log(`Processing group ${group.name} (${group.id})`);
+      
+      try {
+        // Calculate current balances for this group from the perspective of the current user
         const balanceService = require('../services/balanceService');
-        const groupBalances = await balanceService.calculateBalances(group.id, false);
+        const groupBalances = await balanceService.calculateBalances(req.user.id, group.id);
         
-        // Find the balance between current user and target user
-        const relevantBalance = groupBalances.balances.find(balance => 
-          balance.user.id === toUserId
+        console.log(`Group ${group.name} balances:`, groupBalances);
+        
+        // Find the balance between current user and the other user
+        const otherUserId = req.user.id === fromUserId ? toUserId : fromUserId;
+        const relevantBalance = groupBalances.find(balance => 
+          balance.user.id === otherUserId
         );
+        
+        console.log(`Relevant balance for ${otherUserId} in group ${group.name}:`, relevantBalance);
         
         if (relevantBalance && Math.abs(relevantBalance.amount) > 0.01) {
           relevantGroups.push({
@@ -132,8 +160,13 @@ router.post('/multi-group', authMiddleware, async (req, res) => {
             balance: relevantBalance
           });
         }
+      } catch (groupError) {
+        console.error(`Error processing group ${group.name}:`, groupError);
+        // Continue with other groups even if one fails
       }
     }
+    
+    console.log(`Found ${relevantGroups.length} relevant groups with outstanding balances`);
     
     if (relevantGroups.length === 0) {
       return res.status(400).json({ error: 'No outstanding balances found between users' });
@@ -141,20 +174,22 @@ router.post('/multi-group', authMiddleware, async (req, res) => {
     
     // Calculate total outstanding amount across all groups
     const totalOutstanding = relevantGroups.reduce((sum, item) => sum + Math.abs(item.balance.amount), 0);
+    console.log(`Total outstanding amount: ${totalOutstanding}`);
     
     // Distribute the settlement amount proportionally across groups
     for (const { group, balance } of relevantGroups) {
       const groupProportion = Math.abs(balance.amount) / totalOutstanding;
       const groupSettlementAmount = parseFloat(amount) * groupProportion;
       
+      console.log(`Group ${group.name}: proportion ${groupProportion}, amount ${groupSettlementAmount}`);
+      
       if (groupSettlementAmount > 0.01) { // Only create settlement if amount is significant
-        // Determine direction of payment based on balance type
-        const actualFromUserId = balance.type === 'you_owe' ? fromUserId : toUserId;
-        const actualToUserId = balance.type === 'you_owe' ? toUserId : fromUserId;
+        // Use the explicit from/to user IDs provided by the frontend
+        console.log(`Creating settlement: ${fromUserId} -> ${toUserId}, amount: ${groupSettlementAmount}`);
         
         const settlement = await Settlement.create({
-          from: actualFromUserId,
-          to: actualToUserId,
+          from: fromUserId,
+          to: toUserId,
           amount: Math.round(groupSettlementAmount * 100) / 100, // Round to 2 decimal places
           currency: balance.currency || 'TWD',
           group: group.id,
@@ -172,6 +207,8 @@ router.post('/multi-group', authMiddleware, async (req, res) => {
         });
       }
     }
+    
+    console.log(`Created ${createdSettlements.length} settlements`);
     
     res.status(201).json({
       message: `Multi-group settlement recorded successfully across ${createdSettlements.length} groups`,

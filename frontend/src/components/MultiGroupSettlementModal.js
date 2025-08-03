@@ -54,9 +54,15 @@ const MultiGroupSettlementModal = ({ userBalance, currentUser, onComplete, onCan
     setError('');
 
     try {
+      // Determine payment direction based on balance types
+      const isUserOwing = userBalance.currencies.some(c => c.type === 'you_owe');
+      
       // Create multi-group settlement
       const settlementData = {
-        toUserId: userBalance.user.id,
+        // If current user owes money, they pay to the other user
+        // If other user owes money, they pay to the current user
+        fromUserId: isUserOwing ? currentUser.id : userBalance.user.id,
+        toUserId: isUserOwing ? userBalance.user.id : currentUser.id,
         amount: parseFloat(formData.amount),
         method: formData.method,
         notes: formData.notes,
