@@ -4097,14 +4097,80 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 .group-spending-summary .card-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 16px;
+}
+
+.group-spending-summary .card-header > div:first-child {
+  flex: 1;
 }
 
 .group-spending-summary .card-subtitle {
   font-size: 0.875rem;
   color: var(--text-secondary);
   font-weight: normal;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.current-month-indicator,
+.all-time-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.current-month-indicator {
+  background: rgba(0, 123, 255, 0.1);
+  color: #007bff;
+}
+
+.all-time-indicator {
+  background: rgba(108, 117, 125, 0.1);
+  color: #6c757d;
+}
+
+.summary-controls {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.no-current-month-expenses {
+  padding: 20px 0;
+}
+
+.no-current-month-expenses .empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 2px dashed var(--border-color);
+}
+
+.no-current-month-expenses .empty-state i {
+  font-size: 3rem;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  display: block;
+}
+
+.no-current-month-expenses .empty-state h4 {
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 1.25rem;
+}
+
+.no-current-month-expenses .empty-state p {
+  margin: 0 0 20px 0;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
 }
 
 .summary-grid {

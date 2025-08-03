@@ -26,6 +26,7 @@ const GroupDetails = () => {
   const [showDetailedDebts, setShowDetailedDebts] = useState(false);
   const [groupDebts, setGroupDebts] = useState([]);
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest'
+  const [showCurrentMonthOnly, setShowCurrentMonthOnly] = useState(true); // New state for month filter
 
   const fetchGroupData = useCallback(async () => {
     try {
@@ -345,18 +346,38 @@ const GroupDetails = () => {
     setSortOrder(newSortOrder);
   };
 
+  // Helper function to check if expense is from current month
+  const isCurrentMonth = (expenseDate) => {
+    const now = new Date();
+    const expense = new Date(expenseDate);
+    return expense.getMonth() === now.getMonth() && expense.getFullYear() === now.getFullYear();
+  };
+
+  // Helper function to get current month name
+  const getCurrentMonthName = () => {
+    const now = new Date();
+    return now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  };
+
+  // Filter expenses based on month setting
+  const getFilteredExpenses = () => {
+    if (!showCurrentMonthOnly) return expenses;
+    return expenses.filter(expense => isCurrentMonth(expense.date));
+  };
+
   // Calculate group spending summary
   const calculateGroupSummary = () => {
     if (!currentUser || !expenses.length) return null;
 
     const currentUserId = currentUser.id;
+    const filteredExpenses = getFilteredExpenses();
     let totalGroupSpending = 0;
     let totalUserPaid = 0;
     let totalUserShare = 0;
     let paymentsMade = 0; // This would come from settlements data
     let paymentsReceived = 0; // This would come from settlements data
 
-    expenses.forEach(expense => {
+    filteredExpenses.forEach(expense => {
       const amount = parseFloat(expense.amount) || 0;
       totalGroupSpending += amount;
 
@@ -383,7 +404,9 @@ const GroupDetails = () => {
       totalUserShare,
       paymentsMade, // TODO: Get from settlements API
       paymentsReceived, // TODO: Get from settlements API
-      netBalanceChange
+      netBalanceChange,
+      expenseCount: filteredExpenses.length,
+      totalExpenseCount: expenses.length
     };
   };
 
@@ -443,38 +466,79 @@ const GroupDetails = () => {
         {groupSummary && (
           <div className="group-spending-summary card">
             <div className="card-header">
-              <h3><i className="fi fi-rr-chart-pie"></i>&nbsp;Group Spending Summary</h3>
-              <span className="card-subtitle">{group.name} • {group.currency || 'TWD'}</span>
-            </div>
-            <div className="summary-grid">
-              <div className="summary-item">
-                <div className="summary-label">Total group spending</div>
-                <div className="summary-value primary">
-                  {group.currency || 'TWD'} {groupSummary.totalGroupSpending.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
+              <div>
+                <h3><i className="fi fi-rr-chart-pie"></i>&nbsp;Group Spending Summary</h3>
+                <span className="card-subtitle">
+                  {group.name} • {group.currency || 'TWD'} • 
+                  {showCurrentMonthOnly ? (
+                    <span className="current-month-indicator">
+                      <i className="fi fi-rr-calendar"></i> {getCurrentMonthName()} ({groupSummary.expenseCount} of {groupSummary.totalExpenseCount} expenses)
+                    </span>
+                  ) : (
+                    <span className="all-time-indicator">
+                      <i className="fi fi-rr-time-past"></i> All Time ({groupSummary.totalExpenseCount} expenses)
+                    </span>
+                  )}
+                </span>
               </div>
-              <div className="summary-item">
-                <div className="summary-label">Total you paid for</div>
-                <div className="summary-value">
-                  {group.currency || 'TWD'} {groupSummary.totalUserPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-              </div>
-              <div className="summary-item">
-                <div className="summary-label">Your total share</div>
-                <div className="summary-value">
-                  {group.currency || 'TWD'} {groupSummary.totalUserShare.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-              </div>
-              <div className="summary-item">
-                <div className="summary-label">Net balance</div>
-                <div className={`summary-value ${groupSummary.netBalanceChange >= 0 ? 'positive' : 'negative'}`}>
-                  {groupSummary.netBalanceChange >= 0 ? '+' : ''}{group.currency || 'TWD'} {groupSummary.netBalanceChange.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-                <div className="summary-note">
-                  {groupSummary.netBalanceChange >= 0 ? 'You are owed money' : 'You owe money'}
-                </div>
+              <div className="summary-controls">
+                <button 
+                  onClick={() => setShowCurrentMonthOnly(!showCurrentMonthOnly)}
+                  className={`button ${showCurrentMonthOnly ? 'secondary' : 'primary'} small`}
+                  title={showCurrentMonthOnly ? 'Show all expenses' : 'Show current month only'}
+                >
+                  <i className={`fi ${showCurrentMonthOnly ? 'fi-rr-time-past' : 'fi-rr-calendar'}`}></i>
+                  {showCurrentMonthOnly ? 'Show All Time' : 'Current Month'}
+                </button>
               </div>
             </div>
+            
+            {showCurrentMonthOnly && groupSummary.expenseCount === 0 ? (
+              <div className="no-current-month-expenses">
+                <div className="empty-state">
+                  <i className="fi fi-rr-calendar-exclamation"></i>
+                  <h4>No expenses this month</h4>
+                  <p>There are no expenses recorded for {getCurrentMonthName()}.</p>
+                  <button 
+                    onClick={() => setShowCurrentMonthOnly(false)}
+                    className="button secondary small"
+                  >
+                    <i className="fi fi-rr-time-past"></i>
+                    View All Time Summary
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="summary-grid">
+                <div className="summary-item">
+                  <div className="summary-label">Total group spending</div>
+                  <div className="summary-value primary">
+                    {group.currency || 'TWD'} {groupSummary.totalGroupSpending.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-label">Total you paid for</div>
+                  <div className="summary-value">
+                    {group.currency || 'TWD'} {groupSummary.totalUserPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-label">Your total share</div>
+                  <div className="summary-value">
+                    {group.currency || 'TWD'} {groupSummary.totalUserShare.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                </div>
+                <div className="summary-item">
+                  <div className="summary-label">Net balance</div>
+                  <div className={`summary-value ${groupSummary.netBalanceChange >= 0 ? 'positive' : 'negative'}`}>
+                    {groupSummary.netBalanceChange >= 0 ? '+' : ''}{group.currency || 'TWD'} {groupSummary.netBalanceChange.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </div>
+                  <div className="summary-note">
+                    {groupSummary.netBalanceChange >= 0 ? 'You are owed money' : 'You owe money'}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
