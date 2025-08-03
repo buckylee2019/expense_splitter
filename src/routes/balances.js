@@ -2,6 +2,7 @@ const express = require('express');
 const { authMiddleware } = require('../utils/auth');
 const { calculateBalances } = require('../services/balanceService');
 const { calculateOptimizedBalances, calculateOptimizedGroupBalances, getGroupOptimizedTransfers } = require('../services/optimizedBalanceService');
+const balanceService = require('../services/balanceService');
 
 const router = express.Router();
 
@@ -58,6 +59,11 @@ router.get('/breakdown/:userId', authMiddleware, async (req, res) => {
     const { userId } = req.params;
     const currentUserId = req.user.id;
     
+    console.log(`Getting breakdown for user ${userId} from current user ${currentUserId}`);
+    
+    // Import Group model inside the function to avoid potential circular dependency
+    const Group = require('../models/Group');
+    
     // Get all groups where both users are members
     const groups = await Group.findByUserId(currentUserId);
     const breakdown = [];
@@ -67,13 +73,17 @@ router.get('/breakdown/:userId', authMiddleware, async (req, res) => {
       const isTargetUserInGroup = group.members.some(m => m.user === userId);
       if (!isTargetUserInGroup) continue;
       
+      console.log(`Processing group ${group.name} (${group.id})`);
+      
       // Calculate balances for this specific group
-      const groupBalances = await balanceService.calculateBalances(group.id, false);
+      const groupBalances = await balanceService.calculateBalances(currentUserId, group.id);
       
       // Find the balance between current user and target user
-      const relevantBalance = groupBalances.balances.find(balance => 
+      const relevantBalance = groupBalances.find(balance => 
         balance.user.id === userId
       );
+      
+      console.log(`Found balance for ${userId} in group ${group.name}:`, relevantBalance);
       
       if (relevantBalance && Math.abs(relevantBalance.amount) > 0.01) {
         breakdown.push({
@@ -88,6 +98,7 @@ router.get('/breakdown/:userId', authMiddleware, async (req, res) => {
       }
     }
     
+    console.log('Final breakdown:', breakdown);
     res.json({ groups: breakdown });
   } catch (error) {
     console.error('Group breakdown error:', error);
