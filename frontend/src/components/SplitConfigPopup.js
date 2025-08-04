@@ -93,77 +93,105 @@ const SplitConfigPopup = ({
               
               return (
                 <div key={split.userId} className={`split-item ${activeTab === 'equal' && !split.included ? 'excluded' : ''}`}>
-                  <div className="member-info">
-                    <div className="member-details">
-                      <span className="member-name">
-                        {member ? member.userName || member.user : `Member ${index + 1}`}
-                      </span>
+                  {activeTab === 'equal' ? (
+                    // Compact horizontal layout for equal split
+                    <div className="equal-split-layout">
+                      <div className="equal-split-left">
+                        <div className="member-toggle">
+                          <label className="toggle-switch">
+                            <input
+                              type="checkbox"
+                              checked={split.included}
+                              onChange={() => onMemberToggle(split.userId)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
+                        </div>
+                        <div className="member-details">
+                          <span className="member-name">
+                            {member ? member.userName || member.user : `Member ${index + 1}`}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="equal-split-right">
+                        <div className="amount-section">
+                          <div className="amount-input-container">
+                            <input
+                              type="number"
+                              value={split.amount}
+                              onChange={(e) => onSplitChange(split.userId, e.target.value)}
+                              disabled={true}
+                              min="0"
+                              step="1"
+                              className="amount-input"
+                              placeholder="0.00"
+                            />
+                            <span className="currency-symbol">{formData.currency}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    // Original layout for weight and custom splits
+                    <>
+                      <div className="member-info">
+                        <div className="member-details">
+                          <span className="member-name">
+                            {member ? member.userName || member.user : `Member ${index + 1}`}
+                          </span>
+                          {activeTab === 'weight' && (
+                            <span className="weight-percentage">
+                              ({((weight / weights.reduce((sum, w) => sum + w.weight, 0)) * 100).toFixed(1)}%)
+                            </span>
+                          )}
+                        </div>
+                        <div className="amount-section">
+                          <div className="amount-input-container">
+                            <input
+                              type="number"
+                              value={split.amount}
+                              onChange={(e) => onSplitChange(split.userId, e.target.value)}
+                              disabled={activeTab === 'weight'}
+                              min="0"
+                              step="1"
+                              className="amount-input"
+                              placeholder="0.00"
+                            />
+                            <span className="currency-symbol">{formData.currency}</span>
+                          </div>
+                        </div>
+                      </div>
+                      
                       {activeTab === 'weight' && (
-                        <span className="weight-percentage">
-                          ({((weight / weights.reduce((sum, w) => sum + w.weight, 0)) * 100).toFixed(1)}%)
-                        </span>
+                        <div className="weight-controls">
+                          <button
+                            type="button"
+                            className="weight-btn weight-decrease"
+                            onClick={() => onWeightChange(split.userId, Math.max(0, weight - 0.5))}
+                          >
+                            <i className="fi fi-rr-minus"></i>
+                          </button>
+                          <div className="weight-display">
+                            <input
+                              type="number"
+                              value={weight}
+                              onChange={(e) => onWeightChange(split.userId, parseFloat(e.target.value) || 0)}
+                              min="0"
+                              step="0.5"
+                              className="weight-input"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            className="weight-btn weight-increase"
+                            onClick={() => onWeightChange(split.userId, weight + 0.5)}
+                          >
+                            <i className="fi fi-rr-plus"></i>
+                          </button>
+                        </div>
                       )}
-                    </div>
-                    
-                    {activeTab === 'equal' && (
-                      <div className="member-toggle">
-                        <label className="toggle-switch">
-                          <input
-                            type="checkbox"
-                            checked={split.included}
-                            onChange={() => onMemberToggle(split.userId)}
-                          />
-                          <span className="toggle-slider"></span>
-                        </label>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {activeTab === 'weight' && (
-                    <div className="weight-controls">
-                      <button
-                        type="button"
-                        className="weight-btn weight-decrease"
-                        onClick={() => onWeightChange(split.userId, Math.max(0, weight - 0.5))}
-                      >
-                        <i className="fi fi-rr-minus"></i>
-                      </button>
-                      <div className="weight-display">
-                        <input
-                          type="number"
-                          value={weight}
-                          onChange={(e) => onWeightChange(split.userId, parseFloat(e.target.value) || 0)}
-                          min="0"
-                          step="0.5"
-                          className="weight-input"
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        className="weight-btn weight-increase"
-                        onClick={() => onWeightChange(split.userId, weight + 0.5)}
-                      >
-                        <i className="fi fi-rr-plus"></i>
-                      </button>
-                    </div>
+                    </>
                   )}
-                  
-                  <div className="amount-section">
-                    <div className="amount-label">Amount:</div>
-                    <div className="amount-input-container">
-                      <input
-                        type="number"
-                        value={split.amount}
-                        onChange={(e) => onSplitChange(split.userId, e.target.value)}
-                        disabled={activeTab === 'equal' || activeTab === 'weight'}
-                        min="0"
-                        step="1"
-                        className="amount-input"
-                        placeholder="0.00"
-                      />
-                      <span className="currency-symbol">{formData.currency}</span>
-                    </div>
-                  </div>
                 </div>
               );
             })}

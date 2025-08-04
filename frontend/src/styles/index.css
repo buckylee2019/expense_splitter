@@ -7118,12 +7118,12 @@ input:checked + .toggle-slider:before {
   border-color: #e9ecef;
 }
 
-/* Tab-specific styling adjustments */
+/* Restructured layout for better grouping */
 .split-config-popup .member-info {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
-  margin-bottom: 8px;
+  margin-bottom: 0;
 }
 
 .split-config-popup .member-details {
@@ -7144,13 +7144,35 @@ input:checked + .toggle-slider:before {
   font-weight: 500;
 }
 
+/* Compact layout for equal split */
+.split-config-popup .equal-split-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.split-config-popup .equal-split-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.split-config-popup .equal-split-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 120px;
+}
+
 /* Enhanced Weight Controls */
 .split-config-popup .weight-controls {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  margin: 8px 0;
+  margin: 8px 0 0 0;
   padding: 8px;
   background: var(--background-secondary);
   border-radius: 6px;
@@ -7204,14 +7226,14 @@ input:checked + .toggle-slider:before {
   box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
 }
 
-/* Enhanced Amount Section */
+/* Compact Amount Section */
 .split-config-popup .amount-section {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-light);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
 }
 
 .split-config-popup .amount-label {
