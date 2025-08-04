@@ -4,6 +4,7 @@ import api from '../services/api';
 import CategoryPopup from '../components/CategoryPopup';
 import PopupSelector from '../components/PopupSelector';
 import SplitConfigPopup from '../components/SplitConfigPopup';
+import PaidByPopup from '../components/PaidByPopup';
 import { parseCategoryString } from '../data/expenseCategories';
 
 const AddExpense = () => {
@@ -35,6 +36,10 @@ const AddExpense = () => {
   const [showCurrencyPopup, setShowCurrencyPopup] = useState(false);
   const [showPaidByPopup, setShowPaidByPopup] = useState(false);
   const [showSplitConfigPopup, setShowSplitConfigPopup] = useState(false);
+  
+  // Multiple payers state
+  const [isMultiplePayers, setIsMultiplePayers] = useState(false);
+  const [multiplePayers, setMultiplePayers] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -212,6 +217,25 @@ const AddExpense = () => {
         }));
       }
     }
+  };
+
+  // Handle multiple payers
+  const handleMultiplePayers = () => {
+    setIsMultiplePayers(true);
+    // Initialize multiple payers with all group members
+    const initialPayers = group.members.map(member => ({
+      userId: member.user,
+      amount: 0,
+      included: false
+    }));
+    setMultiplePayers(initialPayers);
+    // TODO: Open multiple payers popup
+    console.log('Opening multiple payers popup...');
+  };
+
+  const handleSinglePayerSelect = (userId) => {
+    setIsMultiplePayers(false);
+    setFormData(prev => ({ ...prev, paidBy: userId }));
   };
 
   const validateSplits = () => {
@@ -393,14 +417,28 @@ const AddExpense = () => {
               onClick={() => setShowPaidByPopup(true)}
             >
               <span className="trigger-text">
-                {formData.paidBy ? 
+                {isMultiplePayers ? 
                   (() => {
-                    const member = group?.members?.find(m => m.user === formData.paidBy);
-                    const isCurrentUser = member?.user === currentUser?.id;
-                    const displayName = member?.userName || member?.user || 'Unknown';
-                    return `${displayName}${isCurrentUser ? ' (You)' : ''}`;
+                    const activePayers = multiplePayers.filter(p => p.included && p.amount > 0);
+                    if (activePayers.length === 0) {
+                      return 'Select multiple payers';
+                    } else if (activePayers.length === 1) {
+                      const member = group?.members?.find(m => m.user === activePayers[0].userId);
+                      const isCurrentUser = member?.user === currentUser?.id;
+                      const displayName = member?.userName || member?.user || 'Unknown';
+                      return `${displayName}${isCurrentUser ? ' (You)' : ''}`;
+                    } else {
+                      return `${activePayers.length} people`;
+                    }
                   })()
-                  : 'Select who paid'
+                  : formData.paidBy ? 
+                    (() => {
+                      const member = group?.members?.find(m => m.user === formData.paidBy);
+                      const isCurrentUser = member?.user === currentUser?.id;
+                      const displayName = member?.userName || member?.user || 'Unknown';
+                      return `${displayName}${isCurrentUser ? ' (You)' : ''}`;
+                    })()
+                    : 'Select who paid'
                 }
               </span>
               <i className="fi fi-rr-angle-down"></i>
@@ -502,20 +540,14 @@ const AddExpense = () => {
         onSelect={(value) => setFormData(prev => ({ ...prev, currency: value }))}
       />
 
-      <PopupSelector
+      <PaidByPopup
         isOpen={showPaidByPopup}
         onClose={() => setShowPaidByPopup(false)}
-        title="Who Paid?"
-        options={group?.members?.map(member => {
-          const isCurrentUser = member.user === currentUser?.id;
-          const displayName = member.userName || member.user;
-          return {
-            label: `${displayName}${isCurrentUser ? ' (You)' : ''}`,
-            value: member.user
-          };
-        }) || []}
+        members={group?.members || []}
+        currentUser={currentUser}
         selectedValue={formData.paidBy}
-        onSelect={(value) => setFormData(prev => ({ ...prev, paidBy: value }))}
+        onSelect={handleSinglePayerSelect}
+        onMultiplePayers={handleMultiplePayers}
       />
 
       <SplitConfigPopup
