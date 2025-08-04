@@ -7102,8 +7102,8 @@ input:checked + .toggle-slider:before {
 .split-config-popup .split-item {
   background: white;
   border: 1px solid var(--border-color);
-  border-radius: 12px;
-  padding: 16px;
+  border-radius: 8px;
+  padding: 12px;
   transition: all 0.2s ease;
 }
 
@@ -7123,7 +7123,7 @@ input:checked + .toggle-slider:before {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .split-config-popup .member-details {
@@ -7131,11 +7131,11 @@ input:checked + .toggle-slider:before {
 }
 
 .split-config-popup .member-name {
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 600;
   color: var(--text-primary);
   display: block;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .split-config-popup .weight-percentage {
@@ -7149,16 +7149,16 @@ input:checked + .toggle-slider:before {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  margin: 12px 0;
-  padding: 12px;
+  gap: 12px;
+  margin: 8px 0;
+  padding: 8px;
   background: var(--background-secondary);
-  border-radius: 8px;
+  border-radius: 6px;
 }
 
 .split-config-popup .weight-btn {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   border: 2px solid var(--border-color);
   background: white;
@@ -7167,7 +7167,7 @@ input:checked + .toggle-slider:before {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 1rem;
+  font-size: 0.875rem;
   color: var(--text-secondary);
 }
 
@@ -7183,16 +7183,16 @@ input:checked + .toggle-slider:before {
 }
 
 .split-config-popup .weight-display {
-  min-width: 80px;
+  min-width: 70px;
 }
 
 .split-config-popup .weight-input {
   width: 100%;
-  padding: 12px;
+  padding: 8px;
   border: 2px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 6px;
   text-align: center;
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 600;
   background: white;
   color: var(--text-primary);
@@ -7209,13 +7209,13 @@ input:checked + .toggle-slider:before {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
-  padding-top: 12px;
+  margin-top: 8px;
+  padding-top: 8px;
   border-top: 1px solid var(--border-light);
 }
 
 .split-config-popup .amount-label {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   font-weight: 600;
 }
@@ -7223,17 +7223,17 @@ input:checked + .toggle-slider:before {
 .split-config-popup .amount-input-container {
   display: flex;
   align-items: center;
-  gap: 8px;
-  min-width: 120px;
+  gap: 6px;
+  min-width: 100px;
 }
 
 .split-config-popup .amount-input {
   flex: 1;
-  padding: 10px 12px;
+  padding: 6px 8px;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
+  border-radius: 6px;
   text-align: right;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   background: white;
 }
@@ -7251,10 +7251,10 @@ input:checked + .toggle-slider:before {
 }
 
 .split-config-popup .currency-symbol {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   font-weight: 600;
-  min-width: 32px;
+  min-width: 28px;
 }
 
 /* Enhanced Split Summary */
@@ -7335,11 +7335,11 @@ input:checked + .toggle-slider:before {
   
   .split-config-popup .splits-list {
     padding: 0 16px;
-    gap: 12px;
+    gap: 8px;
   }
   
   .split-config-popup .split-item {
-    padding: 12px;
+    padding: 10px;
   }
   
   .split-config-popup .split-summary {
@@ -7347,11 +7347,11 @@ input:checked + .toggle-slider:before {
   }
   
   .split-config-popup .weight-controls {
-    gap: 12px;
+    gap: 10px;
   }
   
   .split-config-popup .weight-btn {
-    width: 36px;
-    height: 36px;
+    width: 30px;
+    height: 30px;
   }
 }
