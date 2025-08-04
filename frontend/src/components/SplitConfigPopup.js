@@ -130,83 +130,84 @@ const SplitConfigPopup = ({
                     </div>
                   ) : (
                     // Enhanced layout for weight and custom splits with profile photo
-                    <>
-                      <div className="member-info-enhanced">
-                        <div className="member-profile">
-                          <UserPhoto 
-                            user={{ 
-                              id: split.userId, 
-                              name: member?.userName || member?.user || `Member ${index + 1}`,
-                              photoUrl: member?.photoUrl 
-                            }} 
-                            size="medium"
-                          />
-                        </div>
-                        <div className="member-details-enhanced">
-                          <div className="member-name-row">
+                    <div className="member-row-layout">
+                      <div className="member-profile">
+                        <UserPhoto 
+                          user={{ 
+                            id: split.userId, 
+                            name: member?.userName || member?.user || `Member ${index + 1}`,
+                            photoUrl: member?.photoUrl 
+                          }} 
+                          size="medium"
+                        />
+                      </div>
+                      <div className="member-content">
+                        <div className="member-info-row">
+                          <div className="member-details-compact">
                             <span className="member-name">
                               {member ? member.userName || member.user : `Member ${index + 1}`}
                             </span>
-                            <span className="member-amount">
-                              {formData.currency} {split.amount.toFixed(2)}
-                            </span>
+                            {activeTab === 'weight' && (
+                              <span className="weight-shares-info">
+                                {weight} share{weight !== 1 ? 's' : ''} ({((weight / weights.reduce((sum, w) => sum + w.weight, 0)) * 100).toFixed(1)}%)
+                              </span>
+                            )}
                           </div>
-                          {activeTab === 'weight' && (
-                            <div className="weight-info-row">
-                              <span className="weight-shares">
-                                {weight} share{weight !== 1 ? 's' : ''}
+                          <div className="amount-display">
+                            {activeTab === 'custom' ? (
+                              <div className="amount-input-container">
+                                <input
+                                  type="number"
+                                  value={split.amount}
+                                  onChange={(e) => onSplitChange(split.userId, e.target.value)}
+                                  min="0"
+                                  step="1"
+                                  className="amount-input"
+                                  placeholder="0.00"
+                                />
+                                <span className="currency-symbol">{formData.currency}</span>
+                              </div>
+                            ) : (
+                              <span className="calculated-amount">
+                                {formData.currency} {split.amount.toFixed(2)}
                               </span>
-                              <span className="weight-percentage">
-                                ({((weight / weights.reduce((sum, w) => sum + w.weight, 0)) * 100).toFixed(1)}%)
-                              </span>
-                            </div>
-                          )}
+                            )}
+                          </div>
                         </div>
-                        {activeTab === 'custom' && (
-                          <div className="amount-input-container">
-                            <input
-                              type="number"
-                              value={split.amount}
-                              onChange={(e) => onSplitChange(split.userId, e.target.value)}
-                              min="0"
-                              step="1"
-                              className="amount-input"
-                              placeholder="0.00"
-                            />
-                            <span className="currency-symbol">{formData.currency}</span>
+                        
+                        {activeTab === 'weight' && (
+                          <div className="weight-controls-inline">
+                            <span className="weight-label">Adjust shares:</span>
+                            <div className="weight-controls-compact">
+                              <button
+                                type="button"
+                                className="weight-btn weight-decrease"
+                                onClick={() => onWeightChange(split.userId, Math.max(0, weight - 0.5))}
+                              >
+                                <i className="fi fi-rr-minus"></i>
+                              </button>
+                              <div className="weight-display-compact">
+                                <input
+                                  type="number"
+                                  value={weight}
+                                  onChange={(e) => onWeightChange(split.userId, parseFloat(e.target.value) || 0)}
+                                  min="0"
+                                  step="0.5"
+                                  className="weight-input-compact"
+                                />
+                              </div>
+                              <button
+                                type="button"
+                                className="weight-btn weight-increase"
+                                onClick={() => onWeightChange(split.userId, weight + 0.5)}
+                              >
+                                <i className="fi fi-rr-plus"></i>
+                              </button>
+                            </div>
                           </div>
                         )}
                       </div>
-                      
-                      {activeTab === 'weight' && (
-                        <div className="weight-controls">
-                          <button
-                            type="button"
-                            className="weight-btn weight-decrease"
-                            onClick={() => onWeightChange(split.userId, Math.max(0, weight - 0.5))}
-                          >
-                            <i className="fi fi-rr-minus"></i>
-                          </button>
-                          <div className="weight-display">
-                            <input
-                              type="number"
-                              value={weight}
-                              onChange={(e) => onWeightChange(split.userId, parseFloat(e.target.value) || 0)}
-                              min="0"
-                              step="0.5"
-                              className="weight-input"
-                            />
-                          </div>
-                          <button
-                            type="button"
-                            className="weight-btn weight-increase"
-                            onClick={() => onWeightChange(split.userId, weight + 0.5)}
-                          >
-                            <i className="fi fi-rr-plus"></i>
-                          </button>
-                        </div>
-                      )}
-                    </>
+                    </div>
                   )}
                 </div>
               );

@@ -7157,103 +7157,52 @@ input:checked + .toggle-slider:before {
   font-weight: 500;
 }
 
-/* Enhanced Member Info for Weight/Custom Splits */
-.split-config-popup .member-info-enhanced {
+/* New Improved Layout for Weight/Custom Splits */
+.split-config-popup .member-row-layout {
   display: flex;
   align-items: flex-start;
   gap: 16px;
-  margin-bottom: 12px;
 }
 
-.split-config-popup .member-details-enhanced {
+.split-config-popup .member-content {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 12px;
 }
 
-.split-config-popup .member-name-row {
+.split-config-popup .member-info-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 16px;
 }
 
-.split-config-popup .weight-info-row {
+.split-config-popup .member-details-compact {
+  flex: 1;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.split-config-popup .weight-shares {
+.split-config-popup .weight-shares-info {
   font-size: 0.85rem;
   color: var(--primary-color);
-  font-weight: 600;
-}
-
-.split-config-popup .weight-percentage {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
   font-weight: 500;
 }
 
-/* Enhanced Weight Controls */
-.split-config-popup .weight-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  margin: 12px 0 0 0;
-  padding: 12px;
-  background: var(--background-secondary);
-  border-radius: 8px;
+.split-config-popup .amount-display {
+  flex-shrink: 0;
 }
 
-.split-config-popup .weight-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  border: 2px solid var(--border-color);
-  background: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-}
-
-.split-config-popup .weight-btn:hover {
-  border-color: var(--primary-color);
-  color: var(--primary-color);
-  background: rgba(var(--primary-color-rgb), 0.1);
-  transform: scale(1.05);
-}
-
-.split-config-popup .weight-btn:active {
-  transform: scale(0.95);
-}
-
-.split-config-popup .weight-display {
-  min-width: 80px;
-}
-
-.split-config-popup .weight-input {
-  width: 100%;
-  padding: 10px;
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
-  text-align: center;
-  font-size: 1rem;
-  font-weight: 600;
-  background: white;
+.split-config-popup .calculated-amount {
+  font-size: 1.1rem;
+  font-weight: 700;
   color: var(--text-primary);
-}
-
-.split-config-popup .weight-input:focus {
-  outline: none;
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
+  background: var(--background-secondary);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
 }
 
 /* Enhanced Amount Input for Custom Split */
@@ -7261,37 +7210,119 @@ input:checked + .toggle-slider:before {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-width: 120px;
+  background: var(--background-secondary);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
 }
 
 .split-config-popup .amount-input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  text-align: right;
-  font-size: 0.9rem;
-  font-weight: 600;
   background: white;
-}
-
-.split-config-popup .amount-input:disabled {
-  background: var(--background-secondary);
-  color: var(--text-secondary);
-  border-color: var(--border-light);
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-align: right;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 80px;
 }
 
 .split-config-popup .amount-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+.split-config-popup .currency-symbol {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  padding-right: 4px;
+}
+
+/* Compact Weight Controls */
+.split-config-popup .weight-controls-inline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  background: rgba(var(--primary-color-rgb), 0.05);
+  border-radius: 8px;
+  border: 1px solid rgba(var(--primary-color-rgb), 0.1);
+}
+
+.split-config-popup .weight-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.split-config-popup .weight-controls-compact {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.split-config-popup .weight-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.split-config-popup .weight-btn:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background: rgba(var(--primary-color-rgb), 0.1);
+  transform: scale(1.1);
+}
+
+.split-config-popup .weight-btn:active {
+  transform: scale(0.95);
+}
+
+.split-config-popup .weight-display-compact {
+  min-width: 50px;
+}
+
+.split-config-popup .weight-input-compact {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: white;
+  color: var(--text-primary);
+}
+
+.split-config-popup .weight-input-compact:focus {
   outline: none;
   border-color: var(--primary-color);
   box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
 }
 
-.split-config-popup .currency-symbol {
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-  min-width: 32px;
+/* Remove old styles that are no longer needed */
+.split-config-popup .member-info-enhanced,
+.split-config-popup .member-details-enhanced,
+.split-config-popup .member-name-row,
+.split-config-popup .weight-info-row,
+.split-config-popup .weight-shares,
+.split-config-popup .weight-percentage,
+.split-config-popup .weight-controls,
+.split-config-popup .weight-display,
+.split-config-popup .weight-input {
+  /* These styles are now replaced by the new compact design */
 }
 
 /* Enhanced Split Summary */
@@ -7371,18 +7402,22 @@ input:checked + .toggle-slider:before {
     gap: 12px;
   }
   
-  .split-config-popup .member-info-enhanced {
+  .split-config-popup .member-row-layout {
     gap: 12px;
   }
   
-  .split-config-popup .weight-controls {
+  .split-config-popup .member-info-row {
     gap: 12px;
-    padding: 10px;
   }
   
-  .split-config-popup .weight-btn {
-    width: 32px;
-    height: 32px;
+  .split-config-popup .weight-controls-inline {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  
+  .split-config-popup .weight-controls-compact {
+    justify-content: center;
   }
   
   .split-config-popup .splits-list {
@@ -7392,6 +7427,11 @@ input:checked + .toggle-slider:before {
   .split-config-popup .split-summary {
     margin: 16px 16px 0;
     padding: 16px;
+  }
+  
+  .split-config-popup .calculated-amount {
+    font-size: 1rem;
+    padding: 6px 10px;
   }
 }
 
