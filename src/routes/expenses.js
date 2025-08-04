@@ -13,12 +13,33 @@ const populateUserNames = async (expenses) => {
   for (const expense of expenses) {
     const expenseData = expense.toJSON ? expense.toJSON() : expense;
     
-    // Get paidBy user name
+    // Handle paidBy user name(s)
     try {
-      const paidByUser = await User.findById(expenseData.paidBy);
-      expenseData.paidByName = paidByUser ? paidByUser.name : 'Unknown User';
+      if (expenseData.isMultiplePayers && Array.isArray(expenseData.paidBy)) {
+        // Multiple payers - populate each payer's name
+        const populatedPayers = [];
+        for (const payer of expenseData.paidBy) {
+          const user = await User.findById(payer.userId);
+          populatedPayers.push({
+            ...payer,
+            userName: user ? user.name : 'Unknown User',
+            userAvatarUrl: user ? user.avatarUrl : null,
+            userAvatar: user ? user.avatar : null
+          });
+        }
+        expenseData.paidBy = populatedPayers;
+        expenseData.paidByName = `${expenseData.paidBy.length} people`;
+      } else {
+        // Single payer
+        const paidByUser = await User.findById(expenseData.paidBy);
+        expenseData.paidByName = paidByUser ? paidByUser.name : 'Unknown User';
+      }
     } catch (error) {
-      expenseData.paidByName = 'Unknown User';
+      if (expenseData.isMultiplePayers) {
+        expenseData.paidByName = 'Multiple people';
+      } else {
+        expenseData.paidByName = 'Unknown User';
+      }
     }
     
     // Get user names for splits

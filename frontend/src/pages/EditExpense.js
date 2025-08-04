@@ -1,30 +1,47 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import CategorySelector from '../components/CategorySelector';
+import CategoryPopup from '../components/CategoryPopup';
+import PopupSelector from '../components/PopupSelector';
+import SplitConfigPopup from '../components/SplitConfigPopup';
+import PaidByPopup from '../components/PaidByPopup';
+import MultiplePaidByPopup from '../components/MultiplePaidByPopup';
+import { parseCategoryString } from '../data/expenseCategories';
 
 const EditExpense = () => {
   const { groupId, expenseId } = useParams();
   const navigate = useNavigate();
   
+  const [group, setGroup] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [formData, setFormData] = useState({
     description: '',
     amount: '',
     currency: 'TWD',
     category: '',
-    project: '', // Keep project field for MOZE compatibility
-    date: new Date().toISOString().split('T')[0], // Default to today in YYYY-MM-DD format
-    paidBy: '',
+    project: '',
+    date: new Date().toISOString().split('T')[0],
     splitType: 'equal',
+    paidBy: '',
     notes: ''
   });
-  
   const [splits, setSplits] = useState([]);
-  const [group, setGroup] = useState(null);
-  const [currentUser, setCurrentUser] = useState(null);
+  const [weights, setWeights] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  
+  // Popup states
+  const [showCategoryPopup, setShowCategoryPopup] = useState(false);
+  const [showProjectPopup, setShowProjectPopup] = useState(false);
+  const [showCurrencyPopup, setShowCurrencyPopup] = useState(false);
+  const [showPaidByPopup, setShowPaidByPopup] = useState(false);
+  const [showMultiplePaidByPopup, setShowMultiplePaidByPopup] = useState(false);
+  const [showSplitConfigPopup, setShowSplitConfigPopup] = useState(false);
+  
+  // Multiple payers state
+  const [isMultiplePayers, setIsMultiplePayers] = useState(false);
+  const [multiplePayers, setMultiplePayers] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -41,19 +58,38 @@ const EditExpense = () => {
         setGroup(groupRes.data);
         
         const expense = expenseRes.data;
+        
+        // Handle multiple payers vs single payer
+        const isMultiple = expense.isMultiplePayers && Array.isArray(expense.paidBy);
+        setIsMultiplePayers(isMultiple);
+        
+        if (isMultiple) {
+          // Initialize multiple payers
+          const payers = groupRes.data.members.map(member => {
+            const existingPayer = expense.paidBy.find(p => p.userId === member.user);
+            return {
+              userId: member.user,
+              userName: member.userName,
+              amount: existingPayer ? existingPayer.amount : 0,
+              included: existingPayer ? existingPayer.amount > 0 : false
+            };
+          });
+          setMultiplePayers(payers);
+        }
+        
         setFormData({
           description: expense.description,
           amount: expense.amount.toString(),
           currency: expense.currency || 'TWD',
           category: expense.category || '',
           project: expense.project || '',
-          date: expense.date ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0], // Convert to YYYY-MM-DD format
-          paidBy: expense.paidBy,
+          date: expense.date ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0],
+          paidBy: isMultiple ? '' : expense.paidBy,
           splitType: expense.splitType || 'equal',
           notes: expense.notes || ''
         });
         
-        // Create splits for all group members, not just those in the original expense
+        // Create splits for all group members
         const allMemberSplits = groupRes.data.members.map(member => {
           const existingSplit = expense.splits?.find(split => 
             (split.userId || split.user) === member.user
@@ -69,7 +105,19 @@ const EditExpense = () => {
           };
         });
         
+        // Initialize weights for all group members
+        const initialWeights = groupRes.data.members.map(member => {
+          const existingSplit = expense.splits?.find(split => 
+            (split.userId || split.user) === member.user
+          );
+          return {
+            userId: member.user,
+            weight: existingSplit ? (existingSplit.weight || 1) : 1
+          };
+        });
+        
         setSplits(allMemberSplits);
+        setWeights(initialWeights);
         setError('');
       } catch (err) {
         setError('Failed to load expense details');
@@ -82,6 +130,17 @@ const EditExpense = () => {
     fetchData();
   }, [groupId, expenseId]);
 
+  // Helper function to get currency symbol
+  const getCurrencySymbol = (curr) => {
+    switch(curr) {
+      case 'TWD': return '¥';
+      case 'USD': return '$';
+      case 'EUR': return '€';
+      case 'JPY': return '¥';
+      default: return curr;
+    }
+  };
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -91,132 +150,60 @@ const EditExpense = () => {
 
     // Recalculate splits when amount changes
     if (name === 'amount') {
+      const amount = parseFloat(value) || 0;
       if (formData.splitType === 'equal') {
-        const amount = parseFloat(value) || 0;
         calculateEqualSplits(amount);
       } else if (formData.splitType === 'weight') {
-        setTimeout(() => calculateWeightedSplits(), 0);
+        calculateWeightedSplits(amount);
       }
-    }
-  };
-
-  const handleSplitChange = (userId, amount) => {
-    setSplits(prev => prev.map(split => 
-      (split.userId || split.user) === userId 
-        ? { ...split, amount: parseFloat(amount) || 0 }
-        : split
-    ));
-  };
-
-  const handleMemberToggle = (userId) => {
-    setSplits(prev => prev.map(split => 
-      (split.userId || split.user) === userId 
-        ? { ...split, included: !split.included }
-        : split
-    ));
-    
-    // Recalculate equal splits after toggling
-    if (formData.splitType === 'equal') {
-      const amount = parseFloat(formData.amount) || 0;
-      setTimeout(() => calculateEqualSplits(amount), 0);
-    }
-  };
-
-  const handleSplitTypeChange = (e) => {
-    const newSplitType = e.target.value;
-    setFormData(prev => ({ ...prev, splitType: newSplitType }));
-    
-    const amount = parseFloat(formData.amount) || 0;
-    
-    if (newSplitType === 'equal') {
-      // Reset all members to included and calculate equal splits
-      setSplits(prev => prev.map(split => ({ ...split, included: true })));
-      setTimeout(() => calculateEqualSplits(amount), 0);
-    } else if (newSplitType === 'weight') {
-      // Set default weight of 1 for all members
-      setSplits(prev => prev.map(split => ({ 
-        ...split, 
-        weight: 1,
-        amount: amount / splits.length // Equal amount initially
-      })));
-    } else if (newSplitType === 'custom') {
-      // Set all amounts to zero for custom split
-      setSplits(prev => prev.map(split => ({
-        ...split,
-        amount: 0
-      })));
     }
   };
 
   const calculateEqualSplits = (totalAmount) => {
-    setSplits(prev => {
-      const includedMembers = prev.filter(split => split.included);
-      const equalAmount = includedMembers.length > 0 ? totalAmount / includedMembers.length : 0;
-      
-      return prev.map(split => ({
+    const includedMembers = splits.filter(split => split.included);
+    const equalAmount = includedMembers.length > 0 ? totalAmount / includedMembers.length : 0;
+    
+    setSplits(prevSplits => 
+      prevSplits.map(split => ({
         ...split,
         amount: split.included ? equalAmount : 0
-      }));
-    });
+      }))
+    );
   };
 
-  const handleWeightChange = (userId, weight) => {
-    setSplits(prev => prev.map(split => 
-      (split.userId || split.user) === userId 
-        ? { ...split, weight: parseFloat(weight) || 0 }
-        : split
-    ));
+  const calculateWeightedSplits = (totalAmount) => {
+    const totalWeight = weights.reduce((sum, weight) => sum + weight.weight, 0);
     
-    // Recalculate amounts based on weights
-    setTimeout(() => calculateWeightedSplits(), 0);
-  };
-
-  const calculateWeightedSplits = () => {
-    const totalAmount = parseFloat(formData.amount) || 0;
+    if (totalWeight === 0) return;
     
-    setSplits(prev => {
-      const totalWeight = prev.reduce((sum, split) => sum + (split.weight || 0), 0);
-      
-      if (totalWeight === 0) {
-        return prev.map(split => ({ ...split, amount: 0 }));
-      }
-      
-      return prev.map(split => ({
-        ...split,
-        amount: totalAmount * ((split.weight || 0) / totalWeight)
-      }));
-    });
+    setSplits(prevSplits => 
+      prevSplits.map(split => {
+        const weight = weights.find(w => w.userId === split.userId)?.weight || 0;
+        return {
+          ...split,
+          amount: (weight / totalWeight) * totalAmount
+        };
+      })
+    );
   };
 
   const validateSplits = () => {
-    const totalAmount = parseFloat(formData.amount) || 0;
     const totalSplits = splits.reduce((sum, split) => sum + split.amount, 0);
-    
-    // For equal split, ensure at least one member is selected
-    if (formData.splitType === 'equal') {
-      const includedMembers = splits.filter(split => split.included);
-      if (includedMembers.length === 0) {
-        setError('Please select at least one member for the equal split');
-        return false;
-      }
-    }
-    
-    // For weight-based split, ensure total weight is greater than 0
-    if (formData.splitType === 'weight') {
-      const totalWeight = splits.reduce((sum, split) => sum + (split.weight || 0), 0);
-      if (totalWeight === 0) {
-        setError('Please set weights for at least one member');
-        return false;
-      }
-    }
-    
+    const totalAmount = parseFloat(formData.amount) || 0;
     return Math.abs(totalAmount - totalSplits) < 0.01;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.paidBy) {
+    // Validate payer selection
+    if (isMultiplePayers) {
+      const activePayers = multiplePayers.filter(p => p.amount > 0);
+      if (activePayers.length === 0) {
+        setError('Please select at least one payer');
+        return;
+      }
+    } else if (!formData.paidBy) {
       setError('Please select who paid for this expense');
       return;
     }
@@ -230,14 +217,26 @@ const EditExpense = () => {
     setError('');
 
     try {
-      // Filter out splits with zero amounts (unselected members in equal split)
+      // Filter out splits with zero amounts
       const activeSplits = splits.filter(split => split.amount > 0);
       
-      await api.put(`/api/expenses/${expenseId}`, {
+      const expenseData = {
         ...formData,
         amount: parseFloat(formData.amount),
         splits: activeSplits
-      });
+      };
+
+      // Handle multiple payers vs single payer
+      if (isMultiplePayers) {
+        const activePayers = multiplePayers.filter(p => p.amount > 0);
+        expenseData.paidBy = activePayers;
+        expenseData.isMultiplePayers = true;
+      } else {
+        expenseData.paidBy = formData.paidBy;
+        expenseData.isMultiplePayers = false;
+      }
+      
+      await api.put(`/api/expenses/${expenseId}`, expenseData);
 
       navigate(`/groups/${groupId}/expenses/${expenseId}`);
     } catch (err) {
@@ -251,43 +250,29 @@ const EditExpense = () => {
   }
 
   if (error && !group) {
-    return <div className="error">{error}</div>;
+    return <div className="error-message">{error}</div>;
   }
 
+  const totalSplits = splits.reduce((sum, split) => sum + split.amount, 0);
+  const totalAmount = parseFloat(formData.amount) || 0;
+  const isValid = Math.abs(totalAmount - totalSplits) < 0.01;
+
   return (
-    <div className="edit-expense">
-      {error && <div className="error">{error}</div>}
+    <div className="edit-expense mobile-optimized">
+      {error && <div className="error-message">{error}</div>}
 
       <form onSubmit={handleSubmit} className="expense-form">
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <input
-              type="text"
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-              placeholder="What was this expense for?"
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="project">Project</label>
-            <select
-              id="project"
-              name="project"
-              value={formData.project}
-              onChange={handleChange}
-            >
-              <option value="">Select Project (Optional)</option>
-              <option value="生活開銷">生活開銷</option>
-              <option value="玩樂">玩樂</option>
-              <option value="家用">家用</option>
-              <option value="家居裝潢">家居裝潢</option>
-            </select>
-          </div>
+        <div className="form-group">
+          <label htmlFor="description">Description</label>
+          <input
+            type="text"
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+            placeholder="What was this expense for?"
+          />
         </div>
 
         <div className="form-row">
@@ -299,9 +284,9 @@ const EditExpense = () => {
               name="amount"
               value={formData.amount}
               onChange={handleChange}
-              step="1"
-              min="0"
               required
+              min="0"
+              step="1"
               placeholder="0.00"
             />
           </div>
@@ -315,175 +300,136 @@ const EditExpense = () => {
               value={formData.date}
               onChange={handleChange}
               required
-              max={new Date().toISOString().split('T')[0]} // Can't select future dates
+              max={new Date().toISOString().split('T')[0]}
             />
           </div>
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label>Category *</label>
-            <CategorySelector
-              value={formData.category}
-              onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-              required={true}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="project">Project</label>
-            <select
-              id="project"
-              name="project"
-              value={formData.project}
-              onChange={handleChange}
-            >
-              <option value="">Select Project (Optional)</option>
-              <option value="生活開銷">生活開銷</option>
-              <option value="玩樂">玩樂</option>
-              <option value="家用">家用</option>
-              <option value="家居裝潢">家居裝潢</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="notes">Notes (Optional)</label>
-            <input
-              type="text"
-              id="notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              placeholder="Additional notes..."
-            />
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="paidBy">Paid By</label>
-            <select
-              id="paidBy"
-              name="paidBy"
-              value={formData.paidBy}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select who paid</option>
-              {group?.members?.map(member => {
-                const isCurrentUser = member.user === currentUser?.id;
-                const displayName = member.userName || member.user;
-                return (
-                  <option key={member.user} value={member.user}>
-                    {displayName}{isCurrentUser ? ' (You)' : ''}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-        </div>
-
+        {/* Category Selector */}
         <div className="form-group">
-          <label htmlFor="splitType">Split Type</label>
-          <select
-            id="splitType"
-            name="splitType"
-            value={formData.splitType}
-            onChange={handleSplitTypeChange}
+          <label>Category *</label>
+          <div 
+            className="popup-trigger"
+            onClick={() => setShowCategoryPopup(true)}
           >
-            <option value="equal">Equal Split</option>
-            <option value="weight">Weight-based Split</option>
-            <option value="custom">Custom Split</option>
-          </select>
+            <span className="trigger-text">
+              {formData.category || 'Select Category'}
+            </span>
+            <i className="fi fi-rr-angle-down"></i>
+          </div>
         </div>
 
-        <div className="splits-section">
-          <h3>Split Details</h3>
-          <div className="splits-list">
-            {splits.map((split, index) => {
-              const member = group?.members?.find(m => m.user === (split.userId || split.user));
-              const displayName = member?.userName || split.userName || 'Unknown User';
-              const isCurrentUser = (split.userId || split.user) === currentUser?.id;
-              
-              return (
-                <div key={split.userId || split.user || index} className={`split-item ${formData.splitType === 'equal' && !split.included ? 'excluded' : ''}`}>
-                  {formData.splitType === 'equal' && (
-                    <div className="member-checkbox">
-                      <input
-                        type="checkbox"
-                        id={`edit-member-${split.userId || split.user}`}
-                        checked={split.included}
-                        onChange={() => handleMemberToggle(split.userId || split.user)}
-                      />
-                      <label htmlFor={`edit-member-${split.userId || split.user}`} className="checkbox-label">
-                        Include in split
-                      </label>
-                    </div>
-                  )}
-                  
-                  <div className="member-info">
-                    <span className="member-name">
-                      {displayName}{isCurrentUser ? ' (You)' : ''}
-                    </span>
-                  </div>
-                  
-                  {formData.splitType === 'weight' && (
-                    <div className="weight-input">
-                      <label>Weight:</label>
-                      <div className="weight-controls">
-                        <button
-                          type="button"
-                          className="weight-btn weight-decrease"
-                          onClick={() => handleWeightChange(split.userId || split.user, Math.max(0, (split.weight !== undefined ? split.weight : 1) - 0.5))}
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          value={split.weight !== undefined ? split.weight : 1}
-                          onChange={(e) => handleWeightChange(split.userId || split.user, e.target.value)}
-                          step="0.5"
-                          min="0"
-                          className="split-weight"
-                        />
-                        <button
-                          type="button"
-                          className="weight-btn weight-increase"
-                          onClick={() => handleWeightChange(split.userId || split.user, (split.weight !== undefined ? split.weight : 1) + 0.5)}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="amount-input">
-                    <label>Amount:</label>
-                    <input
-                      type="number"
-                      value={split.amount}
-                      onChange={(e) => handleSplitChange(split.userId || split.user, e.target.value)}
-                      disabled={formData.splitType === 'equal' || formData.splitType === 'weight'}
-                      step="1"
-                      min="0"
-                      className="split-amount"
-                    />
-                  </div>
+        {/* Project Selector */}
+        <div className="form-group">
+          <label>Project</label>
+          <div 
+            className="popup-trigger"
+            onClick={() => setShowProjectPopup(true)}
+          >
+            <span className="trigger-text">
+              {formData.project || 'Select Project (Optional)'}
+            </span>
+            <i className="fi fi-rr-angle-down"></i>
+          </div>
+        </div>
+
+        {/* Currency Selector */}
+        <div className="form-group">
+          <label>Currency</label>
+          <div 
+            className="popup-trigger"
+            onClick={() => setShowCurrencyPopup(true)}
+          >
+            <span className="trigger-text">
+              {getCurrencySymbol(formData.currency)} {formData.currency}
+            </span>
+            <i className="fi fi-rr-angle-down"></i>
+          </div>
+        </div>
+
+        {/* Paid By Selector */}
+        <div className="form-group">
+          <label>Paid By</label>
+          <div 
+            className="popup-trigger"
+            onClick={() => setShowPaidByPopup(true)}
+          >
+            <span className="trigger-text">
+              {isMultiplePayers ? 
+                (() => {
+                  const activePayers = multiplePayers.filter(p => p.included && p.amount > 0);
+                  if (activePayers.length === 0) {
+                    return 'Select multiple payers';
+                  } else if (activePayers.length === 1) {
+                    const member = group?.members?.find(m => m.user === activePayers[0].userId);
+                    const isCurrentUser = member?.user === currentUser?.id;
+                    const displayName = member?.userName || member?.user || 'Unknown';
+                    return `${displayName}${isCurrentUser ? ' (You)' : ''}`;
+                  } else {
+                    const totalPaid = activePayers.reduce((sum, p) => sum + p.amount, 0);
+                    return `${activePayers.length} people paid ${getCurrencySymbol(formData.currency)}${totalPaid.toFixed(2)}`;
+                  }
+                })()
+                : formData.paidBy ? 
+                  (() => {
+                    const member = group?.members?.find(m => m.user === formData.paidBy);
+                    const isCurrentUser = member?.user === currentUser?.id;
+                    const displayName = member?.userName || member?.user || 'Unknown';
+                    return `${displayName}${isCurrentUser ? ' (You)' : ''}`;
+                  })()
+                  : 'Select who paid'
+              }
+            </span>
+            <i className="fi fi-rr-angle-down"></i>
+          </div>
+        </div>
+
+        {/* Split Configuration */}
+        <div className="form-group">
+          <label>Split Configuration</label>
+          <div 
+            className="popup-trigger split-config-trigger"
+            onClick={() => setShowSplitConfigPopup(true)}
+          >
+            <div className="split-summary-preview">
+              <div className="split-info">
+                <div className="split-type-info">
+                  <span className="split-type-label">
+                    {formData.splitType === 'equal' ? '⚖️ Equal Split' :
+                     formData.splitType === 'weight' ? '⚖️ Weight-based Split' :
+                     '✏️ Custom Split'}
+                  </span>
                 </div>
-              );
-            })}
+                <div className="split-details-info">
+                  <span className="split-count">
+                    {formData.splitType === 'equal' 
+                      ? `${splits.filter(s => s.included).length} of ${splits.length} members`
+                      : `${splits.length} members`
+                    }
+                  </span>
+                </div>
+              </div>
+              <div className="split-validation">
+                <span className={`validation-status ${isValid ? 'valid' : 'invalid'}`}>
+                  {isValid ? '✓' : '⚠️'}
+                </span>
+              </div>
+            </div>
+            <i className="fi fi-rr-angle-down"></i>
           </div>
-          
-          <div className="split-total">
-            <p>Total: ${splits.reduce((sum, split) => sum + split.amount, 0).toFixed(2)} / ${formData.amount || '0.00'}</p>
-            {formData.splitType === 'custom' && (
-              <p className={`remaining-amount ${(parseFloat(formData.amount) || 0) - splits.reduce((sum, split) => sum + split.amount, 0) >= 0 ? 'positive' : 'negative'}`}>
-                Remaining: ${((parseFloat(formData.amount) || 0) - splits.reduce((sum, split) => sum + split.amount, 0)).toFixed(2)}
-              </p>
-            )}
-          </div>
+        </div>
+
+        {/* Notes */}
+        <div className="form-group">
+          <label htmlFor="notes">Notes (Optional)</label>
+          <textarea
+            id="notes"
+            name="notes"
+            value={formData.notes}
+            onChange={handleChange}
+            placeholder="Add any additional notes..."
+            rows="3"
+          />
         </div>
 
         <div className="form-actions">
@@ -503,6 +449,120 @@ const EditExpense = () => {
           </button>
         </div>
       </form>
+
+      {/* Popups */}
+      {showCategoryPopup && (
+        <CategoryPopup
+          selectedCategory={formData.category}
+          onSelect={(category) => {
+            setFormData(prev => ({ ...prev, category }));
+            setShowCategoryPopup(false);
+          }}
+          onClose={() => setShowCategoryPopup(false)}
+        />
+      )}
+
+      {showProjectPopup && (
+        <PopupSelector
+          title="Select Project"
+          options={[
+            { value: '', label: 'No Project' },
+            { value: '生活開銷', label: '生活開銷' },
+            { value: '玩樂', label: '玩樂' },
+            { value: '家用', label: '家用' },
+            { value: '家居裝潢', label: '家居裝潢' }
+          ]}
+          selectedValue={formData.project}
+          onSelect={(project) => {
+            setFormData(prev => ({ ...prev, project }));
+            setShowProjectPopup(false);
+          }}
+          onClose={() => setShowProjectPopup(false)}
+        />
+      )}
+
+      {showCurrencyPopup && (
+        <PopupSelector
+          title="Select Currency"
+          options={[
+            { value: 'TWD', label: '¥ TWD (Taiwan Dollar)' },
+            { value: 'USD', label: '$ USD (US Dollar)' },
+            { value: 'EUR', label: '€ EUR (Euro)' },
+            { value: 'JPY', label: '¥ JPY (Japanese Yen)' }
+          ]}
+          selectedValue={formData.currency}
+          onSelect={(currency) => {
+            setFormData(prev => ({ ...prev, currency }));
+            setShowCurrencyPopup(false);
+          }}
+          onClose={() => setShowCurrencyPopup(false)}
+        />
+      )}
+
+      {showPaidByPopup && (
+        <PaidByPopup
+          group={group}
+          currentUser={currentUser}
+          selectedPayer={formData.paidBy}
+          isMultiplePayers={isMultiplePayers}
+          multiplePayers={multiplePayers}
+          onSelectSingle={(payer) => {
+            setFormData(prev => ({ ...prev, paidBy: payer }));
+            setIsMultiplePayers(false);
+            setShowPaidByPopup(false);
+          }}
+          onToggleMultiple={() => {
+            setIsMultiplePayers(!isMultiplePayers);
+            if (!isMultiplePayers) {
+              setShowMultiplePaidByPopup(true);
+              setShowPaidByPopup(false);
+            }
+          }}
+          onClose={() => setShowPaidByPopup(false)}
+        />
+      )}
+
+      {showMultiplePaidByPopup && (
+        <MultiplePaidByPopup
+          group={group}
+          currentUser={currentUser}
+          totalAmount={parseFloat(formData.amount) || 0}
+          currency={formData.currency}
+          multiplePayers={multiplePayers}
+          onUpdatePayers={(updatedPayers) => {
+            setMultiplePayers(updatedPayers);
+          }}
+          onDone={() => {
+            setShowMultiplePaidByPopup(false);
+          }}
+          onClose={() => {
+            setShowMultiplePaidByPopup(false);
+            setIsMultiplePayers(false);
+          }}
+        />
+      )}
+
+      {showSplitConfigPopup && (
+        <SplitConfigPopup
+          group={group}
+          currentUser={currentUser}
+          totalAmount={parseFloat(formData.amount) || 0}
+          currency={formData.currency}
+          splitType={formData.splitType}
+          splits={splits}
+          weights={weights}
+          onUpdateSplitType={(type) => {
+            setFormData(prev => ({ ...prev, splitType: type }));
+          }}
+          onUpdateSplits={(updatedSplits) => {
+            setSplits(updatedSplits);
+          }}
+          onUpdateWeights={(updatedWeights) => {
+            setWeights(updatedWeights);
+          }}
+          onClose={() => setShowSplitConfigPopup(false)}
+        />
+      )}
     </div>
   );
 };
