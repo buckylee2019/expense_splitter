@@ -95,19 +95,9 @@ const SplitConfigPopup = ({
               return (
                 <div key={split.userId} className={`split-item ${activeTab === 'equal' && !split.included ? 'excluded' : ''}`}>
                   {activeTab === 'equal' ? (
-                    // Enhanced equal split layout with profile photo
+                    // Enhanced equal split layout with right-aligned toggle
                     <div className="equal-split-layout">
                       <div className="equal-split-left">
-                        <div className="member-toggle">
-                          <label className="toggle-switch">
-                            <input
-                              type="checkbox"
-                              checked={split.included}
-                              onChange={() => onMemberToggle(split.userId)}
-                            />
-                            <span className="toggle-slider"></span>
-                          </label>
-                        </div>
                         <div className="member-profile">
                           <UserPhoto 
                             user={{ 
@@ -123,8 +113,20 @@ const SplitConfigPopup = ({
                             {member ? member.userName || member.user : `Member ${index + 1}`}
                           </span>
                           <span className="member-amount">
-                            {formData.currency} {split.amount.toFixed(2)}
+                            {split.amount.toFixed(2)}
                           </span>
+                        </div>
+                      </div>
+                      <div className="equal-split-right">
+                        <div className="member-toggle">
+                          <label className="toggle-switch">
+                            <input
+                              type="checkbox"
+                              checked={split.included}
+                              onChange={() => onMemberToggle(split.userId)}
+                            />
+                            <span className="toggle-slider"></span>
+                          </label>
                         </div>
                       </div>
                     </div>
@@ -165,11 +167,10 @@ const SplitConfigPopup = ({
                                   className="amount-input"
                                   placeholder="0.00"
                                 />
-                                <span className="currency-symbol">{formData.currency}</span>
                               </div>
                             ) : (
                               <span className="calculated-amount">
-                                {formData.currency} {split.amount.toFixed(2)}
+                                {split.amount.toFixed(2)}
                               </span>
                             )}
                           </div>

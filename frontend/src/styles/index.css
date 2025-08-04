@@ -7119,10 +7119,11 @@ input:checked + .toggle-slider:before {
   border-color: #e9ecef;
 }
 
-/* Enhanced Equal Split Layout with Profile Photos */
+/* Enhanced Equal Split Layout with Right-Aligned Toggle */
 .split-config-popup .equal-split-layout {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
 }
 
@@ -7131,6 +7132,13 @@ input:checked + .toggle-slider:before {
   align-items: center;
   gap: 16px;
   flex: 1;
+}
+
+.split-config-popup .equal-split-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
 }
 
 .split-config-popup .member-profile {
@@ -7142,6 +7150,7 @@ input:checked + .toggle-slider:before {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  align-items: flex-start;
 }
 
 .split-config-popup .member-name {
@@ -7183,6 +7192,7 @@ input:checked + .toggle-slider:before {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  align-items: flex-start;
 }
 
 .split-config-popup .weight-shares-info {
@@ -7193,6 +7203,9 @@ input:checked + .toggle-slider:before {
 
 .split-config-popup .amount-display {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .split-config-popup .calculated-amount {
@@ -7203,13 +7216,13 @@ input:checked + .toggle-slider:before {
   padding: 8px 12px;
   border-radius: 8px;
   border: 1px solid var(--border-light);
+  text-align: right;
 }
 
-/* Enhanced Amount Input for Custom Split */
+/* Enhanced Amount Input for Custom Split - Right Aligned */
 .split-config-popup .amount-input-container {
   display: flex;
   align-items: center;
-  gap: 8px;
   background: var(--background-secondary);
   padding: 4px;
   border-radius: 8px;
@@ -7233,11 +7246,9 @@ input:checked + .toggle-slider:before {
   box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
 }
 
+/* Remove currency symbol styles as they're no longer needed */
 .split-config-popup .currency-symbol {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-  padding-right: 4px;
+  display: none;
 }
 
 /* Compact Weight Controls */
