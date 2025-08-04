@@ -4,6 +4,7 @@ import api from '../services/api';
 import CategoryPopup from '../components/CategoryPopup';
 import PopupSelector from '../components/PopupSelector';
 import SplitTypePopup from '../components/SplitTypePopup';
+import SplitDetailsPopup from '../components/SplitDetailsPopup';
 import { parseCategoryString } from '../data/expenseCategories';
 
 const AddExpense = () => {
@@ -35,6 +36,7 @@ const AddExpense = () => {
   const [showCurrencyPopup, setShowCurrencyPopup] = useState(false);
   const [showPaidByPopup, setShowPaidByPopup] = useState(false);
   const [showSplitTypePopup, setShowSplitTypePopup] = useState(false);
+  const [showSplitDetailsPopup, setShowSplitDetailsPopup] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -424,105 +426,32 @@ const AddExpense = () => {
           </div>
         </div>
 
-        <div className="splits-section">
-          <h3>Split Details</h3>
-          {formData.splitType === 'weight' && (
-            <div className="weight-info">
-              <p>Set weights for each member (higher weight = larger share)</p>
-            </div>
-          )}
-          <div className="splits-list">
-            {splits.map((split, index) => {
-              const member = group.members.find(m => m.user === split.userId);
-              const weightObj = weights.find(w => w.userId === split.userId);
-              const weight = weightObj?.weight !== undefined ? weightObj.weight : 1;
-              
-              return (
-                <div key={split.userId} className={`split-item ${formData.splitType === 'equal' && !split.included ? 'excluded' : ''}`}>
-                  {formData.splitType === 'equal' && (
-                    <div className="member-checkbox">
-                      <input
-                        type="checkbox"
-                        id={`member-${split.userId}`}
-                        checked={split.included}
-                        onChange={() => handleMemberToggle(split.userId)}
-                      />
-                      <label htmlFor={`member-${split.userId}`} className="checkbox-label">
-                        Include in split
-                      </label>
-                    </div>
-                  )}
-                  
-                  <div className="member-info">
-                    <span className="member-name">
-                      {member ? member.userName || member.user : `Member ${index + 1}`}
-                    </span>
-                  </div>
-                  
-                  {formData.splitType === 'weight' && (
-                    <div className="weight-input">
-                      <label>Weight:</label>
-                      <div className="weight-controls">
-                        <button
-                          type="button"
-                          className="weight-btn weight-decrease"
-                          onClick={() => handleWeightChange(split.userId, Math.max(0, weight - 0.5))}
-                        >
-                          -
-                        </button>
-                        <input
-                          type="number"
-                          value={weight}
-                          onChange={(e) => handleWeightChange(split.userId, e.target.value)}
-                          min="0"
-                          step="0.5"
-                          className="weight-value"
-                        />
-                        <button
-                          type="button"
-                          className="weight-btn weight-increase"
-                          onClick={() => handleWeightChange(split.userId, weight + 0.5)}
-                        >
-                          +
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="amount-input">
-                    <label>Amount:</label>
-                    <input
-                      type="number"
-                      value={split.amount}
-                      onChange={(e) => handleSplitChange(split.userId, e.target.value)}
-                      disabled={formData.splitType === 'equal' || formData.splitType === 'weight'}
-                      min="0"
-                      step="1"
-                      className="split-amount"
-                    />
-                  </div>
-                  
-                  {formData.splitType === 'weight' && (
-                    <div className="weight-percentage">
-                      ({((weight / weights.reduce((sum, w) => sum + w.weight, 0)) * 100).toFixed(1)}%)
-                    </div>
-                  )}
+        {/* Split Details Trigger */}
+        <div className="form-group">
+          <label>Split Details</label>
+          <div 
+            className="popup-trigger split-details-trigger"
+            onClick={() => setShowSplitDetailsPopup(true)}
+          >
+            <div className="split-summary-preview">
+              <div className="split-info">
+                <span className="split-count">
+                  {formData.splitType === 'equal' 
+                    ? `${splits.filter(s => s.included).length} of ${splits.length} members`
+                    : `${splits.length} members`
+                  }
+                </span>
+                <span className="split-total">
+                  {formData.currency} {totalSplits.toFixed(2)} / {totalAmount.toFixed(2)}
+                </span>
+              </div>
+              {!isValid && (
+                <div className="split-warning">
+                  <i className="fi fi-rr-exclamation-triangle"></i>
                 </div>
-              );
-            })}
-          </div>
-          
-          <div className="split-summary">
-            <p>Total: ${totalAmount.toFixed(2)}</p>
-            <p>Split Total: ${totalSplits.toFixed(2)}</p>
-            {formData.splitType === 'custom' && (
-              <p className={`remaining-amount ${totalAmount - totalSplits >= 0 ? 'positive' : 'negative'}`}>
-                Remaining: ${(totalAmount - totalSplits).toFixed(2)}
-              </p>
-            )}
-            {!isValid && (
-              <p className="error">Splits don't match total amount!</p>
-            )}
+              )}
+            </div>
+            <i className="fi fi-rr-angle-right"></i>
           </div>
         </div>
 
@@ -606,6 +535,21 @@ const AddExpense = () => {
           setFormData(prev => ({ ...prev, splitType: value }));
           handleSplitTypeChange({ target: { value } });
         }}
+      />
+
+      <SplitDetailsPopup
+        isOpen={showSplitDetailsPopup}
+        onClose={() => setShowSplitDetailsPopup(false)}
+        splits={splits}
+        weights={weights}
+        group={group}
+        formData={formData}
+        onSplitChange={handleSplitChange}
+        onMemberToggle={handleMemberToggle}
+        onWeightChange={handleWeightChange}
+        totalAmount={totalAmount}
+        totalSplits={totalSplits}
+        isValid={isValid}
       />
     </div>
   );
