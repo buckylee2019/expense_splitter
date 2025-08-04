@@ -7795,238 +7795,218 @@ input:checked + .toggle-slider:before {
     font-size: 0.9rem;
   }
 }
-/* Multiple Paid By Popup Styles */
-.multiple-paid-by-popup {
+/* Enter Paid Amounts Popup Styles */
+.enter-paid-amounts-popup {
   max-height: 90vh;
 }
 
-.multiple-payers-list {
+.enter-paid-amounts-popup .popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border-light);
+  background: white;
+}
+
+.enter-paid-amounts-popup .header-left {
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.enter-paid-amounts-popup .header-center {
+  flex: 2;
+  display: flex;
+  justify-content: center;
+}
+
+.enter-paid-amounts-popup .header-right {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.enter-paid-amounts-popup .back-button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.enter-paid-amounts-popup .back-button:hover {
+  background: rgba(var(--primary-color-rgb), 0.1);
+}
+
+.enter-paid-amounts-popup .done-button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.enter-paid-amounts-popup .done-button:hover:not(.disabled) {
+  background: rgba(var(--primary-color-rgb), 0.1);
+}
+
+.enter-paid-amounts-popup .done-button.disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.enter-paid-amounts-popup .header-center h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+/* Paid Amounts List */
+.paid-amounts-list {
   display: flex;
   flex-direction: column;
   padding: 0 20px;
   gap: 0;
-  max-height: 60vh;
-  overflow-y: auto;
 }
 
-.multiple-payer-item {
-  display: flex;
-  flex-direction: column;
-  border-bottom: 1px solid var(--border-light);
-  transition: all 0.2s ease;
-}
-
-.multiple-payer-item:last-child {
-  border-bottom: none;
-}
-
-.multiple-payer-item.included {
-  background: rgba(var(--primary-color-rgb), 0.05);
-  margin: 0 -20px;
-  padding: 0 20px;
-  border-radius: 8px;
-  border-bottom: 1px solid rgba(var(--primary-color-rgb), 0.1);
-}
-
-.payer-row {
+.paid-amount-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 0;
-  gap: 16px;
+  padding: 20px 0;
+  border-bottom: 1px solid var(--border-light);
 }
 
-.payer-left {
+.paid-amount-item:last-child {
+  border-bottom: none;
+}
+
+.payer-info {
   display: flex;
   align-items: center;
   gap: 16px;
   flex: 1;
 }
 
-.payer-right {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+.paid-amount-item .member-profile {
   flex-shrink: 0;
 }
 
-.payer-toggle {
-  flex-shrink: 0;
-}
-
-.multiple-payer-item .member-profile {
-  flex-shrink: 0;
-}
-
-.multiple-payer-item .member-details {
+.paid-amount-item .member-details {
   flex: 1;
 }
 
-.multiple-payer-item .member-name {
+.paid-amount-item .member-name {
   font-size: 1rem;
   font-weight: 500;
   color: var(--text-primary);
   line-height: 1.2;
 }
 
-.multiple-payer-item .amount-input-container {
+.amount-input-section {
   display: flex;
   align-items: center;
-  background: var(--background-secondary);
-  padding: 4px;
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  min-width: 100px;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
-.multiple-payer-item .amount-input {
-  background: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 6px;
-  text-align: right;
-  font-size: 1rem;
+.currency-symbol {
+  font-size: 1.125rem;
   font-weight: 600;
   color: var(--text-primary);
-  width: 100%;
 }
 
-.multiple-payer-item .amount-input:disabled {
-  background: var(--background-light);
-  color: var(--text-disabled);
-  cursor: not-allowed;
+.amount-input-underlined {
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 0;
+  text-align: right;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  width: 120px;
+  transition: border-color 0.2s ease;
 }
 
-.multiple-payer-item .amount-input:focus {
+.amount-input-underlined:focus {
   outline: none;
-  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+  border-bottom-color: var(--primary-color);
 }
 
-.multiple-payer-item .amount-input::placeholder {
+.amount-input-underlined::placeholder {
   color: var(--text-placeholder);
   font-weight: normal;
 }
 
-/* Multiple Payers Summary */
-.multiple-payers-summary {
-  background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(var(--primary-color-rgb), 0.05) 100%);
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
+/* Total Summary */
+.total-summary {
+  background: var(--background-light);
   padding: 20px;
   margin: 20px 20px 0;
+  border-radius: 12px;
+  text-align: center;
 }
 
-.multiple-payers-summary .summary-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.multiple-payers-summary .summary-row:last-child {
-  margin-bottom: 0;
-}
-
-.multiple-payers-summary .summary-label {
-  font-size: 0.9rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.multiple-payers-summary .summary-value {
-  font-size: 1rem;
+.total-line {
+  font-size: 1.25rem;
   font-weight: 700;
   color: var(--text-primary);
+  margin-bottom: 8px;
 }
 
-.multiple-payers-summary .summary-value.overpaid {
-  color: #dc3545;
-}
-
-.multiple-payers-summary .summary-value.remaining {
-  color: #ffc107;
-}
-
-/* Toggle Switch Styles for Multiple Payers */
-.multiple-payer-item .toggle-switch {
-  position: relative;
-  display: inline-block;
-  width: 48px;
-  height: 28px;
-}
-
-.multiple-payer-item .toggle-switch input {
-  opacity: 0;
-  width: 0;
-  height: 0;
-}
-
-.multiple-payer-item .toggle-slider {
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: #ccc;
-  transition: 0.3s;
-  border-radius: 28px;
-}
-
-.multiple-payer-item .toggle-slider:before {
-  position: absolute;
-  content: "";
-  height: 20px;
-  width: 20px;
-  left: 4px;
-  bottom: 4px;
-  background-color: white;
-  transition: 0.3s;
-  border-radius: 50%;
-}
-
-.multiple-payer-item input:checked + .toggle-slider {
-  background-color: var(--primary-color);
-}
-
-.multiple-payer-item input:checked + .toggle-slider:before {
-  transform: translateX(20px);
+.remaining-line {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 /* Mobile optimizations */
 @media (max-width: 768px) {
-  .multiple-payers-list {
+  .paid-amounts-list {
     padding: 0 16px;
   }
   
-  .multiple-payer-item.included {
-    margin: 0 -16px;
-    padding: 0 16px;
+  .paid-amount-item {
+    padding: 16px 0;
   }
   
-  .payer-left {
+  .payer-info {
     gap: 12px;
   }
   
-  .payer-row {
-    gap: 12px;
-  }
-  
-  .multiple-payer-item .member-name {
+  .paid-amount-item .member-name {
     font-size: 0.95rem;
   }
   
-  .multiple-payer-item .amount-input-container {
-    min-width: 90px;
+  .amount-input-underlined {
+    width: 100px;
+    font-size: 1rem;
   }
   
-  .multiple-payer-item .amount-input {
-    font-size: 0.9rem;
-    padding: 6px 10px;
+  .currency-symbol {
+    font-size: 1rem;
   }
   
-  .multiple-payers-summary {
+  .total-summary {
     margin: 16px 16px 0;
     padding: 16px;
+  }
+  
+  .total-line {
+    font-size: 1.125rem;
+  }
+  
+  .remaining-line {
+    font-size: 0.9rem;
   }
 }

@@ -221,6 +221,17 @@ const AddExpense = () => {
     }
   };
 
+  // Helper function to get currency symbol
+  const getCurrencySymbol = (curr) => {
+    switch(curr) {
+      case 'TWD': return '¥';
+      case 'USD': return '$';
+      case 'EUR': return '€';
+      case 'JPY': return '¥';
+      default: return curr;
+    }
+  };
+
   // Handle multiple payers
   const handleMultiplePayers = () => {
     setIsMultiplePayers(true);
@@ -446,7 +457,8 @@ const AddExpense = () => {
                       const displayName = member?.userName || member?.user || 'Unknown';
                       return `${displayName}${isCurrentUser ? ' (You)' : ''}`;
                     } else {
-                      return `${activePayers.length} people`;
+                      const totalPaid = activePayers.reduce((sum, p) => sum + p.amount, 0);
+                      return `${activePayers.length} people paid ${getCurrencySymbol(formData.currency)}${totalPaid.toFixed(2)}`;
                     }
                   })()
                   : formData.paidBy ? 
