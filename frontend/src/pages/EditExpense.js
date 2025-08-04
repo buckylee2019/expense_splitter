@@ -240,13 +240,16 @@ const EditExpense = () => {
       // Handle multiple payers vs single payer
       if (isMultiplePayers) {
         const activePayers = multiplePayers.filter(p => p.amount > 0);
+        console.log('Submitting multiple payers:', activePayers);
         expenseData.paidBy = activePayers;
         expenseData.isMultiplePayers = true;
       } else {
+        console.log('Submitting single payer:', formData.paidBy);
         expenseData.paidBy = formData.paidBy;
         expenseData.isMultiplePayers = false;
       }
       
+      console.log('Final expense data:', expenseData);
       await api.put(`/api/expenses/${expenseId}`, expenseData);
 
       navigate(`/groups/${groupId}/expenses/${expenseId}`);
@@ -486,6 +489,7 @@ const EditExpense = () => {
 
       {showProjectPopup && (
         <PopupSelector
+          isOpen={showProjectPopup}
           title="Select Project"
           options={[
             { value: '', label: 'No Project' },
@@ -505,6 +509,7 @@ const EditExpense = () => {
 
       {showCurrencyPopup && (
         <PopupSelector
+          isOpen={showCurrencyPopup}
           title="Select Currency"
           options={[
             { value: 'TWD', label: 'TWD (Taiwan Dollar)' },
@@ -514,6 +519,7 @@ const EditExpense = () => {
           ]}
           selectedValue={formData.currency}
           onSelect={(currency) => {
+            console.log('Currency selected:', currency);
             setFormData(prev => ({ ...prev, currency }));
             setShowCurrencyPopup(false);
           }}
@@ -551,6 +557,7 @@ const EditExpense = () => {
           totalAmount={parseFloat(formData.amount) || 0}
           currency={formData.currency}
           onSave={(updatedPayers) => {
+            console.log('Multiple payers saved:', updatedPayers);
             setMultiplePayers(updatedPayers);
             setIsMultiplePayers(true);
             setShowMultiplePaidByPopup(false);
