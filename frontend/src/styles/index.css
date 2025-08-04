@@ -8010,3 +8010,35 @@ input:checked + .toggle-slider:before {
     font-size: 0.9rem;
   }
 }
+/* Enhanced validation styles for multiple payers */
+.remaining-line.balanced {
+  color: #28a745;
+}
+
+.remaining-line.overpaid {
+  color: #dc3545;
+}
+
+.remaining-line.underpaid {
+  color: #ffc107;
+}
+
+.validation-message {
+  font-size: 0.875rem;
+  text-align: center;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-top: 8px;
+}
+
+.total-summary .validation-message {
+  background: rgba(255, 193, 7, 0.1);
+  color: #856404;
+  border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.remaining-line.overpaid ~ .validation-message {
+  background: rgba(220, 53, 69, 0.1);
+  color: #dc3545;
+  border: 1px solid rgba(220, 53, 69, 0.2);
+}

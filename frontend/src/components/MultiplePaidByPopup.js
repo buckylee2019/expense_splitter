@@ -51,6 +51,11 @@ const MultiplePaidByPopup = ({
   const remainingAmount = Math.max(0, totalAmount - totalPaid);
   const activePayers = payers.filter(p => p.included && p.amount > 0);
   const isValid = activePayers.length > 0;
+  
+  // Check if amounts match (with small tolerance for rounding)
+  const amountsMatch = Math.abs(totalPaid - totalAmount) < 0.01;
+  const hasOverpayment = totalPaid > totalAmount + 0.01;
+  const hasUnderpayment = totalPaid < totalAmount - 0.01;
 
   const getCurrencySymbol = (curr) => {
     switch(curr) {
@@ -138,9 +143,22 @@ const MultiplePaidByPopup = ({
             <div className="total-line">
               {getCurrencySymbol(currency)}{totalPaid.toFixed(2)} of {getCurrencySymbol(currency)}{totalAmount.toFixed(2)}
             </div>
-            <div className="remaining-line">
-              {getCurrencySymbol(currency)}{remainingAmount.toFixed(2)} left
+            <div className={`remaining-line ${hasOverpayment ? 'overpaid' : hasUnderpayment ? 'underpaid' : 'balanced'}`}>
+              {hasOverpayment ? 
+                `${getCurrencySymbol(currency)}${(totalPaid - totalAmount).toFixed(2)} overpaid` :
+                hasUnderpayment ?
+                `${getCurrencySymbol(currency)}${remainingAmount.toFixed(2)} left` :
+                'Amounts match ✓'
+              }
             </div>
+            {!amountsMatch && (
+              <div className="validation-message">
+                {hasOverpayment ? 
+                  'Warning: Total paid exceeds expense amount' :
+                  'Note: Total paid is less than expense amount'
+                }
+              </div>
+            )}
           </div>
         </div>
       </div>

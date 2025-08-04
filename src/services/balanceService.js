@@ -18,7 +18,6 @@ const calculateBalances = async (userId, groupId = null) => {
 
     // Calculate what user owes and is owed based on expenses, separated by currency
     filteredExpenses.forEach(expense => {
-      const userPaid = expense.paidBy === userId;
       const currency = expense.currency || 'TWD';
       
       // Find the user's split in this expense (handle both 'user' and 'userId' fields)
@@ -27,33 +26,84 @@ const calculateBalances = async (userId, groupId = null) => {
       );
       const userOwes = userSplit ? userSplit.amount : 0;
       
-      if (userPaid) {
-        // User paid for this expense, so others owe them
+      // Calculate how much the current user paid for this expense
+      let userPaidAmount = 0;
+      
+      if (expense.isMultiplePayers && Array.isArray(expense.paidBy)) {
+        // Multiple payers - find user's payment
+        const userPayment = expense.paidBy.find(payer => payer.userId === userId);
+        if (userPayment) {
+          userPaidAmount = userPayment.amount;
+        }
+      } else {
+        // Single payer - user paid full amount if they are the payer
+        if (expense.paidBy === userId) {
+          userPaidAmount = expense.amount;
+        }
+      }
+      
+      // Calculate user's net balance for this expense
+      const userNetBalance = userPaidAmount - userOwes;
+      
+      // If user has a net balance (positive or negative), distribute it among other users
+      if (Math.abs(userNetBalance) > 0.01) {
         expense.splits.forEach(split => {
-          const splitUserId = split.user || split.userId;
-          if (splitUserId !== userId) {
-            const otherUserId = splitUserId;
+          const otherUserId = split.user || split.userId;
+          if (otherUserId !== userId) {
+            // Calculate how much the other user paid
+            let otherUserPaidAmount = 0;
+            
+            if (expense.isMultiplePayers && Array.isArray(expense.paidBy)) {
+              const otherUserPayment = expense.paidBy.find(payer => payer.userId === otherUserId);
+              if (otherUserPayment) {
+                otherUserPaidAmount = otherUserPayment.amount;
+              }
+            } else {
+              if (expense.paidBy === otherUserId) {
+                otherUserPaidAmount = expense.amount;
+              }
+            }
+            
+            const otherUserOwes = split.amount;
+            const otherUserNetBalance = otherUserPaidAmount - otherUserOwes;
+            
+            // Initialize balance tracking
             if (!balances[otherUserId]) {
               balances[otherUserId] = {};
             }
             if (!balances[otherUserId][currency]) {
               balances[otherUserId][currency] = 0;
             }
-            // Other user owes this amount to current user in this currency
-            balances[otherUserId][currency] += split.amount;
+            
+            // Simple approach: if current user overpaid and other user underpaid (or vice versa)
+            // they need to settle the difference proportionally
+            if (userNetBalance > 0 && otherUserNetBalance < 0) {
+              // Current user overpaid, other user underpaid
+              // Other user owes current user
+              const settlementAmount = Math.min(userNetBalance, Math.abs(otherUserNetBalance));
+              balances[otherUserId][currency] += settlementAmount;
+            } else if (userNetBalance < 0 && otherUserNetBalance > 0) {
+              // Current user underpaid, other user overpaid  
+              // Current user owes other user
+              const settlementAmount = Math.min(Math.abs(userNetBalance), otherUserNetBalance);
+              balances[otherUserId][currency] -= settlementAmount;
+            } else if (userNetBalance > 0 && otherUserNetBalance >= 0) {
+              // Both overpaid or other user broke even, but current user overpaid more
+              // Other user should contribute to current user's overpayment proportionally
+              const totalSplitAmount = expense.splits.reduce((sum, s) => sum + s.amount, 0);
+              const otherUserProportion = otherUserOwes / totalSplitAmount;
+              const otherUserShare = userNetBalance * otherUserProportion;
+              balances[otherUserId][currency] += otherUserShare;
+            } else if (userNetBalance < 0 && otherUserNetBalance <= 0) {
+              // Both underpaid or other user broke even, but current user underpaid more
+              // Current user should pay other user proportionally
+              const totalSplitAmount = expense.splits.reduce((sum, s) => sum + s.amount, 0);
+              const otherUserProportion = otherUserOwes / totalSplitAmount;
+              const currentUserShare = Math.abs(userNetBalance) * otherUserProportion;
+              balances[otherUserId][currency] -= currentUserShare;
+            }
           }
         });
-      } else {
-        // Someone else paid, user owes their share
-        const payerId = expense.paidBy;
-        if (!balances[payerId]) {
-          balances[payerId] = {};
-        }
-        if (!balances[payerId][currency]) {
-          balances[payerId][currency] = 0;
-        }
-        // User owes this amount to the payer in this currency
-        balances[payerId][currency] -= userOwes;
       }
     });
 
