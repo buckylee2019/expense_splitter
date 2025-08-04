@@ -7098,72 +7098,102 @@ input:checked + .toggle-slider:before {
   text-align: center;
 }
 
-/* Enhanced Split Items for Tabs */
+/* Enhanced Split Items for Tabs with Profile Photos */
 .split-config-popup .split-item {
   background: white;
   border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 12px;
+  border-radius: 12px;
+  padding: 16px;
   transition: all 0.2s ease;
+  margin-bottom: 12px;
 }
 
 .split-config-popup .split-item:hover {
   border-color: rgba(var(--primary-color-rgb), 0.3);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
 }
 
 .split-config-popup .split-item.excluded {
-  opacity: 0.5;
+  opacity: 0.6;
   background: #f8f9fa;
   border-color: #e9ecef;
 }
 
-/* Restructured layout for better grouping */
-.split-config-popup .member-info {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0;
-}
-
-.split-config-popup .member-details {
-  flex: 1;
-}
-
-.split-config-popup .member-name {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  display: block;
-  margin-bottom: 1px;
-}
-
-.split-config-popup .weight-percentage {
-  font-size: 0.75rem;
-  color: var(--primary-color);
-  font-weight: 500;
-}
-
-/* Compact layout for equal split */
+/* Enhanced Equal Split Layout with Profile Photos */
 .split-config-popup .equal-split-layout {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
 }
 
 .split-config-popup .equal-split-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   flex: 1;
 }
 
-.split-config-popup .equal-split-right {
+.split-config-popup .member-profile {
+  flex-shrink: 0;
+}
+
+.split-config-popup .member-details {
+  flex: 1;
   display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.split-config-popup .member-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.split-config-popup .member-amount {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+/* Enhanced Member Info for Weight/Custom Splits */
+.split-config-popup .member-info-enhanced {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.split-config-popup .member-details-enhanced {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.split-config-popup .member-name-row {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: 8px;
-  min-width: 120px;
+}
+
+.split-config-popup .weight-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.split-config-popup .weight-shares {
+  font-size: 0.85rem;
+  color: var(--primary-color);
+  font-weight: 600;
+}
+
+.split-config-popup .weight-percentage {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: 500;
 }
 
 /* Enhanced Weight Controls */
@@ -7171,16 +7201,16 @@ input:checked + .toggle-slider:before {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  margin: 8px 0 0 0;
-  padding: 8px;
+  gap: 16px;
+  margin: 12px 0 0 0;
+  padding: 12px;
   background: var(--background-secondary);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 .split-config-popup .weight-btn {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: 2px solid var(--border-color);
   background: white;
@@ -7189,7 +7219,7 @@ input:checked + .toggle-slider:before {
   justify-content: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: var(--text-secondary);
 }
 
@@ -7205,16 +7235,16 @@ input:checked + .toggle-slider:before {
 }
 
 .split-config-popup .weight-display {
-  min-width: 70px;
+  min-width: 80px;
 }
 
 .split-config-popup .weight-input {
   width: 100%;
-  padding: 8px;
+  padding: 10px;
   border: 2px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 8px;
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
   background: white;
   color: var(--text-primary);
@@ -7226,36 +7256,21 @@ input:checked + .toggle-slider:before {
   box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
 }
 
-/* Compact Amount Section */
-.split-config-popup .amount-section {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
-}
-
-.split-config-popup .amount-label {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
+/* Enhanced Amount Input for Custom Split */
 .split-config-popup .amount-input-container {
   display: flex;
   align-items: center;
-  gap: 6px;
-  min-width: 100px;
+  gap: 8px;
+  min-width: 120px;
 }
 
 .split-config-popup .amount-input {
   flex: 1;
-  padding: 6px 8px;
+  padding: 8px 12px;
   border: 1px solid var(--border-color);
-  border-radius: 6px;
+  border-radius: 8px;
   text-align: right;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   font-weight: 600;
   background: white;
 }
@@ -7273,10 +7288,111 @@ input:checked + .toggle-slider:before {
 }
 
 .split-config-popup .currency-symbol {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   color: var(--text-secondary);
   font-weight: 600;
-  min-width: 28px;
+  min-width: 32px;
+}
+
+/* Enhanced Split Summary */
+.split-config-popup .split-summary {
+  background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(var(--primary-color-rgb), 0.05) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 20px 0;
+}
+
+.split-config-popup .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.split-config-popup .summary-row:last-child {
+  margin-bottom: 0;
+}
+
+.split-config-popup .summary-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.split-config-popup .summary-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.split-config-popup .summary-value.positive {
+  color: #28a745;
+}
+
+.split-config-popup .summary-value.negative {
+  color: #dc3545;
+}
+
+.split-config-popup .validation-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(220, 53, 69, 0.1);
+  border: 1px solid rgba(220, 53, 69, 0.2);
+  border-radius: 8px;
+  color: #dc3545;
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-top: 12px;
+}
+
+/* Enhanced Splits List */
+.split-config-popup .splits-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+  margin-bottom: 0;
+}
+
+/* Mobile optimizations for enhanced layout */
+@media (max-width: 768px) {
+  .split-config-popup .split-item {
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  
+  .split-config-popup .equal-split-layout {
+    gap: 12px;
+  }
+  
+  .split-config-popup .equal-split-left {
+    gap: 12px;
+  }
+  
+  .split-config-popup .member-info-enhanced {
+    gap: 12px;
+  }
+  
+  .split-config-popup .weight-controls {
+    gap: 12px;
+    padding: 10px;
+  }
+  
+  .split-config-popup .weight-btn {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .split-config-popup .splits-list {
+    padding: 0 16px;
+  }
+  
+  .split-config-popup .split-summary {
+    margin: 16px 16px 0;
+    padding: 16px;
+  }
 }
 
 /* Enhanced Split Summary */

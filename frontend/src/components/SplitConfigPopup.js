@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import UserPhoto from './UserPhoto';
 
 const SplitConfigPopup = ({ 
   isOpen, 
@@ -94,7 +95,7 @@ const SplitConfigPopup = ({
               return (
                 <div key={split.userId} className={`split-item ${activeTab === 'equal' && !split.included ? 'excluded' : ''}`}>
                   {activeTab === 'equal' ? (
-                    // Compact horizontal layout for equal split
+                    // Enhanced equal split layout with profile photo
                     <div className="equal-split-layout">
                       <div className="equal-split-left">
                         <div className="member-toggle">
@@ -107,51 +108,66 @@ const SplitConfigPopup = ({
                             <span className="toggle-slider"></span>
                           </label>
                         </div>
+                        <div className="member-profile">
+                          <UserPhoto 
+                            user={{ 
+                              id: split.userId, 
+                              name: member?.userName || member?.user || `Member ${index + 1}`,
+                              photoUrl: member?.photoUrl 
+                            }} 
+                            size="medium"
+                          />
+                        </div>
                         <div className="member-details">
                           <span className="member-name">
                             {member ? member.userName || member.user : `Member ${index + 1}`}
                           </span>
-                        </div>
-                      </div>
-                      <div className="equal-split-right">
-                        <div className="amount-section">
-                          <div className="amount-input-container">
-                            <input
-                              type="number"
-                              value={split.amount}
-                              onChange={(e) => onSplitChange(split.userId, e.target.value)}
-                              disabled={true}
-                              min="0"
-                              step="1"
-                              className="amount-input"
-                              placeholder="0.00"
-                            />
-                            <span className="currency-symbol">{formData.currency}</span>
-                          </div>
+                          <span className="member-amount">
+                            {formData.currency} {split.amount.toFixed(2)}
+                          </span>
                         </div>
                       </div>
                     </div>
                   ) : (
-                    // Original layout for weight and custom splits
+                    // Enhanced layout for weight and custom splits with profile photo
                     <>
-                      <div className="member-info">
-                        <div className="member-details">
-                          <span className="member-name">
-                            {member ? member.userName || member.user : `Member ${index + 1}`}
-                          </span>
-                          {activeTab === 'weight' && (
-                            <span className="weight-percentage">
-                              ({((weight / weights.reduce((sum, w) => sum + w.weight, 0)) * 100).toFixed(1)}%)
+                      <div className="member-info-enhanced">
+                        <div className="member-profile">
+                          <UserPhoto 
+                            user={{ 
+                              id: split.userId, 
+                              name: member?.userName || member?.user || `Member ${index + 1}`,
+                              photoUrl: member?.photoUrl 
+                            }} 
+                            size="medium"
+                          />
+                        </div>
+                        <div className="member-details-enhanced">
+                          <div className="member-name-row">
+                            <span className="member-name">
+                              {member ? member.userName || member.user : `Member ${index + 1}`}
                             </span>
+                            <span className="member-amount">
+                              {formData.currency} {split.amount.toFixed(2)}
+                            </span>
+                          </div>
+                          {activeTab === 'weight' && (
+                            <div className="weight-info-row">
+                              <span className="weight-shares">
+                                {weight} share{weight !== 1 ? 's' : ''}
+                              </span>
+                              <span className="weight-percentage">
+                                ({((weight / weights.reduce((sum, w) => sum + w.weight, 0)) * 100).toFixed(1)}%)
+                              </span>
+                            </div>
                           )}
                         </div>
-                        <div className="amount-section">
+                        {activeTab === 'custom' && (
                           <div className="amount-input-container">
                             <input
                               type="number"
                               value={split.amount}
                               onChange={(e) => onSplitChange(split.userId, e.target.value)}
-                              disabled={activeTab === 'weight'}
                               min="0"
                               step="1"
                               className="amount-input"
@@ -159,7 +175,7 @@ const SplitConfigPopup = ({
                             />
                             <span className="currency-symbol">{formData.currency}</span>
                           </div>
-                        </div>
+                        )}
                       </div>
                       
                       {activeTab === 'weight' && (
@@ -206,6 +222,12 @@ const SplitConfigPopup = ({
               <span className="summary-label">Split Total:</span>
               <span className="summary-value">{formData.currency} {totalSplits.toFixed(2)}</span>
             </div>
+            {activeTab === 'weight' && (
+              <div className="summary-row">
+                <span className="summary-label">Total Shares:</span>
+                <span className="summary-value">{weights.reduce((sum, w) => sum + w.weight, 0)} shares</span>
+              </div>
+            )}
             {activeTab === 'custom' && (
               <div className="summary-row">
                 <span className="summary-label">Remaining:</span>
