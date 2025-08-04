@@ -523,24 +523,19 @@ const EditExpense = () => {
 
       {showPaidByPopup && (
         <PaidByPopup
-          group={group}
+          isOpen={showPaidByPopup}
+          onClose={() => setShowPaidByPopup(false)}
+          members={group?.members || []}
           currentUser={currentUser}
-          selectedPayer={formData.paidBy}
-          isMultiplePayers={isMultiplePayers}
-          multiplePayers={multiplePayers}
-          onSelectSingle={(payer) => {
+          selectedValue={formData.paidBy}
+          onSelect={(payer) => {
             setFormData(prev => ({ ...prev, paidBy: payer }));
             setIsMultiplePayers(false);
-            setShowPaidByPopup(false);
           }}
-          onToggleMultiple={() => {
-            setIsMultiplePayers(!isMultiplePayers);
-            if (!isMultiplePayers) {
-              setShowMultiplePaidByPopup(true);
-              setShowPaidByPopup(false);
-            }
+          onMultiplePayers={() => {
+            setIsMultiplePayers(true);
+            setShowMultiplePaidByPopup(true);
           }}
-          onClose={() => setShowPaidByPopup(false)}
         />
       )}
 
@@ -566,23 +561,45 @@ const EditExpense = () => {
 
       {showSplitConfigPopup && (
         <SplitConfigPopup
-          group={group}
-          currentUser={currentUser}
-          totalAmount={parseFloat(formData.amount) || 0}
-          currency={formData.currency}
-          splitType={formData.splitType}
+          isOpen={showSplitConfigPopup}
+          onClose={() => setShowSplitConfigPopup(false)}
           splits={splits}
           weights={weights}
-          onUpdateSplitType={(type) => {
-            handleSplitTypeChange(type);
-          }}
-          onUpdateSplits={(updatedSplits) => {
+          group={group}
+          formData={formData}
+          onSplitChange={(updatedSplits) => {
             setSplits(updatedSplits);
           }}
-          onUpdateWeights={(updatedWeights) => {
-            setWeights(updatedWeights);
+          onMemberToggle={(userId) => {
+            setSplits(prev => prev.map(split => 
+              split.userId === userId 
+                ? { ...split, included: !split.included }
+                : split
+            ));
+            // Recalculate splits after toggling
+            setTimeout(() => {
+              if (formData.splitType === 'equal') {
+                calculateEqualSplits(parseFloat(formData.amount) || 0);
+              }
+            }, 0);
           }}
-          onClose={() => setShowSplitConfigPopup(false)}
+          onWeightChange={(userId, weight) => {
+            setWeights(prev => prev.map(w => 
+              w.userId === userId ? { ...w, weight } : w
+            ));
+            // Recalculate splits after weight change
+            setTimeout(() => {
+              if (formData.splitType === 'weight') {
+                calculateWeightedSplits(parseFloat(formData.amount) || 0);
+              }
+            }, 0);
+          }}
+          onSplitTypeChange={(splitType) => {
+            handleSplitTypeChange(splitType);
+          }}
+          totalAmount={parseFloat(formData.amount) || 0}
+          totalSplits={splits.reduce((sum, split) => sum + split.amount, 0)}
+          isValid={Math.abs((parseFloat(formData.amount) || 0) - splits.reduce((sum, split) => sum + split.amount, 0)) < 0.01}
         />
       )}
     </div>
