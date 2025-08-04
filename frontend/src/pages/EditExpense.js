@@ -152,23 +152,34 @@ const EditExpense = () => {
     if (name === 'amount') {
       const amount = parseFloat(value) || 0;
       if (formData.splitType === 'equal') {
-        calculateEqualSplits(amount);
+        setTimeout(() => calculateEqualSplits(amount), 0);
       } else if (formData.splitType === 'weight') {
-        calculateWeightedSplits(amount);
+        setTimeout(() => calculateWeightedSplits(amount), 0);
       }
     }
   };
 
-  const calculateEqualSplits = (totalAmount) => {
-    const includedMembers = splits.filter(split => split.included);
-    const equalAmount = includedMembers.length > 0 ? totalAmount / includedMembers.length : 0;
+  const handleSplitTypeChange = (splitType) => {
+    setFormData(prev => ({ ...prev, splitType }));
+    const amount = parseFloat(formData.amount) || 0;
     
-    setSplits(prevSplits => 
-      prevSplits.map(split => ({
+    if (splitType === 'equal') {
+      calculateEqualSplits(amount);
+    } else if (splitType === 'weight') {
+      calculateWeightedSplits(amount);
+    }
+  };
+
+  const calculateEqualSplits = (totalAmount) => {
+    setSplits(prev => {
+      const includedMembers = prev.filter(split => split.included);
+      const equalAmount = includedMembers.length > 0 ? totalAmount / includedMembers.length : 0;
+      
+      return prev.map(split => ({
         ...split,
         amount: split.included ? equalAmount : 0
-      }))
-    );
+      }));
+    });
   };
 
   const calculateWeightedSplits = (totalAmount) => {
@@ -259,6 +270,17 @@ const EditExpense = () => {
 
   return (
     <div className="edit-expense mobile-optimized">
+      <div className="page-header">
+        <h1>Edit Expense</h1>
+        <button 
+          type="button" 
+          onClick={() => navigate(`/groups/${groupId}/expenses/${expenseId}`)}
+          className="button secondary"
+        >
+          Cancel
+        </button>
+      </div>
+
       {error && <div className="error-message">{error}</div>}
 
       <form onSubmit={handleSubmit} className="expense-form">
@@ -436,14 +458,14 @@ const EditExpense = () => {
           <button 
             type="button" 
             onClick={() => navigate(`/groups/${groupId}/expenses/${expenseId}`)}
-            className="btn btn-secondary"
+            className="button secondary"
           >
             Cancel
           </button>
           <button 
             type="submit" 
-            disabled={submitting}
-            className="btn btn-primary"
+            disabled={submitting || !isValid}
+            className="button primary"
           >
             {submitting ? 'Updating...' : 'Update Expense'}
           </button>
@@ -552,7 +574,7 @@ const EditExpense = () => {
           splits={splits}
           weights={weights}
           onUpdateSplitType={(type) => {
-            setFormData(prev => ({ ...prev, splitType: type }));
+            handleSplitTypeChange(type);
           }}
           onUpdateSplits={(updatedSplits) => {
             setSplits(updatedSplits);
