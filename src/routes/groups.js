@@ -19,6 +19,8 @@ const populateMemberNames = async (group) => {
         ...member,
         userName: user ? user.name : 'Unknown User',
         email: user ? user.email : 'Unknown Email',
+        avatarUrl: user ? user.avatarUrl : null,
+        avatar: user ? user.avatar : null,
         id: member.user, // Ensure we have the user ID for removal
         user: member.user // Keep original user field
       });
@@ -27,6 +29,8 @@ const populateMemberNames = async (group) => {
         ...member,
         userName: 'Unknown User',
         email: 'Unknown Email',
+        avatarUrl: null,
+        avatar: null,
         id: member.user,
         user: member.user
       });
