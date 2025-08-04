@@ -7125,6 +7125,7 @@ input:checked + .toggle-slider:before {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  width: 100%;
 }
 
 .split-config-popup .equal-split-left {
@@ -7132,6 +7133,7 @@ input:checked + .toggle-slider:before {
   align-items: center;
   gap: 16px;
   flex: 1;
+  min-width: 0; /* Allow shrinking */
 }
 
 .split-config-popup .equal-split-right {
@@ -7139,6 +7141,7 @@ input:checked + .toggle-slider:before {
   align-items: center;
   justify-content: flex-end;
   flex-shrink: 0;
+  margin-left: auto; /* Force to right */
 }
 
 .split-config-popup .member-profile {
@@ -7151,6 +7154,7 @@ input:checked + .toggle-slider:before {
   flex-direction: column;
   gap: 4px;
   align-items: flex-start;
+  min-width: 0; /* Allow text to wrap if needed */
 }
 
 .split-config-popup .member-name {
@@ -7171,6 +7175,7 @@ input:checked + .toggle-slider:before {
   display: flex;
   align-items: flex-start;
   gap: 16px;
+  width: 100%;
 }
 
 .split-config-popup .member-content {
@@ -7178,6 +7183,7 @@ input:checked + .toggle-slider:before {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  min-width: 0; /* Allow shrinking */
 }
 
 .split-config-popup .member-info-row {
@@ -7185,6 +7191,7 @@ input:checked + .toggle-slider:before {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  width: 100%;
 }
 
 .split-config-popup .member-details-compact {
@@ -7193,6 +7200,7 @@ input:checked + .toggle-slider:before {
   flex-direction: column;
   gap: 4px;
   align-items: flex-start;
+  min-width: 0; /* Allow text to wrap if needed */
 }
 
 .split-config-popup .weight-shares-info {
@@ -7206,6 +7214,7 @@ input:checked + .toggle-slider:before {
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  margin-left: auto; /* Force to right */
 }
 
 .split-config-popup .calculated-amount {
@@ -7227,6 +7236,7 @@ input:checked + .toggle-slider:before {
   padding: 4px;
   border-radius: 8px;
   border: 1px solid var(--border-color);
+  margin-left: auto; /* Force to right */
 }
 
 .split-config-popup .amount-input {
@@ -7239,6 +7249,7 @@ input:checked + .toggle-slider:before {
   font-weight: 600;
   color: var(--text-primary);
   min-width: 80px;
+  width: 80px; /* Fixed width for consistency */
 }
 
 .split-config-popup .amount-input:focus {
@@ -7249,6 +7260,58 @@ input:checked + .toggle-slider:before {
 /* Remove currency symbol styles as they're no longer needed */
 .split-config-popup .currency-symbol {
   display: none;
+}
+
+/* Enhanced Toggle Switch Alignment */
+.split-config-popup .member-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.split-config-popup .toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+}
+
+.split-config-popup .toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.split-config-popup .toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 28px;
+}
+
+.split-config-popup .toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.split-config-popup input:checked + .toggle-slider {
+  background-color: var(--primary-color);
+}
+
+.split-config-popup input:checked + .toggle-slider:before {
+  transform: translateX(20px);
 }
 
 /* Compact Weight Controls */
