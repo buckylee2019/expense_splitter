@@ -5,7 +5,6 @@ A full-stack application for splitting expenses among friends and groups.
 ## Deployment Instructions
 
 We've consolidated all deployment scripts into a single `deploy-all.sh` script that can handle both backend and frontend deployments.
-
 ### Using the Unified Deployment Script
 
 ```bash

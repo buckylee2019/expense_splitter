@@ -19,22 +19,54 @@ const populateUserNames = async (expenses) => {
         // Multiple payers - populate each payer's name
         const populatedPayers = [];
         for (const payer of expenseData.paidBy) {
+          if (!payer.userId) {
+            console.warn('Payer found without userId:', payer);
+            populatedPayers.push({
+              ...payer,
+              userName: 'Unknown User',
+              userAvatarUrl: null,
+              userAvatar: null
+            });
+            continue;
+          }
+          
           const user = await User.findById(payer.userId);
-          populatedPayers.push({
-            ...payer,
-            userName: user ? user.name : 'Unknown User',
-            userAvatarUrl: user ? user.avatarUrl : null,
-            userAvatar: user ? user.avatar : null
-          });
+          if (!user) {
+            console.warn('User not found for payer ID:', payer.userId);
+            populatedPayers.push({
+              ...payer,
+              userName: 'Unknown User',
+              userAvatarUrl: null,
+              userAvatar: null
+            });
+          } else {
+            populatedPayers.push({
+              ...payer,
+              userName: user.name,
+              userAvatarUrl: user.avatarUrl,
+              userAvatar: user.avatar
+            });
+          }
         }
         expenseData.paidBy = populatedPayers;
         expenseData.paidByName = `${expenseData.paidBy.length} people`;
       } else {
         // Single payer
-        const paidByUser = await User.findById(expenseData.paidBy);
-        expenseData.paidByName = paidByUser ? paidByUser.name : 'Unknown User';
+        if (!expenseData.paidBy) {
+          console.warn('Expense found without paidBy:', expenseData.id);
+          expenseData.paidByName = 'Unknown User';
+        } else {
+          const paidByUser = await User.findById(expenseData.paidBy);
+          if (!paidByUser) {
+            console.warn('User not found for paidBy ID:', expenseData.paidBy);
+            expenseData.paidByName = 'Unknown User';
+          } else {
+            expenseData.paidByName = paidByUser.name;
+          }
+        }
       }
     } catch (error) {
+      console.error('Error populating paidBy user:', error);
       if (expenseData.isMultiplePayers) {
         expenseData.paidByName = 'Multiple people';
       } else {
@@ -48,14 +80,37 @@ const populateUserNames = async (expenses) => {
       try {
         // Handle both 'user' and 'userId' field names for backward compatibility
         const userId = split.user || split.userId;
+        
+        if (!userId) {
+          console.warn('Split found without user ID:', split);
+          populatedSplits.push({
+            ...split,
+            userName: 'Unknown User',
+            userAvatarUrl: null,
+            userAvatar: null
+          });
+          continue;
+        }
+        
         const user = await User.findById(userId);
-        populatedSplits.push({
-          ...split,
-          userName: user ? user.name : 'Unknown User',
-          userAvatarUrl: user ? user.avatarUrl : null,
-          userAvatar: user ? user.avatar : null
-        });
+        if (!user) {
+          console.warn('User not found for ID:', userId);
+          populatedSplits.push({
+            ...split,
+            userName: 'Unknown User',
+            userAvatarUrl: null,
+            userAvatar: null
+          });
+        } else {
+          populatedSplits.push({
+            ...split,
+            userName: user.name,
+            userAvatarUrl: user.avatarUrl,
+            userAvatar: user.avatar
+          });
+        }
       } catch (error) {
+        console.error('Error populating user for split:', error);
         populatedSplits.push({
           ...split,
           userName: 'Unknown User',

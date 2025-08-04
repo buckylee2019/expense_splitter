@@ -464,7 +464,7 @@ const EditExpense = () => {
           </button>
           <button 
             type="submit" 
-            disabled={submitting || !isValid}
+            disabled={submitting}
             className="button primary"
           >
             {submitting ? 'Updating...' : 'Update Expense'}
