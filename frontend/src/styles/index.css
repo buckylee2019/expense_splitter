@@ -8196,3 +8196,20 @@ input:checked + .toggle-slider:before {
     align-self: flex-end;
   }
 }
+/* Balance settled state */
+.balance-settled {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.expense-user-balance.settled .balance-settled {
+  color: var(--text-secondary);
+}
+
+.expense-user-balance.settled {
+  background: var(--background-light);
+  border-left: 3px solid var(--text-secondary);
+}

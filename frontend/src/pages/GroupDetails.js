@@ -78,7 +78,7 @@ const GroupDetails = () => {
   const calculateUserExpenseBalance = (expense) => {
     if (!currentUser) return null;
     
-    const userPaid = expense.paidBy === currentUser.id;
+    // Find user's split
     const userSplit = expense.splits.find(split => 
       split.user === currentUser.id || split.userId === currentUser.id
     );
@@ -87,25 +87,44 @@ const GroupDetails = () => {
     
     const userOwes = userSplit.amount;
     
-    if (userPaid) {
-      // User paid for this expense, calculate how much others owe them
-      const totalOwedToUser = expense.splits
-        .filter(split => (split.user || split.userId) !== currentUser.id)
-        .reduce((sum, split) => sum + split.amount, 0);
-      
+    // Calculate how much the user paid
+    let userPaid = 0;
+    
+    if (expense.isMultiplePayers && Array.isArray(expense.paidBy)) {
+      // Multiple payers - find user's contribution
+      const userPayer = expense.paidBy.find(payer => payer.userId === currentUser.id);
+      userPaid = userPayer ? userPayer.amount : 0;
+    } else if (expense.paidBy === currentUser.id) {
+      // Single payer - user paid the full amount
+      userPaid = expense.amount;
+    }
+    
+    // Calculate net balance (what user paid minus what they owe)
+    const netBalance = userPaid - userOwes;
+    
+    if (netBalance > 0) {
+      // User gets money back
       return {
-        type: 'credit', // User gets money back
-        amount: totalOwedToUser,
+        type: 'credit',
+        amount: netBalance,
         currency: expense.currency || 'TWD',
-        message: `You get back ${totalOwedToUser.toFixed(2)} ${expense.currency || 'TWD'}`
+        message: `You get back ${netBalance.toFixed(2)} ${expense.currency || 'TWD'}`
+      };
+    } else if (netBalance < 0) {
+      // User owes money
+      return {
+        type: 'debt',
+        amount: Math.abs(netBalance),
+        currency: expense.currency || 'TWD',
+        message: `You owe ${Math.abs(netBalance).toFixed(2)} ${expense.currency || 'TWD'}`
       };
     } else {
-      // Someone else paid, user owes their share
+      // User is settled (paid exactly what they owe)
       return {
-        type: 'debt', // User owes money
-        amount: userOwes,
+        type: 'settled',
+        amount: 0,
         currency: expense.currency || 'TWD',
-        message: `You owe ${userOwes.toFixed(2)} ${expense.currency || 'TWD'}`
+        message: `You're settled`
       };
     }
   };
@@ -835,10 +854,15 @@ const GroupDetails = () => {
                               <i className="fi fi-rr-arrow-up"></i>
                               You get back {userBalance.amount.toFixed(2)} {userBalance.currency}
                             </span>
-                          ) : (
+                          ) : userBalance.type === 'debt' ? (
                             <span className="balance-debt">
                               <i className="fi fi-rr-arrow-down"></i>
                               You owe {userBalance.amount.toFixed(2)} {userBalance.currency}
+                            </span>
+                          ) : (
+                            <span className="balance-settled">
+                              <i className="fi fi-rr-check"></i>
+                              You're settled
                             </span>
                           )}
                         </div>
