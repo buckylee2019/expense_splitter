@@ -224,7 +224,7 @@ const AddExpense = () => {
   // Helper function to get currency symbol
   const getCurrencySymbol = (curr) => {
     switch(curr) {
-      case 'TWD': return '¥';
+      case 'TWD': return 'TWD';
       case 'USD': return '$';
       case 'EUR': return '€';
       case 'JPY': return '¥';

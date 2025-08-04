@@ -133,7 +133,7 @@ const EditExpense = () => {
   // Helper function to get currency symbol
   const getCurrencySymbol = (curr) => {
     switch(curr) {
-      case 'TWD': return '¥';
+      case 'TWD': return 'TWD';
       case 'USD': return '$';
       case 'EUR': return '€';
       case 'JPY': return '¥';
@@ -363,7 +363,7 @@ const EditExpense = () => {
             onClick={() => setShowCurrencyPopup(true)}
           >
             <span className="trigger-text">
-              {getCurrencySymbol(formData.currency)} {formData.currency}
+              {formData.currency === 'TWD' ? 'TWD' : `${getCurrencySymbol(formData.currency)} ${formData.currency}`}
             </span>
             <i className="fi fi-rr-angle-down"></i>
           </div>
@@ -507,7 +507,7 @@ const EditExpense = () => {
         <PopupSelector
           title="Select Currency"
           options={[
-            { value: 'TWD', label: '¥ TWD (Taiwan Dollar)' },
+            { value: 'TWD', label: 'TWD (Taiwan Dollar)' },
             { value: 'USD', label: '$ USD (US Dollar)' },
             { value: 'EUR', label: '€ EUR (Euro)' },
             { value: 'JPY', label: '¥ JPY (Japanese Yen)' }
@@ -541,20 +541,19 @@ const EditExpense = () => {
 
       {showMultiplePaidByPopup && (
         <MultiplePaidByPopup
-          group={group}
-          currentUser={currentUser}
-          totalAmount={parseFloat(formData.amount) || 0}
-          currency={formData.currency}
-          multiplePayers={multiplePayers}
-          onUpdatePayers={(updatedPayers) => {
-            setMultiplePayers(updatedPayers);
-          }}
-          onDone={() => {
-            setShowMultiplePaidByPopup(false);
-          }}
+          isOpen={showMultiplePaidByPopup}
           onClose={() => {
             setShowMultiplePaidByPopup(false);
             setIsMultiplePayers(false);
+          }}
+          members={group?.members || []}
+          currentUser={currentUser}
+          totalAmount={parseFloat(formData.amount) || 0}
+          currency={formData.currency}
+          onSave={(updatedPayers) => {
+            setMultiplePayers(updatedPayers);
+            setIsMultiplePayers(true);
+            setShowMultiplePaidByPopup(false);
           }}
         />
       )}
