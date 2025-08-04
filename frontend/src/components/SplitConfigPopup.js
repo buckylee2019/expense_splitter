@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-const SplitDetailsPopup = ({ 
+const SplitConfigPopup = ({ 
   isOpen, 
   onClose, 
   splits, 
@@ -10,10 +10,13 @@ const SplitDetailsPopup = ({
   onSplitChange, 
   onMemberToggle, 
   onWeightChange,
+  onSplitTypeChange,
   totalAmount,
   totalSplits,
   isValid
 }) => {
+  const [activeTab, setActiveTab] = useState(formData.splitType);
+
   if (!isOpen) return null;
 
   const handleBackdropClick = (e) => {
@@ -22,41 +25,64 @@ const SplitDetailsPopup = ({
     }
   };
 
-  const getSplitTypeTitle = () => {
-    switch (formData.splitType) {
-      case 'equal': return 'Equal Split';
-      case 'weight': return 'Weight-based Split';
-      case 'custom': return 'Custom Split';
-      default: return 'Split Details';
-    }
+  const handleTabChange = (splitType) => {
+    setActiveTab(splitType);
+    onSplitTypeChange(splitType);
   };
 
-  const getSplitTypeDescription = () => {
-    switch (formData.splitType) {
-      case 'equal': return 'Select members to include in equal split';
-      case 'weight': return 'Set weights for each member (higher weight = larger share)';
-      case 'custom': return 'Manually set each person\'s amount';
-      default: return '';
+  const splitTypes = [
+    {
+      value: 'equal',
+      label: 'Equal',
+      icon: '⚖️',
+      description: 'Split equally among selected members'
+    },
+    {
+      value: 'weight',
+      label: 'Weight',
+      icon: '⚖️',
+      description: 'Split based on custom weights'
+    },
+    {
+      value: 'custom',
+      label: 'Custom',
+      icon: '✏️',
+      description: 'Manually set each person\'s amount'
     }
-  };
+  ];
 
   return (
     <div className="popup-overlay" onClick={handleBackdropClick}>
-      <div className="popup-selector split-details-popup">
+      <div className="popup-selector split-config-popup">
         <div className="popup-header">
           <div className="header-left">
-            <h3>{getSplitTypeTitle()}</h3>
+            <h3>Split Configuration</h3>
           </div>
           <button className="popup-close" onClick={onClose}>
             <i className="fi fi-rr-cross"></i>
           </button>
         </div>
         
-        {getSplitTypeDescription() && (
-          <div className="split-description-section">
-            <p className="split-description-text">{getSplitTypeDescription()}</p>
-          </div>
-        )}
+        {/* Split Type Tabs */}
+        <div className="split-tabs">
+          {splitTypes.map((type) => (
+            <button
+              key={type.value}
+              className={`split-tab ${activeTab === type.value ? 'active' : ''}`}
+              onClick={() => handleTabChange(type.value)}
+            >
+              <span className="tab-icon">{type.icon}</span>
+              <span className="tab-label">{type.label}</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Active Tab Description */}
+        <div className="split-description-section">
+          <p className="split-description-text">
+            {splitTypes.find(type => type.value === activeTab)?.description}
+          </p>
+        </div>
         
         <div className="popup-content split-details-content">
           <div className="splits-list">
@@ -66,20 +92,20 @@ const SplitDetailsPopup = ({
               const weight = weightObj?.weight !== undefined ? weightObj.weight : 1;
               
               return (
-                <div key={split.userId} className={`split-item ${formData.splitType === 'equal' && !split.included ? 'excluded' : ''}`}>
+                <div key={split.userId} className={`split-item ${activeTab === 'equal' && !split.included ? 'excluded' : ''}`}>
                   <div className="member-info">
                     <div className="member-details">
                       <span className="member-name">
                         {member ? member.userName || member.user : `Member ${index + 1}`}
                       </span>
-                      {formData.splitType === 'weight' && (
+                      {activeTab === 'weight' && (
                         <span className="weight-percentage">
                           ({((weight / weights.reduce((sum, w) => sum + w.weight, 0)) * 100).toFixed(1)}%)
                         </span>
                       )}
                     </div>
                     
-                    {formData.splitType === 'equal' && (
+                    {activeTab === 'equal' && (
                       <div className="member-toggle">
                         <label className="toggle-switch">
                           <input
@@ -93,7 +119,7 @@ const SplitDetailsPopup = ({
                     )}
                   </div>
                   
-                  {formData.splitType === 'weight' && (
+                  {activeTab === 'weight' && (
                     <div className="weight-controls">
                       <button
                         type="button"
@@ -129,7 +155,7 @@ const SplitDetailsPopup = ({
                         type="number"
                         value={split.amount}
                         onChange={(e) => onSplitChange(split.userId, e.target.value)}
-                        disabled={formData.splitType === 'equal' || formData.splitType === 'weight'}
+                        disabled={activeTab === 'equal' || activeTab === 'weight'}
                         min="0"
                         step="1"
                         className="amount-input"
@@ -152,7 +178,7 @@ const SplitDetailsPopup = ({
               <span className="summary-label">Split Total:</span>
               <span className="summary-value">{formData.currency} {totalSplits.toFixed(2)}</span>
             </div>
-            {formData.splitType === 'custom' && (
+            {activeTab === 'custom' && (
               <div className="summary-row">
                 <span className="summary-label">Remaining:</span>
                 <span className={`summary-value ${totalAmount - totalSplits >= 0 ? 'positive' : 'negative'}`}>
@@ -183,4 +209,4 @@ const SplitDetailsPopup = ({
   );
 };
 
-export default SplitDetailsPopup;
+export default SplitConfigPopup;

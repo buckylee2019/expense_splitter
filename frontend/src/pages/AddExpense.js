@@ -3,8 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import CategoryPopup from '../components/CategoryPopup';
 import PopupSelector from '../components/PopupSelector';
-import SplitTypePopup from '../components/SplitTypePopup';
-import SplitDetailsPopup from '../components/SplitDetailsPopup';
+import SplitConfigPopup from '../components/SplitConfigPopup';
 import { parseCategoryString } from '../data/expenseCategories';
 
 const AddExpense = () => {
@@ -35,8 +34,7 @@ const AddExpense = () => {
   const [showProjectPopup, setShowProjectPopup] = useState(false);
   const [showCurrencyPopup, setShowCurrencyPopup] = useState(false);
   const [showPaidByPopup, setShowPaidByPopup] = useState(false);
-  const [showSplitTypePopup, setShowSplitTypePopup] = useState(false);
-  const [showSplitDetailsPopup, setShowSplitDetailsPopup] = useState(false);
+  const [showSplitConfigPopup, setShowSplitConfigPopup] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -410,40 +408,33 @@ const AddExpense = () => {
           </div>
         </div>
 
-        {/* Split Type Selector */}
+        {/* Split Configuration */}
         <div className="form-group">
-          <label>Split Type</label>
+          <label>Split Configuration</label>
           <div 
-            className="popup-trigger"
-            onClick={() => setShowSplitTypePopup(true)}
-          >
-            <span className="trigger-text">
-              {formData.splitType === 'equal' ? 'Equal Split' :
-               formData.splitType === 'weight' ? 'Weight-based Split' :
-               'Custom Split'}
-            </span>
-            <i className="fi fi-rr-angle-down"></i>
-          </div>
-        </div>
-
-        {/* Split Details Trigger */}
-        <div className="form-group">
-          <label>Split Details</label>
-          <div 
-            className="popup-trigger split-details-trigger"
-            onClick={() => setShowSplitDetailsPopup(true)}
+            className="popup-trigger split-config-trigger"
+            onClick={() => setShowSplitConfigPopup(true)}
           >
             <div className="split-summary-preview">
               <div className="split-info">
-                <span className="split-count">
-                  {formData.splitType === 'equal' 
-                    ? `${splits.filter(s => s.included).length} of ${splits.length} members`
-                    : `${splits.length} members`
-                  }
-                </span>
-                <span className="split-total">
-                  {formData.currency} {totalSplits.toFixed(2)} / {totalAmount.toFixed(2)}
-                </span>
+                <div className="split-type-info">
+                  <span className="split-type-label">
+                    {formData.splitType === 'equal' ? '⚖️ Equal Split' :
+                     formData.splitType === 'weight' ? '⚖️ Weight-based Split' :
+                     '✏️ Custom Split'}
+                  </span>
+                </div>
+                <div className="split-details-info">
+                  <span className="split-count">
+                    {formData.splitType === 'equal' 
+                      ? `${splits.filter(s => s.included).length} of ${splits.length} members`
+                      : `${splits.length} members`
+                    }
+                  </span>
+                  <span className="split-total">
+                    {formData.currency} {totalSplits.toFixed(2)} / {totalAmount.toFixed(2)}
+                  </span>
+                </div>
               </div>
               {!isValid && (
                 <div className="split-warning">
@@ -527,19 +518,9 @@ const AddExpense = () => {
         onSelect={(value) => setFormData(prev => ({ ...prev, paidBy: value }))}
       />
 
-      <SplitTypePopup
-        isOpen={showSplitTypePopup}
-        onClose={() => setShowSplitTypePopup(false)}
-        selectedValue={formData.splitType}
-        onSelect={(value) => {
-          setFormData(prev => ({ ...prev, splitType: value }));
-          handleSplitTypeChange({ target: { value } });
-        }}
-      />
-
-      <SplitDetailsPopup
-        isOpen={showSplitDetailsPopup}
-        onClose={() => setShowSplitDetailsPopup(false)}
+      <SplitConfigPopup
+        isOpen={showSplitConfigPopup}
+        onClose={() => setShowSplitConfigPopup(false)}
         splits={splits}
         weights={weights}
         group={group}
@@ -547,6 +528,10 @@ const AddExpense = () => {
         onSplitChange={handleSplitChange}
         onMemberToggle={handleMemberToggle}
         onWeightChange={handleWeightChange}
+        onSplitTypeChange={(value) => {
+          setFormData(prev => ({ ...prev, splitType: value }));
+          handleSplitTypeChange({ target: { value } });
+        }}
         totalAmount={totalAmount}
         totalSplits={totalSplits}
         isValid={isValid}
