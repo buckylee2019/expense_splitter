@@ -103,7 +103,8 @@ const SplitConfigPopup = ({
                             user={{ 
                               id: split.userId, 
                               name: member?.userName || member?.user || `Member ${index + 1}`,
-                              photoUrl: member?.photoUrl 
+                              avatarUrl: member?.avatarUrl || member?.photoUrl,
+                              avatar: member?.avatar
                             }} 
                             size="medium"
                           />
@@ -138,7 +139,8 @@ const SplitConfigPopup = ({
                           user={{ 
                             id: split.userId, 
                             name: member?.userName || member?.user || `Member ${index + 1}`,
-                            photoUrl: member?.photoUrl 
+                            avatarUrl: member?.avatarUrl || member?.photoUrl,
+                            avatar: member?.avatar
                           }} 
                           size="medium"
                         />
