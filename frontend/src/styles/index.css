@@ -7795,3 +7795,238 @@ input:checked + .toggle-slider:before {
     font-size: 0.9rem;
   }
 }
+/* Multiple Paid By Popup Styles */
+.multiple-paid-by-popup {
+  max-height: 90vh;
+}
+
+.multiple-payers-list {
+  display: flex;
+  flex-direction: column;
+  padding: 0 20px;
+  gap: 0;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.multiple-payer-item {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--border-light);
+  transition: all 0.2s ease;
+}
+
+.multiple-payer-item:last-child {
+  border-bottom: none;
+}
+
+.multiple-payer-item.included {
+  background: rgba(var(--primary-color-rgb), 0.05);
+  margin: 0 -20px;
+  padding: 0 20px;
+  border-radius: 8px;
+  border-bottom: 1px solid rgba(var(--primary-color-rgb), 0.1);
+}
+
+.payer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  gap: 16px;
+}
+
+.payer-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex: 1;
+}
+
+.payer-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+}
+
+.payer-toggle {
+  flex-shrink: 0;
+}
+
+.multiple-payer-item .member-profile {
+  flex-shrink: 0;
+}
+
+.multiple-payer-item .member-details {
+  flex: 1;
+}
+
+.multiple-payer-item .member-name {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.multiple-payer-item .amount-input-container {
+  display: flex;
+  align-items: center;
+  background: var(--background-secondary);
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  min-width: 100px;
+}
+
+.multiple-payer-item .amount-input {
+  background: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 6px;
+  text-align: right;
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  width: 100%;
+}
+
+.multiple-payer-item .amount-input:disabled {
+  background: var(--background-light);
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.multiple-payer-item .amount-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
+}
+
+.multiple-payer-item .amount-input::placeholder {
+  color: var(--text-placeholder);
+  font-weight: normal;
+}
+
+/* Multiple Payers Summary */
+.multiple-payers-summary {
+  background: linear-gradient(135deg, var(--background-secondary) 0%, rgba(var(--primary-color-rgb), 0.05) 100%);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 20px;
+  margin: 20px 20px 0;
+}
+
+.multiple-payers-summary .summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.multiple-payers-summary .summary-row:last-child {
+  margin-bottom: 0;
+}
+
+.multiple-payers-summary .summary-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.multiple-payers-summary .summary-value {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.multiple-payers-summary .summary-value.overpaid {
+  color: #dc3545;
+}
+
+.multiple-payers-summary .summary-value.remaining {
+  color: #ffc107;
+}
+
+/* Toggle Switch Styles for Multiple Payers */
+.multiple-payer-item .toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 28px;
+}
+
+.multiple-payer-item .toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.multiple-payer-item .toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.3s;
+  border-radius: 28px;
+}
+
+.multiple-payer-item .toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+.multiple-payer-item input:checked + .toggle-slider {
+  background-color: var(--primary-color);
+}
+
+.multiple-payer-item input:checked + .toggle-slider:before {
+  transform: translateX(20px);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .multiple-payers-list {
+    padding: 0 16px;
+  }
+  
+  .multiple-payer-item.included {
+    margin: 0 -16px;
+    padding: 0 16px;
+  }
+  
+  .payer-left {
+    gap: 12px;
+  }
+  
+  .payer-row {
+    gap: 12px;
+  }
+  
+  .multiple-payer-item .member-name {
+    font-size: 0.95rem;
+  }
+  
+  .multiple-payer-item .amount-input-container {
+    min-width: 90px;
+  }
+  
+  .multiple-payer-item .amount-input {
+    font-size: 0.9rem;
+    padding: 6px 10px;
+  }
+  
+  .multiple-payers-summary {
+    margin: 16px 16px 0;
+    padding: 16px;
+  }
+}

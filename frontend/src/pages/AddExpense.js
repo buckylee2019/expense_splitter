@@ -5,6 +5,7 @@ import CategoryPopup from '../components/CategoryPopup';
 import PopupSelector from '../components/PopupSelector';
 import SplitConfigPopup from '../components/SplitConfigPopup';
 import PaidByPopup from '../components/PaidByPopup';
+import MultiplePaidByPopup from '../components/MultiplePaidByPopup';
 import { parseCategoryString } from '../data/expenseCategories';
 
 const AddExpense = () => {
@@ -35,6 +36,7 @@ const AddExpense = () => {
   const [showProjectPopup, setShowProjectPopup] = useState(false);
   const [showCurrencyPopup, setShowCurrencyPopup] = useState(false);
   const [showPaidByPopup, setShowPaidByPopup] = useState(false);
+  const [showMultiplePaidByPopup, setShowMultiplePaidByPopup] = useState(false);
   const [showSplitConfigPopup, setShowSplitConfigPopup] = useState(false);
   
   // Multiple payers state
@@ -222,20 +224,19 @@ const AddExpense = () => {
   // Handle multiple payers
   const handleMultiplePayers = () => {
     setIsMultiplePayers(true);
-    // Initialize multiple payers with all group members
-    const initialPayers = group.members.map(member => ({
-      userId: member.user,
-      amount: 0,
-      included: false
-    }));
-    setMultiplePayers(initialPayers);
-    // TODO: Open multiple payers popup
-    console.log('Opening multiple payers popup...');
+    setShowMultiplePaidByPopup(true);
   };
 
   const handleSinglePayerSelect = (userId) => {
     setIsMultiplePayers(false);
     setFormData(prev => ({ ...prev, paidBy: userId }));
+  };
+
+  const handleMultiplePayersSave = (payersData) => {
+    setMultiplePayers(payersData);
+    setIsMultiplePayers(true);
+    // Clear single payer selection when using multiple payers
+    setFormData(prev => ({ ...prev, paidBy: null }));
   };
 
   const validateSplits = () => {
@@ -257,7 +258,14 @@ const AddExpense = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!formData.paidBy) {
+    // Validate payer selection
+    if (isMultiplePayers) {
+      const activePayers = multiplePayers.filter(p => p.amount > 0);
+      if (activePayers.length === 0) {
+        setError('Please select at least one payer with an amount');
+        return;
+      }
+    } else if (!formData.paidBy) {
       setError('Please select who paid for this expense');
       return;
     }
@@ -285,6 +293,16 @@ const AddExpense = () => {
         groupId,
         splits: activeSplits
       };
+
+      // Handle multiple payers vs single payer
+      if (isMultiplePayers) {
+        const activePayers = multiplePayers.filter(p => p.amount > 0);
+        expenseData.paidBy = activePayers; // Array of payer objects
+        expenseData.isMultiplePayers = true;
+      } else {
+        expenseData.paidBy = formData.paidBy; // Single user ID
+        expenseData.isMultiplePayers = false;
+      }
       
       await api.post('/api/expenses', expenseData);
 
@@ -567,6 +585,16 @@ const AddExpense = () => {
         totalAmount={totalAmount}
         totalSplits={totalSplits}
         isValid={isValid}
+      />
+
+      <MultiplePaidByPopup
+        isOpen={showMultiplePaidByPopup}
+        onClose={() => setShowMultiplePaidByPopup(false)}
+        members={group?.members || []}
+        currentUser={currentUser}
+        totalAmount={parseFloat(formData.amount) || 0}
+        currency={formData.currency}
+        onSave={handleMultiplePayersSave}
       />
     </div>
   );
