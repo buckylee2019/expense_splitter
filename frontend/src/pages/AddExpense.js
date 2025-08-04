@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import CategorySelector from '../components/CategorySelector';
+import CategoryPopup from '../components/CategoryPopup';
+import PopupSelector from '../components/PopupSelector';
+import SplitTypePopup from '../components/SplitTypePopup';
 import { parseCategoryString } from '../data/expenseCategories';
 
 const AddExpense = () => {
@@ -26,6 +28,13 @@ const AddExpense = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  
+  // Popup states
+  const [showCategoryPopup, setShowCategoryPopup] = useState(false);
+  const [showProjectPopup, setShowProjectPopup] = useState(false);
+  const [showCurrencyPopup, setShowCurrencyPopup] = useState(false);
+  const [showPaidByPopup, setShowPaidByPopup] = useState(false);
+  const [showSplitTypePopup, setShowSplitTypePopup] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -275,28 +284,24 @@ const AddExpense = () => {
   const isValid = Math.abs(totalAmount - totalSplits) < 0.01;
 
   return (
-    <div className="add-expense">
-      <div className="page-header">
-        <h1>Add Expense to {group?.name}</h1>
-      </div>
-
+    <div className="add-expense mobile-optimized">
       {error && <div className="error-message">{error}</div>}
 
       <form onSubmit={handleSubmit} className="expense-form">
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="description">Description</label>
-            <input
-              type="text"
-              id="description"
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              required
-              placeholder="What was this expense for?"
-            />
-          </div>
+        <div className="form-group">
+          <label htmlFor="description">Description</label>
+          <input
+            type="text"
+            id="description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            required
+            placeholder="What was this expense for?"
+          />
+        </div>
 
+        <div className="form-row">
           <div className="form-group">
             <label htmlFor="amount">Amount</label>
             <input
@@ -321,104 +326,102 @@ const AddExpense = () => {
               value={formData.date}
               onChange={handleChange}
               required
-              max={new Date().toISOString().split('T')[0]} // Can't select future dates
+              max={new Date().toISOString().split('T')[0]}
             />
           </div>
         </div>
 
-        <div className="form-row">
-          <div className="form-group">
-            <label>Category *</label>
-            <CategorySelector
-              value={formData.category}
-              onChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-              required={true}
-            />
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="project">Project</label>
-            <select
-              id="project"
-              name="project"
-              value={formData.project}
-              onChange={handleChange}
-            >
-              <option value="">Select Project (Optional)</option>
-              <option value="生活開銷">生活開銷</option>
-              <option value="玩樂">玩樂</option>
-              <option value="家用">家用</option>
-              <option value="家居裝潢">家居裝潢</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="notes">Notes (Optional)</label>
-            <input
-              type="text"
-              id="notes"
-              name="notes"
-              value={formData.notes}
-              onChange={handleChange}
-              placeholder="Additional notes..."
-            />
-          </div>
-        </div>
-
-        <div className="form-row">
-          <div className="form-group">
-            <label htmlFor="currency">Currency</label>
-            <select
-              id="currency"
-              name="currency"
-              value={formData.currency}
-              onChange={handleChange}
-            >
-              <option value="USD">USD - US Dollar</option>
-              <option value="EUR">EUR - Euro</option>
-              <option value="GBP">GBP - British Pound</option>
-              <option value="TWD">TWD - Taiwan Dollar</option>
-              <option value="JPY">JPY - Japanese Yen</option>
-            </select>
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="paidBy">Paid By</label>
-            <select
-              id="paidBy"
-              name="paidBy"
-              value={formData.paidBy || ''}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select who paid</option>
-              {group?.members?.map(member => {
-                const isCurrentUser = member.user === currentUser?.id;
-                const displayName = member.userName || member.user;
-                return (
-                  <option key={member.user} value={member.user}>
-                    {displayName}{isCurrentUser ? ' (You)' : ''}
-                  </option>
-                );
-              })}
-            </select>
-          </div>
-        </div>
-
+        {/* Category Selector */}
         <div className="form-group">
-          <label htmlFor="splitType">Split Type</label>
-          <select
-            id="splitType"
-            name="splitType"
-            value={formData.splitType}
-            onChange={handleSplitTypeChange}
+          <label>Category *</label>
+          <div 
+            className="popup-trigger"
+            onClick={() => setShowCategoryPopup(true)}
           >
-            <option value="equal">Equal Split</option>
-            <option value="weight">Weight-based Split</option>
-            <option value="custom">Custom Split</option>
-          </select>
+            <span className="trigger-text">
+              {formData.category || 'Select Category'}
+            </span>
+            <i className="fi fi-rr-angle-down"></i>
+          </div>
+        </div>
+
+        {/* Project Selector */}
+        <div className="form-group">
+          <label>Project</label>
+          <div 
+            className="popup-trigger"
+            onClick={() => setShowProjectPopup(true)}
+          >
+            <span className="trigger-text">
+              {formData.project || 'Select Project (Optional)'}
+            </span>
+            <i className="fi fi-rr-angle-down"></i>
+          </div>
+        </div>
+
+        {/* Notes */}
+        <div className="form-group">
+          <label htmlFor="notes">Notes (Optional)</label>
+          <input
+            type="text"
+            id="notes"
+            name="notes"
+            value={formData.notes}
+            onChange={handleChange}
+            placeholder="Additional notes..."
+          />
+        </div>
+
+        <div className="form-row">
+          {/* Currency Selector */}
+          <div className="form-group">
+            <label>Currency</label>
+            <div 
+              className="popup-trigger"
+              onClick={() => setShowCurrencyPopup(true)}
+            >
+              <span className="trigger-text">{formData.currency}</span>
+              <i className="fi fi-rr-angle-down"></i>
+            </div>
+          </div>
+
+          {/* Paid By Selector */}
+          <div className="form-group">
+            <label>Paid By</label>
+            <div 
+              className="popup-trigger"
+              onClick={() => setShowPaidByPopup(true)}
+            >
+              <span className="trigger-text">
+                {formData.paidBy ? 
+                  (() => {
+                    const member = group?.members?.find(m => m.user === formData.paidBy);
+                    const isCurrentUser = member?.user === currentUser?.id;
+                    const displayName = member?.userName || member?.user || 'Unknown';
+                    return `${displayName}${isCurrentUser ? ' (You)' : ''}`;
+                  })()
+                  : 'Select who paid'
+                }
+              </span>
+              <i className="fi fi-rr-angle-down"></i>
+            </div>
+          </div>
+        </div>
+
+        {/* Split Type Selector */}
+        <div className="form-group">
+          <label>Split Type</label>
+          <div 
+            className="popup-trigger"
+            onClick={() => setShowSplitTypePopup(true)}
+          >
+            <span className="trigger-text">
+              {formData.splitType === 'equal' ? 'Equal Split' :
+               formData.splitType === 'weight' ? 'Weight-based Split' :
+               'Custom Split'}
+            </span>
+            <i className="fi fi-rr-angle-down"></i>
+          </div>
         </div>
 
         <div className="splits-section">
@@ -540,6 +543,70 @@ const AddExpense = () => {
           </button>
         </div>
       </form>
+
+      {/* Popup Modals */}
+      <CategoryPopup
+        isOpen={showCategoryPopup}
+        onClose={() => setShowCategoryPopup(false)}
+        selectedValue={formData.category}
+        onSelect={(value) => setFormData(prev => ({ ...prev, category: value }))}
+      />
+
+      <PopupSelector
+        isOpen={showProjectPopup}
+        onClose={() => setShowProjectPopup(false)}
+        title="Select Project"
+        options={[
+          { label: 'None (Optional)', value: '' },
+          { label: '生活開銷', value: '生活開銷' },
+          { label: '玩樂', value: '玩樂' },
+          { label: '家用', value: '家用' },
+          { label: '家居裝潢', value: '家居裝潢' }
+        ]}
+        selectedValue={formData.project}
+        onSelect={(value) => setFormData(prev => ({ ...prev, project: value }))}
+      />
+
+      <PopupSelector
+        isOpen={showCurrencyPopup}
+        onClose={() => setShowCurrencyPopup(false)}
+        title="Select Currency"
+        options={[
+          { label: 'TWD - Taiwan Dollar', value: 'TWD' },
+          { label: 'USD - US Dollar', value: 'USD' },
+          { label: 'EUR - Euro', value: 'EUR' },
+          { label: 'GBP - British Pound', value: 'GBP' },
+          { label: 'JPY - Japanese Yen', value: 'JPY' }
+        ]}
+        selectedValue={formData.currency}
+        onSelect={(value) => setFormData(prev => ({ ...prev, currency: value }))}
+      />
+
+      <PopupSelector
+        isOpen={showPaidByPopup}
+        onClose={() => setShowPaidByPopup(false)}
+        title="Who Paid?"
+        options={group?.members?.map(member => {
+          const isCurrentUser = member.user === currentUser?.id;
+          const displayName = member.userName || member.user;
+          return {
+            label: `${displayName}${isCurrentUser ? ' (You)' : ''}`,
+            value: member.user
+          };
+        }) || []}
+        selectedValue={formData.paidBy}
+        onSelect={(value) => setFormData(prev => ({ ...prev, paidBy: value }))}
+      />
+
+      <SplitTypePopup
+        isOpen={showSplitTypePopup}
+        onClose={() => setShowSplitTypePopup(false)}
+        selectedValue={formData.splitType}
+        onSelect={(value) => {
+          setFormData(prev => ({ ...prev, splitType: value }));
+          handleSplitTypeChange({ target: { value } });
+        }}
+      />
     </div>
   );
 };
