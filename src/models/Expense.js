@@ -12,6 +12,7 @@ class Expense {
     this.currency = data.currency || 'TWD';
     this.category = data.category;
     this.paidBy = data.paidBy;
+    this.isMultiplePayers = data.isMultiplePayers || false;
     this.group = data.group;
     this.splits = data.splits || [];
     this.splitType = data.splitType;

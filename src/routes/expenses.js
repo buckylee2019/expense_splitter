@@ -94,6 +94,7 @@ router.post('/', authMiddleware, async (req, res) => {
       splitType,
       splits,
       paidBy,
+      isMultiplePayers,
       date
     } = req.body;
 
@@ -107,17 +108,33 @@ router.post('/', authMiddleware, async (req, res) => {
         return res.status(404).json({ error: 'Group not found or user not a member' });
       }
       
-      // Validate that the selected payer is a member of the group
+      // Validate that the selected payer(s) are members of the group
       if (paidBy) {
-        const payerIsMember = group.members.some(member => member.user === paidBy);
-        if (!payerIsMember) {
-          return res.status(400).json({ error: 'Selected payer is not a member of this group' });
+        if (isMultiplePayers && Array.isArray(paidBy)) {
+          // Validate multiple payers
+          for (const payer of paidBy) {
+            const payerIsMember = group.members.some(member => member.user === payer.userId);
+            if (!payerIsMember) {
+              return res.status(400).json({ error: `Payer ${payer.userId} is not a member of this group` });
+            }
+          }
+        } else {
+          // Validate single payer
+          const payerIsMember = group.members.some(member => member.user === paidBy);
+          if (!payerIsMember) {
+            return res.status(400).json({ error: 'Selected payer is not a member of this group' });
+          }
         }
       }
     }
 
     // Use provided paidBy or default to current user
-    const expensePaidBy = paidBy || req.user.id;
+    let expensePaidBy;
+    if (isMultiplePayers && Array.isArray(paidBy)) {
+      expensePaidBy = paidBy; // Keep the array of payer objects
+    } else {
+      expensePaidBy = paidBy || req.user.id; // Single payer ID
+    }
 
     // Validate splits total
     const totalSplit = splits.reduce((sum, split) => sum + split.amount, 0);
@@ -132,6 +149,7 @@ router.post('/', authMiddleware, async (req, res) => {
       category,
       project,
       paidBy: expensePaidBy,
+      isMultiplePayers: isMultiplePayers || false,
       group: expenseGroupId,
       splitType,
       splits,
@@ -176,6 +194,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       project,
       splits,
       paidBy,
+      isMultiplePayers,
       date
     } = req.body;
 
@@ -191,13 +210,24 @@ router.put('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ error: 'Only the person who paid can edit this expense' });
     }*/
 
-    // Validate that the selected payer is a member of the group (if paidBy is provided)
+    // Validate that the selected payer(s) are members of the group (if paidBy is provided)
     if (paidBy && existingExpense.group) {
       const group = await Group.findByUserIdAndGroupId(req.user.id, existingExpense.group);
       if (group) {
-        const payerIsMember = group.members.some(member => member.user === paidBy);
-        if (!payerIsMember) {
-          return res.status(400).json({ error: 'Selected payer is not a member of this group' });
+        if (isMultiplePayers && Array.isArray(paidBy)) {
+          // Validate multiple payers
+          for (const payer of paidBy) {
+            const payerIsMember = group.members.some(member => member.user === payer.userId);
+            if (!payerIsMember) {
+              return res.status(400).json({ error: `Payer ${payer.userId} is not a member of this group` });
+            }
+          }
+        } else {
+          // Validate single payer
+          const payerIsMember = group.members.some(member => member.user === paidBy);
+          if (!payerIsMember) {
+            return res.status(400).json({ error: 'Selected payer is not a member of this group' });
+          }
         }
       }
     }
@@ -218,6 +248,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       category: category || existingExpense.category,
       project: project !== undefined ? project : existingExpense.project,
       paidBy: paidBy || existingExpense.paidBy,
+      isMultiplePayers: isMultiplePayers !== undefined ? isMultiplePayers : existingExpense.isMultiplePayers,
       splits: splits || existingExpense.splits,
       date: date || existingExpense.date,
       updatedAt: new Date().toISOString()
