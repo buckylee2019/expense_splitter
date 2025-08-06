@@ -342,7 +342,7 @@ const AddExpense = () => {
 
       <form onSubmit={handleSubmit} className="expense-form">
         <div className="form-group">
-          <label htmlFor="description">Description</label>
+          <label htmlFor="description">Name</label>
           <input
             type="text"
             id="description"
@@ -412,16 +412,16 @@ const AddExpense = () => {
           </div>
         </div>
 
-        {/* Notes */}
+        {/* Description */}
         <div className="form-group">
-          <label htmlFor="notes">Notes (Optional)</label>
+          <label htmlFor="notes">Description (Optional)</label>
           <input
             type="text"
             id="notes"
             name="notes"
             value={formData.notes}
             onChange={handleChange}
-            placeholder="Additional notes..."
+            placeholder="Additional description..."
           />
         </div>
 

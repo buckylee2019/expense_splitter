@@ -201,7 +201,7 @@ router.get('/export/:year/:month', authMiddleware, async (req, res) => {
           dateStr, // 日期 (Date)
           timeStr, // 時間 (Time)
           expense.project || '', // 專案 (Project) - new field
-          expense.description || '', // 描述 (Description) - use description
+          expense.notes || '', // 描述 (Description) - use notes field instead of description
           groupTag, // 標籤 (Tags) - group name with # prefix
           '' // 對象 (Target)
         ].join(',');

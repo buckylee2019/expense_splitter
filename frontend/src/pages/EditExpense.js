@@ -288,7 +288,7 @@ const EditExpense = () => {
 
       <form onSubmit={handleSubmit} className="expense-form">
         <div className="form-group">
-          <label htmlFor="description">Description</label>
+          <label htmlFor="description">Name</label>
           <input
             type="text"
             id="description"
@@ -444,15 +444,15 @@ const EditExpense = () => {
           </div>
         </div>
 
-        {/* Notes */}
+        {/* Description */}
         <div className="form-group">
-          <label htmlFor="notes">Notes (Optional)</label>
+          <label htmlFor="notes">Description (Optional)</label>
           <textarea
             id="notes"
             name="notes"
             value={formData.notes}
             onChange={handleChange}
-            placeholder="Add any additional notes..."
+            placeholder="Add any additional description..."
             rows="3"
           />
         </div>

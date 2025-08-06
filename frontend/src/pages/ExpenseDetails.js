@@ -72,8 +72,10 @@ const ExpenseDetails = () => {
           <span> / </span>
           <Link to={`/groups/${groupId}`}>{group.name}</Link>
           <span> / </span>
-          <span>Expense Details</span>
+          <span>{expense.description}</span>
         </div>
+        
+        <h1 className="expense-name">{expense.description}</h1>
         
         <div className="header-actions">
           <Link to={`/groups/${groupId}`} className="button secondary">
@@ -136,6 +138,12 @@ const ExpenseDetails = () => {
               <div className="meta-item">
                 <strong>Project:</strong> 
                 <span className="project-display">📁 {expense.project}</span>
+              </div>
+            )}
+            {expense.notes && (
+              <div className="meta-item">
+                <strong>Description:</strong> 
+                <span className="description-text">{expense.notes}</span>
               </div>
             )}
             <div className="meta-item">
