@@ -250,11 +250,28 @@ router.get('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'Expense not found' });
     }
 
+    // Debug: Log the expense data before population
+    console.log('Raw expense data:', {
+      id: expense.id,
+      description: expense.description,
+      notes: expense.notes,
+      hasNotes: !!expense.notes
+    });
+
     // Populate user names
     const populatedExpenses = await populateUserNames([expense]);
     
+    // Debug: Log the expense data after population
+    console.log('Populated expense data:', {
+      id: populatedExpenses[0].id,
+      description: populatedExpenses[0].description,
+      notes: populatedExpenses[0].notes,
+      hasNotes: !!populatedExpenses[0].notes
+    });
+    
     res.json(populatedExpenses[0]);
   } catch (error) {
+    console.error('Error fetching expense:', error);
     res.status(400).json({ error: error.message });
   }
 });
