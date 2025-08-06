@@ -187,6 +187,13 @@ router.get('/export/:year/:month', authMiddleware, async (req, res) => {
           }
         }
         
+        // Debug: Log the expense notes field
+        console.log('Expense ID:', expense.id, 'Description:', expense.description, 'Notes:', expense.notes);
+        
+        // Ensure notes field is properly handled and escape any commas
+        const notesField = (expense.notes || '').replace(/,/g, '，'); // Replace commas with Chinese comma
+        const descriptionField = (expense.description || '').replace(/,/g, '，');
+        
         const csvRow = [
           '錢包', // 帳戶 (Account)
           expense.currency || 'TWD', // 幣種 (Currency)
@@ -196,12 +203,12 @@ router.get('/export/:year/:month', authMiddleware, async (req, res) => {
           amount, // 金額 (Amount) - user's split amount
           0, // 手續費 (Fee)
           0, // 折扣 (Discount)
-          expense.description || '', // 名稱 (Name) - use description
+          descriptionField, // 名稱 (Name) - use description
           '', // 商家 (Merchant) - blank as requested
           dateStr, // 日期 (Date)
           timeStr, // 時間 (Time)
           expense.project || '', // 專案 (Project) - new field
-          expense.notes || '', // 描述 (Description) - use notes field instead of description
+          notesField, // 描述 (Description) - use notes field for description
           groupTag, // 標籤 (Tags) - group name with # prefix
           '' // 對象 (Target)
         ].join(',');
