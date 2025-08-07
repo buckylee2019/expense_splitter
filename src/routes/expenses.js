@@ -171,7 +171,8 @@ router.post('/', authMiddleware, async (req, res) => {
       splits,
       paidBy,
       isMultiplePayers,
-      date
+      date,
+      notes
     } = req.body;
 
     // Accept both 'group' and 'groupId' for backward compatibility
@@ -229,7 +230,8 @@ router.post('/', authMiddleware, async (req, res) => {
       group: expenseGroupId,
       splitType,
       splits,
-      date: date || new Date().toISOString()
+      date: date || new Date().toISOString(),
+      notes
     });
 
     res.status(201).json({
@@ -288,14 +290,19 @@ router.put('/:id', authMiddleware, async (req, res) => {
       splits,
       paidBy,
       isMultiplePayers,
-      date
+      date,
+      notes
     } = req.body;
+
+    console.log('PUT request body notes field:', notes);
 
     // Find the existing expense
     const existingExpense = await Expense.findByUserIdAndExpenseId(req.user.id, req.params.id);
     if (!existingExpense) {
       return res.status(404).json({ error: 'Expense not found' });
     }
+
+    console.log('Existing expense notes field:', existingExpense.notes);
 
     // Only allow the person who paid for the expense to edit it
     // Temporarily commenting out this restriction to allow any group member to edit expenses
@@ -344,11 +351,16 @@ router.put('/:id', authMiddleware, async (req, res) => {
       isMultiplePayers: isMultiplePayers !== undefined ? isMultiplePayers : existingExpense.isMultiplePayers,
       splits: splits || existingExpense.splits,
       date: date || existingExpense.date,
+      notes: notes !== undefined ? notes : existingExpense.notes,
       updatedAt: new Date().toISOString()
     });
 
+    console.log('Updated expense notes field:', updatedExpense.notes);
+
     // Populate user names
     const populatedExpenses = await populateUserNames([updatedExpense]);
+    
+    console.log('Final response notes field:', populatedExpenses[0].notes);
     
     res.json({
       message: 'Expense updated successfully',
