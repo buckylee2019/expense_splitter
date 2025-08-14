@@ -165,7 +165,7 @@ const SplitConfigPopup = ({
                                   value={split.amount}
                                   onChange={(e) => onSplitChange(split.userId, e.target.value)}
                                   min="0"
-                                  step="1"
+                                  step="0.01"
                                   className="amount-input"
                                   placeholder="0.00"
                                 />

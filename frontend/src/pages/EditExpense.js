@@ -198,6 +198,14 @@ const EditExpense = () => {
     );
   };
 
+  const handleSplitChange = (userId, amount) => {
+    setSplits(prev => prev.map(split => 
+      (split.userId === userId || split.user === userId)
+        ? { ...split, amount: Math.max(0, parseFloat(amount) || 0) }
+        : split
+    ));
+  };
+
   const validateSplits = () => {
     const totalSplits = splits.reduce((sum, split) => sum + split.amount, 0);
     const totalAmount = parseFloat(formData.amount) || 0;
@@ -573,9 +581,7 @@ const EditExpense = () => {
           weights={weights}
           group={group}
           formData={formData}
-          onSplitChange={(updatedSplits) => {
-            setSplits(updatedSplits);
-          }}
+          onSplitChange={handleSplitChange}
           onMemberToggle={(userId) => {
             setSplits(prev => prev.map(split => 
               split.userId === userId 
