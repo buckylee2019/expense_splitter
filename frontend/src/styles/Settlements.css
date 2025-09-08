@@ -25,8 +25,7 @@
 }
 
 .settlements-items {
-  max-height: 500px;
-  overflow-y: auto;
+  /* Remove max-height and overflow to prevent duplicate scrollers */
 }
 
 .settlement-item {
@@ -207,6 +206,21 @@ textarea {
   gap: 0.75rem;
 }
 
+.edit-settlement-btn {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8rem;
+  border: none;
+  background: #6c757d;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.edit-settlement-btn:hover {
+  background: #5a6268;
+}
+
 .delete-settlement-btn {
   padding: 0.25rem 0.5rem;
   font-size: 0.8rem;
@@ -216,6 +230,37 @@ textarea {
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s ease;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 20px;
 }
 
 .delete-settlement-btn:hover {

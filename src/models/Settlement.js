@@ -78,19 +78,17 @@ class Settlement {
         try {
           if (settlement.from) {
             const fromUser = await User.findById(settlement.from);
-            if (fromUser) {
-              settlement.fromName = fromUser.name || fromUser.email;
-            }
+            settlement.fromName = fromUser?.name || fromUser?.email || settlement.from;
           }
           
           if (settlement.to) {
             const toUser = await User.findById(settlement.to);
-            if (toUser) {
-              settlement.toName = toUser.name || toUser.email;
-            }
+            settlement.toName = toUser?.name || toUser?.email || settlement.to;
           }
         } catch (err) {
           console.error('Error fetching user details for settlement:', err);
+          settlement.fromName = settlement.from;
+          settlement.toName = settlement.to;
         }
         
         return settlement;
@@ -134,6 +132,10 @@ class Settlement {
 
     await docClient.send(new PutCommand(params));
     return this;
+  }
+
+  async update() {
+    return this.save();
   }
 
   async delete() {

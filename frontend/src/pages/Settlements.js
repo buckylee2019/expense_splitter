@@ -22,6 +22,18 @@ const Settlements = () => {
   const [successMessage, setSuccessMessage] = useState('');
   const [balances, setBalances] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
+  const [editingSettlement, setEditingSettlement] = useState(null);
+  const [editFormData, setEditFormData] = useState({
+    fromUserId: '',
+    toUserId: '',
+    amount: '',
+    currency: 'TWD',
+    groupId: '',
+    method: 'cash',
+    notes: '',
+    isThirdPartySettlement: false
+  });
+  const [groupMembers, setGroupMembers] = useState([]);
 
   useEffect(() => {
     fetchData();
@@ -84,11 +96,16 @@ const Settlements = () => {
         
         if (firstBalance.type === 'you_owe') {
           // You owe someone else
+          const userName = selectedGroup?.members?.find(m => m.user === firstBalance.user.id)?.userName || 
+                          selectedGroup?.members?.find(m => m.user === firstBalance.user.id)?.name || 
+                          selectedGroup?.members?.find(m => m.user === firstBalance.user.id)?.email || 
+                          firstBalance.user.id;
+          
           setFormData(prev => ({
             ...prev,
             toUserId: firstBalance.user.id,
             amount: firstBalance.amount.toFixed(2),
-            notes: `Settling balance with ${firstBalance.user.name}`
+            notes: `Settling balance with ${userName}`
           }));
         } else {
           // Someone owes you - don't auto-fill as they should be the one paying
@@ -107,11 +124,15 @@ const Settlements = () => {
       
       if (userBalance) {
         // Auto-fill the amount based on the balance
+        const userName = selectedGroup?.members?.find(m => m.user === userId)?.userName || 
+                        selectedGroup?.members?.find(m => m.user === userId)?.name || 
+                        selectedGroup?.members?.find(m => m.user === userId)?.email || userId;
+        
         setFormData(prev => ({
           ...prev,
           toUserId: userId,
           amount: userBalance.amount.toFixed(2),
-          notes: `Settling balance with ${userBalance.user.name}`
+          notes: `Settling balance with ${userName}`
         }));
       } else {
         // Just update the user ID if no balance found
@@ -158,8 +179,81 @@ const Settlements = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleEditSettlement = async (settlement) => {
+    console.log('Edit settlement:', settlement);
+    const group = groups.find(g => g.id === settlement.group);
+    console.log('Group found:', group);
+    
+    // Fetch user details for group members
+    const membersWithNames = await Promise.all(
+      group.members.map(async (member) => {
+        console.log('Processing member:', member);
+        try {
+          const userResponse = await api.get(`/api/users/${member.user}`);
+          console.log('User API response:', userResponse.data);
+          const memberWithName = {
+            ...member,
+            userName: userResponse.data.name || userResponse.data.email
+          };
+          console.log('Member with name:', memberWithName);
+          return memberWithName;
+        } catch (error) {
+          console.error('Error fetching user:', member.user, error);
+          return {
+            ...member,
+            userName: member.user
+          };
+        }
+      })
+    );
+    
+    console.log('Final membersWithNames:', membersWithNames);
+    
+    setEditingSettlement(settlement);
+    setSelectedGroup(group);
+    setGroupMembers(membersWithNames);
+    setEditFormData({
+      fromUserId: settlement.from,
+      toUserId: settlement.to,
+      amount: settlement.amount.toString(),
+      currency: settlement.currency || 'TWD',
+      groupId: settlement.group,
+      method: settlement.method || 'cash',
+      notes: settlement.notes || '',
+      isThirdPartySettlement: settlement.from !== currentUser?.id
+    });
+  };
+
+  const handleUpdateSettlement = async (e) => {
     e.preventDefault();
+    try {
+      await api.put(`/api/settlements/${editingSettlement.id}`, editFormData);
+      setSuccessMessage('Settlement updated successfully');
+      setEditingSettlement(null);
+      fetchData();
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err) {
+      console.error('Update error:', err);
+      setError(err.response?.data?.error || 'Failed to update settlement');
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditingSettlement(null);
+    setSelectedGroup(null);
+    setEditFormData({
+      fromUserId: '',
+      toUserId: '',
+      amount: '',
+      currency: 'TWD',
+      groupId: '',
+      method: 'cash',
+      notes: '',
+      isThirdPartySettlement: false
+    });
+  };
+
+  const handleSubmit = async (e) => {
     setError('');
     setSuccessMessage('');
     setLoading(true);
@@ -240,6 +334,15 @@ const Settlements = () => {
                         <span className="date">
                           {new Date(settlement.settledAt).toLocaleDateString()}
                         </span>
+                        {(settlement.recordedBy === currentUser?.id || settlement.from === currentUser?.id || settlement.to === currentUser?.id) && (
+                          <button
+                            onClick={() => handleEditSettlement(settlement)}
+                            className="btn btn-sm btn-secondary edit-settlement-btn"
+                            title="Edit settlement"
+                          >
+                            <i className="fi fi-rr-edit"></i>
+                          </button>
+                        )}
                         <button
                           onClick={() => handleDeleteSettlement(settlement.id)}
                           className="btn btn-sm btn-danger delete-settlement-btn"
@@ -315,7 +418,7 @@ const Settlements = () => {
                       <option value="">Select who is paying</option>
                       {selectedGroup.members.map(member => (
                         <option key={member.user} value={member.user}>
-                          {member.userName || member.user}
+                          {member.userName || member.name || member.email || member.user}
                         </option>
                       ))}
                     </select>
@@ -334,7 +437,7 @@ const Settlements = () => {
                     <option value="">Select member</option>
                     {selectedGroup.members.map(member => (
                       <option key={member.user} value={member.user}>
-                        {member.userName || member.user}
+                        {member.userName || member.name || member.email || member.user}
                       </option>
                     ))}
                   </select>
@@ -391,8 +494,7 @@ const Settlements = () => {
                   >
                     <option value="cash">Cash</option>
                     <option value="bank_transfer">Bank Transfer</option>
-                    <option value="venmo">Venmo</option>
-                    <option value="paypal">PayPal</option>
+                    <option value="line_pay">Line Pay</option>
                   </select>
                 </div>
 
@@ -423,6 +525,155 @@ const Settlements = () => {
           </form>
         </div>
       </div>
+
+      {/* Edit Settlement Modal */}
+      {editingSettlement && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Edit Settlement</h3>
+            <form onSubmit={handleUpdateSettlement}>
+              <div className="form-group">
+                <label htmlFor="edit-group">Group</label>
+                <select
+                  id="edit-group"
+                  value={editFormData.groupId}
+                  onChange={(e) => {
+                    const selectedGroup = groups.find(g => g.id === e.target.value);
+                    setEditFormData(prev => ({ ...prev, groupId: e.target.value }));
+                    setSelectedGroup(selectedGroup);
+                  }}
+                  required
+                  disabled
+                >
+                  <option value="">Select a group</option>
+                  {groups.map(group => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={editFormData.isThirdPartySettlement}
+                    onChange={(e) => setEditFormData(prev => ({ 
+                      ...prev, 
+                      isThirdPartySettlement: e.target.checked,
+                      fromUserId: e.target.checked ? '' : currentUser?.id || ''
+                    }))}
+                  />
+                  Third-party settlement (someone else paid)
+                </label>
+              </div>
+
+              {editFormData.isThirdPartySettlement && (
+                <div className="form-group">
+                  <label htmlFor="edit-from-user">Who paid?</label>
+                  <select
+                    id="edit-from-user"
+                    value={editFormData.fromUserId}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, fromUserId: e.target.value }))}
+                    required
+                  >
+                    <option value="">Select who paid</option>
+                    {groupMembers.map(member => (
+                      <option key={member.user} value={member.user}>
+                        {member.userName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
+              <div className="form-group">
+                <label htmlFor="edit-to-user">Who received the payment?</label>
+                <select
+                  id="edit-to-user"
+                  value={editFormData.toUserId}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, toUserId: e.target.value }))}
+                  required
+                >
+                  <option value="">Select recipient</option>
+                  {groupMembers.map(member => (
+                    <option key={member.user} value={member.user}>
+                      {member.userName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="edit-amount">Amount</label>
+                  <input
+                    id="edit-amount"
+                    type="number"
+                    step="0.01"
+                    value={editFormData.amount}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, amount: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="edit-currency">Currency</label>
+                  <select
+                    id="edit-currency"
+                    value={editFormData.currency}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, currency: e.target.value }))}
+                  >
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="TWD">TWD - Taiwan Dollar</option>
+                    <option value="JPY">JPY - Japanese Yen</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-method">Payment Method</label>
+                <select
+                  id="edit-method"
+                  value={editFormData.method}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, method: e.target.value }))}
+                >
+                  <option value="cash">Cash</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="line_pay">Line Pay</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="edit-notes">Notes</label>
+                <textarea
+                  id="edit-notes"
+                  value={editFormData.notes}
+                  onChange={(e) => setEditFormData(prev => ({ ...prev, notes: e.target.value }))}
+                  placeholder="Add any notes about this settlement"
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" onClick={cancelEdit} className="btn btn-secondary">
+                  Cancel
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary"
+                  disabled={!editFormData.groupId || !editFormData.toUserId || !editFormData.amount || 
+                    (editFormData.isThirdPartySettlement && !editFormData.fromUserId)}
+                >
+                  Update Settlement
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -221,7 +221,44 @@ router.post('/multi-group', authMiddleware, async (req, res) => {
   }
 });
 
-module.exports = router;
+// Update settlement
+router.put('/:id', authMiddleware, async (req, res) => {
+  try {
+    const settlement = await Settlement.findById(req.params.id);
+    
+    if (!settlement) {
+      return res.status(404).json({ error: 'Settlement not found' });
+    }
+
+    // Check if user recorded this settlement
+    if (settlement.recordedBy !== req.user.id) {
+      return res.status(403).json({ error: 'You can only edit settlements you recorded' });
+    }
+
+    const { amount, method, notes } = req.body;
+    
+    if (amount !== undefined) {
+      if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+        return res.status(400).json({ error: 'Amount must be a positive number' });
+      }
+      settlement.amount = parseFloat(amount);
+    }
+    
+    if (method !== undefined) settlement.method = method;
+    if (notes !== undefined) settlement.notes = notes;
+    
+    await settlement.update();
+
+    res.json({
+      message: 'Settlement updated successfully',
+      settlement
+    });
+  } catch (error) {
+    console.error('Error updating settlement:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Delete settlement
 router.delete('/:id', authMiddleware, async (req, res) => {
   try {
@@ -246,3 +283,5 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
+module.exports = router;

@@ -95,6 +95,19 @@ router.put('/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// Get user by ID
+router.get('/:id', authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json({ id: user.id, name: user.name, email: user.email });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Search users by email
 router.get('/search', authMiddleware, async (req, res) => {
   try {
