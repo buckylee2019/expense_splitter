@@ -127,12 +127,30 @@ const populateUserNames = async (expenses) => {
   return populatedExpenses;
 };
 
-// Get user's expenses
+// Get user's expenses with pagination and filtering
 router.get('/', authMiddleware, async (req, res) => {
   try {
-    const { groupId } = req.query;
+    const { 
+      groupId, 
+      page = 1, 
+      limit = 20, 
+      sort = 'date', 
+      order = 'desc',
+      startDate,
+      endDate,
+      search,
+      category,
+      minAmount,
+      maxAmount
+    } = req.query;
     
-    let expenses;
+    // Parse pagination parameters
+    const pageNum = Math.max(1, parseInt(page));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit))); // Max 100 items per page
+    const offset = (pageNum - 1) * limitNum;
+    
+    let expenses, totalCount;
+    
     if (groupId) {
       // First verify user has access to this group
       const group = await Group.findByUserIdAndGroupId(req.user.id, groupId);
@@ -140,17 +158,56 @@ router.get('/', authMiddleware, async (req, res) => {
         return res.status(404).json({ error: 'Group not found or user not a member' });
       }
       
-      // Get expenses for specific group
-      expenses = await Expense.findByGroupId(groupId);
+      // Build filter options
+      const filterOptions = {
+        groupId,
+        startDate,
+        endDate,
+        search,
+        category,
+        minAmount: minAmount ? parseFloat(minAmount) : undefined,
+        maxAmount: maxAmount ? parseFloat(maxAmount) : undefined,
+        sort,
+        order,
+        limit: limitNum,
+        offset
+      };
+      
+      // Get expenses for specific group with filters
+      const result = await Expense.findByGroupIdWithFilters(filterOptions);
+      expenses = result.expenses;
+      totalCount = result.totalCount;
     } else {
-      // Get all user's expenses
-      expenses = await Expense.findByUserId(req.user.id);
+      // Get user's expenses with basic pagination
+      const result = await Expense.findByUserIdWithPagination(req.user.id, {
+        limit: limitNum,
+        offset,
+        sort,
+        order
+      });
+      expenses = result.expenses;
+      totalCount = result.totalCount;
     }
     
     // Populate user names
     const populatedExpenses = await populateUserNames(expenses);
     
-    res.json(populatedExpenses);
+    // Calculate pagination info
+    const totalPages = Math.ceil(totalCount / limitNum);
+    const hasNextPage = pageNum < totalPages;
+    const hasPrevPage = pageNum > 1;
+    
+    res.json({
+      expenses: populatedExpenses,
+      pagination: {
+        currentPage: pageNum,
+        totalPages,
+        totalCount,
+        hasNextPage,
+        hasPrevPage,
+        limit: limitNum
+      }
+    });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

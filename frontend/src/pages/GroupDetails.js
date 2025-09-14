@@ -27,6 +27,8 @@ const GroupDetails = () => {
   const [groupDebts, setGroupDebts] = useState([]);
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest'
   const [showCurrentMonthOnly, setShowCurrentMonthOnly] = useState(true); // New state for month filter
+  const [pagination, setPagination] = useState(null);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   const fetchGroupData = useCallback(async () => {
     try {
@@ -37,13 +39,14 @@ const GroupDetails = () => {
 
       const [groupRes, expensesRes, balancesRes, globalBalancesRes] = await Promise.all([
         api.get(`/api/groups/${groupId}`),
-        api.get(`/api/expenses?groupId=${groupId}`),
+        api.get(`/api/expenses?groupId=${groupId}&limit=20&sort=date&order=desc`),
         api.get(`/api/balances?groupId=${groupId}${useOptimized ? '&optimized=true' : ''}`),
         api.get(`/api/balances${useOptimized ? '?optimized=true' : ''}`) // Global balances for comparison
       ]);
 
       setGroup(groupRes.data);
-      setExpenses(expensesRes.data);
+      setExpenses(expensesRes.data.expenses || expensesRes.data);
+      setPagination(expensesRes.data.pagination || null);
       setBalances(balancesRes.data.balances);
       setGlobalBalances(globalBalancesRes.data.balances);
       
@@ -69,6 +72,24 @@ const GroupDetails = () => {
       setLoading(false);
     }
   }, [groupId, useOptimized]);
+
+  const loadMoreExpenses = async () => {
+    if (!pagination?.hasNextPage || loadingMore) return;
+    
+    try {
+      setLoadingMore(true);
+      const nextPage = pagination.currentPage + 1;
+      const response = await api.get(`/api/expenses?groupId=${groupId}&limit=20&sort=date&order=desc&page=${nextPage}`);
+      
+      const newExpenses = response.data.expenses || response.data;
+      setExpenses(prev => [...prev, ...newExpenses]);
+      setPagination(response.data.pagination || null);
+    } catch (err) {
+      console.error('Failed to load more expenses:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   useEffect(() => {
     fetchGroupData();
@@ -895,6 +916,30 @@ const GroupDetails = () => {
                 </div>
               );
             })}
+          </div>
+        )}
+        
+        {/* Load More Button */}
+        {pagination && pagination.hasNextPage && (
+          <div className="load-more-container">
+            <button 
+              onClick={loadMoreExpenses}
+              disabled={loadingMore}
+              className="button secondary load-more-btn"
+            >
+              {loadingMore ? (
+                <>
+                  <i className="fi fi-rr-spinner"></i>&nbsp;Loading...
+                </>
+              ) : (
+                <>
+                  <i className="fi fi-rr-arrow-down"></i>&nbsp;Load More Expenses
+                </>
+              )}
+            </button>
+            <div className="pagination-info">
+              Showing {expenses.length} of {pagination.totalCount} expenses
+            </div>
           </div>
         )}
       </div>
