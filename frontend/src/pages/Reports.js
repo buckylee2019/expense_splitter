@@ -15,6 +15,7 @@ const Reports = () => {
   const [exportingAll, setExportingAll] = useState(false);
   const [groups, setGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState('');
+  const [displayMode, setDisplayMode] = useState('list'); // 'list' or 'matrix'
 
   // Generate year options (current year and previous 5 years)
   const yearOptions = [];
@@ -79,6 +80,11 @@ const Reports = () => {
       return;
     }
     
+    if (displayMode === 'matrix') {
+      exportAdminMatrixCSV();
+      return;
+    }
+    
     try {
       setExportingAll(true);
       
@@ -103,6 +109,76 @@ const Reports = () => {
       
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to export all members data');
+    } finally {
+      setExportingAll(false);
+    }
+  };
+
+  const exportAdminMatrixCSV = async () => {
+    try {
+      setExportingAll(true);
+      
+      // Get group expenses data
+      const response = await api.get(`/api/reports/group-matrix/${selectedYear}/${selectedMonth}?groupId=${selectedGroupId}`);
+      const groupExpenses = response.data;
+      
+      // Build matrix data
+      const allUsers = new Map();
+      const expenseMatrix = {};
+
+      groupExpenses.forEach(expense => {
+        expense.splits?.forEach(split => {
+          const userId = split.user || split.userId;
+          if (userId && split.userName) {
+            allUsers.set(userId, split.userName);
+          }
+        });
+        expenseMatrix[expense.description] = {};
+      });
+
+      const users = Array.from(allUsers.entries()).map(([id, name]) => ({ id, name }));
+
+      groupExpenses.forEach(expense => {
+        expense.splits?.forEach(split => {
+          const userId = split.user || split.userId;
+          if (userId) {
+            expenseMatrix[expense.description][userId] = split.amount || 0;
+          }
+        });
+      });
+
+      // Create CSV content
+      const csvRows = [];
+      
+      // Header row
+      const headerRow = ['', ...users.map(user => user.name)];
+      csvRows.push(headerRow.join(','));
+      
+      // Data rows
+      Object.entries(expenseMatrix).forEach(([expenseName, userAmounts]) => {
+        const row = [expenseName, ...users.map(user => userAmounts[user.id] || 0)];
+        csvRows.push(row.join(','));
+      });
+
+      const csvContent = csvRows.join('\n');
+      
+      // Get group name for filename
+      const selectedGroup = groups.find(g => g.id === selectedGroupId);
+      const groupName = selectedGroup ? selectedGroup.name.replace(/[^a-zA-Z0-9]/g, '_') : 'group';
+      
+      // Download CSV
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${groupName}_matrix_${selectedYear}_${selectedMonth.toString().padStart(2, '0')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to export matrix data');
     } finally {
       setExportingAll(false);
     }
@@ -134,6 +210,61 @@ const Reports = () => {
     }
   };
 
+  const exportMatrixCSV = () => {
+    if (!reportData || !reportData.expenses.length) return;
+
+    // Build matrix data
+    const allUsers = new Map();
+    const expenseMatrix = {};
+
+    reportData.expenses.forEach(expense => {
+      expense.splits?.forEach(split => {
+        const userId = split.user || split.userId;
+        if (userId && split.userName) {
+          allUsers.set(userId, split.userName);
+        }
+      });
+      expenseMatrix[expense.description] = {};
+    });
+
+    const users = Array.from(allUsers.entries()).map(([id, name]) => ({ id, name }));
+
+    reportData.expenses.forEach(expense => {
+      expense.splits?.forEach(split => {
+        const userId = split.user || split.userId;
+        if (userId) {
+          expenseMatrix[expense.description][userId] = split.amount || 0;
+        }
+      });
+    });
+
+    // Create CSV content
+    const csvRows = [];
+    
+    // Header row
+    const headerRow = ['', ...users.map(user => user.name)];
+    csvRows.push(headerRow.join(','));
+    
+    // Data rows
+    Object.entries(expenseMatrix).forEach(([expenseName, userAmounts]) => {
+      const row = [expenseName, ...users.map(user => userAmounts[user.id] || 0)];
+      csvRows.push(row.join(','));
+    });
+
+    const csvContent = csvRows.join('\n');
+    
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `matrix_expenses_${selectedYear}_${selectedMonth.toString().padStart(2, '0')}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const formatCurrency = (amount, currency = 'TWD') => {
     return `${currency} ${amount.toFixed(2)}`;
   };
@@ -153,6 +284,70 @@ const Reports = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const renderMatrixView = () => {
+    if (!reportData || !reportData.expenses.length) return null;
+
+    // Get all unique users from all expenses
+    const allUsers = new Map();
+    const expenseMatrix = {};
+
+    reportData.expenses.forEach(expense => {
+      expense.splits?.forEach(split => {
+        const userId = split.user || split.userId;
+        if (userId && split.userName) {
+          allUsers.set(userId, split.userName);
+        }
+      });
+      
+      // Initialize expense row
+      expenseMatrix[expense.description] = {};
+    });
+
+    // Convert map to array
+    const users = Array.from(allUsers.entries()).map(([id, name]) => ({ id, name }));
+
+    // Fill the matrix
+    reportData.expenses.forEach(expense => {
+      expense.splits?.forEach(split => {
+        const userId = split.user || split.userId;
+        if (userId) {
+          expenseMatrix[expense.description][userId] = split.amount || 0;
+        }
+      });
+    });
+
+    return (
+      <div className="matrix-view">
+        <div className="matrix-table-container">
+          <table className="matrix-table">
+            <thead>
+              <tr>
+                <th className="expense-header"></th>
+                {users.map(user => (
+                  <th key={user.id} className="user-header">
+                    {user.name}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {Object.entries(expenseMatrix).map(([expenseName, userAmounts]) => (
+                <tr key={expenseName}>
+                  <td className="expense-name">{expenseName}</td>
+                  {users.map(user => (
+                    <td key={user.id} className="amount-cell">
+                      {userAmounts[user.id] || 0}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -229,6 +424,18 @@ const Reports = () => {
                       {group.name}
                     </option>
                   ))}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="display-mode">Display Mode</label>
+                <select
+                  id="display-mode"
+                  value={displayMode}
+                  onChange={(e) => setDisplayMode(e.target.value)}
+                  className="display-mode-selector"
+                >
+                  <option value="list">List View</option>
+                  <option value="matrix">Matrix View (Users × Expenses)</option>
                 </select>
               </div>
               <button
@@ -334,6 +541,8 @@ const Reports = () => {
                   Add Some Expenses
                 </Link>
               </div>
+            ) : displayMode === 'matrix' ? (
+              renderMatrixView()
             ) : (
               <div className="expenses-table">
                 <div className="table-header">

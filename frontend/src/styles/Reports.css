@@ -402,3 +402,71 @@
   cursor: not-allowed;
   transform: none;
 }
+
+/* Matrix View Styles */
+.matrix-view {
+  margin-top: 20px;
+}
+
+.matrix-table-container {
+  overflow-x: auto;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  background: white;
+}
+
+.matrix-table th,
+.matrix-table td {
+  padding: 8px 12px;
+  text-align: left;
+  border-bottom: 1px solid #e0e0e0;
+  border-right: 1px solid #e0e0e0;
+}
+
+.matrix-table th {
+  background: #f8f9fa;
+  font-weight: 600;
+  color: #333;
+}
+
+.expense-header {
+  width: 150px;
+}
+
+.user-header {
+  text-align: center;
+  min-width: 80px;
+}
+
+.expense-name {
+  font-weight: 500;
+  color: #333;
+}
+
+.amount-cell {
+  text-align: center;
+  font-family: 'Courier New', monospace;
+  color: #666;
+}
+
+.matrix-table tr:nth-child(even) {
+  background: #f9f9f9;
+}
+
+.matrix-table tr:hover {
+  background: #f0f8ff;
+}
+
+/* Display mode selector */
+.display-mode-selector {
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+}

@@ -54,8 +54,24 @@ router.get('/monthly/:year/:month', authMiddleware, async (req, res) => {
           );
           const userAmount = userSplit ? userSplit.amount : 0;
           
+          // Enhance splits with user names for matrix view
+          const enhancedSplits = await Promise.all(
+            expense.splits.map(async (split) => {
+              const splitUserId = split.user || split.userId;
+              if (splitUserId) {
+                const user = await User.findById(splitUserId);
+                return {
+                  ...split,
+                  userName: user ? (user.name || user.email) : 'Unknown User'
+                };
+              }
+              return split;
+            })
+          );
+          
           return {
             ...expense,
+            splits: enhancedSplits,
             groupName,
             payerName,
             userAmount,
@@ -331,6 +347,68 @@ router.get('/export-all/:year/:month', authMiddleware, async (req, res) => {
   } catch (error) {
     console.error('Error exporting admin CSV:', error);
     res.status(500).json({ error: 'Failed to export all members data' });
+  }
+});
+
+// Get group expenses for matrix view (admin only)
+router.get('/group-matrix/:year/:month', authMiddleware, async (req, res) => {
+  try {
+    const { year, month } = req.params;
+    const { groupId } = req.query;
+    const userId = req.user.id;
+    
+    // Check if user is admin
+    const currentUser = await User.findById(userId);
+    if (!currentUser || currentUser.email !== 'little880536@gmail.com') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    if (!groupId) {
+      return res.status(400).json({ error: 'Group ID is required' });
+    }
+    
+    // Create date range for the month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    
+    // Get expenses for the specific group
+    const expenses = await Expense.findByGroupId(groupId);
+    
+    // Filter by date
+    const monthlyExpenses = expenses.filter(expense => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate >= startDate && expenseDate <= endDate;
+    });
+    
+    // Enhance splits with user names
+    const expensesWithUserNames = await Promise.all(
+      monthlyExpenses.map(async (expense) => {
+        const enhancedSplits = await Promise.all(
+          expense.splits.map(async (split) => {
+            const splitUserId = split.user || split.userId;
+            if (splitUserId) {
+              const user = await User.findById(splitUserId);
+              return {
+                ...split,
+                userName: user ? (user.name || user.email) : 'Unknown User'
+              };
+            }
+            return split;
+          })
+        );
+        
+        return {
+          ...expense,
+          splits: enhancedSplits
+        };
+      })
+    );
+    
+    res.json(expensesWithUserNames);
+    
+  } catch (error) {
+    console.error('Error fetching group matrix data:', error);
+    res.status(500).json({ error: 'Failed to fetch group matrix data' });
   }
 });
 
