@@ -235,4 +235,103 @@ router.get('/export/:year/:month', authMiddleware, async (req, res) => {
   }
 });
 
+// Admin: Export all members' expenses as CSV
+router.get('/export-all/:year/:month', authMiddleware, async (req, res) => {
+  try {
+    const { year, month } = req.params;
+    const { groupId } = req.query;
+    const userId = req.user.id;
+    
+    // Check if user is admin
+    const currentUser = await User.findById(userId);
+    if (!currentUser || currentUser.email !== 'little880536@gmail.com') {
+      return res.status(403).json({ error: 'Admin access required' });
+    }
+    
+    if (!groupId) {
+      return res.status(400).json({ error: 'Group ID is required' });
+    }
+    
+    // Create date range for the month
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999);
+    
+    // Get expenses for the specific group
+    const expenses = await Expense.findByGroupId(groupId);
+    
+    // Filter by date
+    const monthlyExpenses = expenses.filter(expense => {
+      const expenseDate = new Date(expense.date);
+      return expenseDate >= startDate && expenseDate <= endDate;
+    });
+    
+    // Get group name
+    const group = await Group.findById(groupId);
+    const groupName = group ? group.name : 'Unknown Group';
+    
+    // Convert to CSV format
+    const csvRows = [];
+    
+    // Add header row
+    csvRows.push('User Name,User Email,Group,Date,Description,Category,Amount,Currency,User Split,Notes,Project');
+    
+    // Process each expense
+    for (const expense of monthlyExpenses) {
+      try {
+        // Process each split (each user involved in this expense)
+        for (const split of expense.splits || []) {
+          const splitUserId = split.user || split.userId;
+          if (!splitUserId) continue;
+          
+          // Get user details for this split
+          const user = await User.findById(splitUserId);
+          const userName = user ? (user.name || user.email) : 'Unknown';
+          const userEmail = user ? user.email : '';
+          
+          // Format date
+          const expenseDate = new Date(expense.date);
+          const dateStr = expenseDate.toLocaleDateString();
+          
+          // Escape commas in text fields
+          const description = (expense.description || '').replace(/,/g, '，');
+          const notes = (expense.notes || '').replace(/,/g, '，');
+          const project = (expense.project || '').replace(/,/g, '，');
+          
+          const csvRow = [
+            userName,
+            userEmail,
+            groupName,
+            dateStr,
+            description,
+            expense.category || '',
+            expense.amount || 0,
+            expense.currency || 'TWD',
+            split.amount || 0,
+            notes,
+            project
+          ].join(',');
+          
+          csvRows.push(csvRow);
+        }
+      } catch (error) {
+        console.error('Error processing expense for admin CSV:', error);
+      }
+    }
+    
+    const csvContent = csvRows.join('\n');
+    
+    // Set headers for CSV download
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${groupName.replace(/[^a-zA-Z0-9]/g, '_')}_expenses_${year}_${month.toString().padStart(2, '0')}.csv"`);
+    
+    // Add BOM for proper UTF-8 encoding in Excel
+    res.write('\ufeff');
+    res.end(csvContent);
+    
+  } catch (error) {
+    console.error('Error exporting admin CSV:', error);
+    res.status(500).json({ error: 'Failed to export all members data' });
+  }
+});
+
 module.exports = router;

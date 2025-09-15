@@ -381,3 +381,24 @@
     display: block;
   }
 }
+/* Admin export button styling */
+.button.admin-export {
+  background: linear-gradient(135deg, #6f42c1, #8b5cf6);
+  color: white;
+  border: none;
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(111, 66, 193, 0.3);
+  transition: all 0.2s ease;
+}
+
+.button.admin-export:hover:not(:disabled) {
+  background: linear-gradient(135deg, #5a2d91, #7c3aed);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(111, 66, 193, 0.4);
+}
+
+.button.admin-export:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}

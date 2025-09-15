@@ -11,6 +11,10 @@ const Reports = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [exporting, setExporting] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [exportingAll, setExportingAll] = useState(false);
+  const [groups, setGroups] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState('');
 
   // Generate year options (current year and previous 5 years)
   const yearOptions = [];
@@ -35,8 +39,24 @@ const Reports = () => {
   ];
 
   useEffect(() => {
+    fetchCurrentUser();
     fetchReport();
   }, [selectedYear, selectedMonth]);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await api.get('/api/users/profile');
+      setCurrentUser(response.data);
+      
+      // If admin, fetch groups
+      if (response.data.email === 'little880536@gmail.com') {
+        const groupsResponse = await api.get('/api/groups');
+        setGroups(groupsResponse.data);
+      }
+    } catch (err) {
+      console.error('Failed to fetch current user:', err);
+    }
+  };
 
   const fetchReport = async () => {
     try {
@@ -50,6 +70,41 @@ const Reports = () => {
       setReportData(null);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportAllMembers = async () => {
+    if (!selectedGroupId) {
+      setError('Please select a group first');
+      return;
+    }
+    
+    try {
+      setExportingAll(true);
+      
+      const response = await api.get(`/api/reports/export-all/${selectedYear}/${selectedMonth}?groupId=${selectedGroupId}`, {
+        responseType: 'blob'
+      });
+      
+      // Get group name for filename
+      const selectedGroup = groups.find(g => g.id === selectedGroupId);
+      const groupName = selectedGroup ? selectedGroup.name.replace(/[^a-zA-Z0-9]/g, '_') : 'group';
+      
+      // Create download link
+      const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${groupName}_expenses_${selectedYear}_${selectedMonth.toString().padStart(2, '0')}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to export all members data');
+    } finally {
+      setExportingAll(false);
     }
   };
 
@@ -156,6 +211,35 @@ const Reports = () => {
             >
               {exporting ? '📤 Exporting...' : '📥 Export CSV'}
             </button>
+          )}
+          
+          {currentUser && currentUser.email === 'little880536@gmail.com' && (
+            <>
+              <div className="form-group">
+                <label htmlFor="group-select">Select Group for Export</label>
+                <select
+                  id="group-select"
+                  value={selectedGroupId}
+                  onChange={(e) => setSelectedGroupId(e.target.value)}
+                  className="group-selector"
+                >
+                  <option value="">Choose a group...</option>
+                  {groups.map(group => (
+                    <option key={group.id} value={group.id}>
+                      {group.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleExportAllMembers}
+                disabled={exportingAll || !selectedGroupId}
+                className="button admin-export"
+                title="Admin: Export all members' expenses for selected group"
+              >
+                {exportingAll ? '📤 Exporting All...' : '👑 Export All Members'}
+              </button>
+            </>
           )}
         </div>
       </div>
