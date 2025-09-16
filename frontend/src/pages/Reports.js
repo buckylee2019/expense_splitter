@@ -94,7 +94,7 @@ const Reports = () => {
       
       // Get group name for filename
       const selectedGroup = groups.find(g => g.id === selectedGroupId);
-      const groupName = selectedGroup ? selectedGroup.name.replace(/[^a-zA-Z0-9]/g, '_') : 'group';
+      const groupName = selectedGroup ? selectedGroup.name.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '_') : 'group';
       
       // Create download link
       const blob = new Blob([response.data], { type: 'text/csv;charset=utf-8;' });
@@ -164,7 +164,7 @@ const Reports = () => {
       
       // Get group name for filename
       const selectedGroup = groups.find(g => g.id === selectedGroupId);
-      const groupName = selectedGroup ? selectedGroup.name.replace(/[^a-zA-Z0-9]/g, '_') : 'group';
+      const groupName = selectedGroup ? selectedGroup.name.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '_') : 'group';
       
       // Download CSV
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -390,14 +390,6 @@ const Reports = () => {
         </div>
 
         <div className="report-actions">
-          <button
-            onClick={fetchReport}
-            disabled={loading}
-            className="button secondary"
-          >
-            {loading ? '🔄 Loading...' : '🔍 View Report'}
-          </button>
-          
           {reportData && reportData.expenses.length > 0 && (
             <button
               onClick={handleExportCSV}
