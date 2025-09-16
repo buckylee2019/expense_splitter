@@ -8215,3 +8215,69 @@ input:checked + .toggle-slider:before {
   background: var(--background-light);
   border-left: 3px solid var(--text-secondary);
 }
+/* Dashboard view mode toggle */
+.view-mode-toggle {
+  display: flex;
+  gap: 4px;
+  margin-right: 12px;
+}
+
+.view-mode-toggle .button {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Dashboard group balances */
+.group-balances {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.group-balance-section {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  background: #fafafa;
+}
+
+.group-balance-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.group-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.group-balance-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.group-balance-count {
+  font-size: 12px;
+  color: #666;
+  background: #e0e0e0;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+.group-balance-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.no-group-balances {
+  text-align: center;
+  padding: 40px;
+  color: #666;
+}

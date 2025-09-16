@@ -54,8 +54,8 @@ const SettlementModal = ({ balance, groupId, currentUser, onComplete, onCancel }
     }
   };
 
-  const fromUserName = balance.type === 'you_owe' ? 'You' : balance.user.name;
-  const toUserName = balance.type === 'you_owe' ? balance.user.name : 'You';
+  const fromUserName = balance?.type === 'you_owe' ? 'You' : (balance?.user?.name || 'Select User');
+  const toUserName = balance?.type === 'you_owe' ? (balance?.user?.name || 'Select User') : 'You';
 
   return (
     <div className="modal-overlay">
@@ -125,9 +125,7 @@ const SettlementModal = ({ balance, groupId, currentUser, onComplete, onCancel }
             >
               <option value="cash">Cash</option>
               <option value="bank_transfer">🏦 Bank Transfer</option>
-              <option value="digital_wallet">📱 Digital Wallet</option>
-              <option value="credit_card">Credit Card</option>
-              <option value="check">📝 Check</option>
+              <option value="line_pay">📱 Line Pay</option>
               <option value="other">Other</option>
             </select>
           </div>
