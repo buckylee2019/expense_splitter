@@ -12,10 +12,10 @@ const Reports = () => {
   const [error, setError] = useState('');
   const [exporting, setExporting] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
-  const [exportingAll, setExportingAll] = useState(false);
   const [groups, setGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [displayMode, setDisplayMode] = useState('list'); // 'list' or 'matrix'
+  const [exportType, setExportType] = useState('personal'); // 'personal', 'all-members', 'group-balances'
 
   // Generate year options (current year and previous 5 years)
   const yearOptions = [];
@@ -74,6 +74,16 @@ const Reports = () => {
     }
   };
 
+  const handleUnifiedExport = async () => {
+    if (exportType === 'personal') {
+      await handleExportCSV();
+    } else if (exportType === 'all-members') {
+      await handleExportAllMembers();
+    } else if (exportType === 'group-balances') {
+      await exportGroupBalancesCSV();
+    }
+  };
+
   const handleExportAllMembers = async () => {
     if (!selectedGroupId) {
       setError('Please select a group first');
@@ -86,7 +96,7 @@ const Reports = () => {
     }
     
     try {
-      setExportingAll(true);
+      setExporting(true);
       
       const response = await api.get(`/api/reports/export-all/${selectedYear}/${selectedMonth}?groupId=${selectedGroupId}`, {
         responseType: 'blob'
@@ -110,13 +120,13 @@ const Reports = () => {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to export all members data');
     } finally {
-      setExportingAll(false);
+      setExporting(false);
     }
   };
 
   const exportAdminMatrixCSV = async () => {
     try {
-      setExportingAll(true);
+      setExporting(true);
       
       // Get group expenses data
       const response = await api.get(`/api/reports/group-matrix/${selectedYear}/${selectedMonth}?groupId=${selectedGroupId}`);
@@ -180,7 +190,7 @@ const Reports = () => {
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to export matrix data');
     } finally {
-      setExportingAll(false);
+      setExporting(false);
     }
   };
 
@@ -205,6 +215,63 @@ const Reports = () => {
       
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to export CSV');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const exportGroupBalancesCSV = async () => {
+    if (!selectedGroupId) {
+      setError('Please select a group first');
+      return;
+    }
+
+    try {
+      setExporting(true);
+      
+      // Get group-wide optimized transfers
+      const response = await api.get(`/api/balances/group/${selectedGroupId}/optimized`);
+      const balancesData = response.data;
+      
+      if (!balancesData.optimizedTransfers || balancesData.optimizedTransfers.length === 0) {
+        setError('No balance data found for this group');
+        return;
+      }
+
+      // Get group info
+      const groupResponse = await api.get(`/api/groups/${selectedGroupId}`);
+      const groupName = groupResponse.data.name;
+
+      // Create CSV content
+      let csvContent = `Group Balance Report - ${groupName}\n`;
+      csvContent += `Generated on: ${new Date().toLocaleDateString()}\n`;
+      csvContent += `Optimized Transfers (${balancesData.transferCount} transactions)\n\n`;
+      csvContent += `From,To,Amount,Currency\n`;
+
+      // Process optimized transfers
+      balancesData.optimizedTransfers.forEach(transfer => {
+        csvContent += `${transfer.fromName},${transfer.toName},${transfer.amount},${transfer.currency}\n`;
+      });
+
+      // Add summary
+      csvContent += `\nSummary\n`;
+      csvContent += `Total Optimized Transfers,${balancesData.transferCount}\n`;
+      csvContent += `Total Transfer Amount,${balancesData.totalTransferAmount}\n`;
+      csvContent += `Savings vs Individual Settlements,${balancesData.savingsPercentage}%\n`;
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `${groupName.replace(/[^a-zA-Z0-9\u4e00-\u9fff]/g, '_')}_balances_${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to export group balances');
     } finally {
       setExporting(false);
     }
@@ -390,56 +457,65 @@ const Reports = () => {
         </div>
 
         <div className="report-actions">
-          {reportData && reportData.expenses.length > 0 && (
-            <button
-              onClick={handleExportCSV}
-              disabled={exporting}
-              className="button primary"
+          <div className="form-group">
+            <label htmlFor="export-type">Export Type</label>
+            <select
+              id="export-type"
+              value={exportType}
+              onChange={(e) => setExportType(e.target.value)}
+              className="export-type-selector"
             >
-              {exporting ? '📤 Exporting...' : '📥 Export CSV'}
-            </button>
+              <option value="personal">Personal Expenses CSV</option>
+              {currentUser && currentUser.email === 'little880536@gmail.com' && (
+                <>
+                  <option value="all-members">All Members Expenses CSV</option>
+                  <option value="group-balances">Group Balances CSV</option>
+                </>
+              )}
+            </select>
+          </div>
+          
+          {(exportType === 'all-members' || exportType === 'group-balances') && currentUser && currentUser.email === 'little880536@gmail.com' && (
+            <div className="form-group">
+              <label htmlFor="group-select">Select Group</label>
+              <select
+                id="group-select"
+                value={selectedGroupId}
+                onChange={(e) => setSelectedGroupId(e.target.value)}
+                className="group-selector"
+              >
+                <option value="">Choose a group...</option>
+                {groups.map(group => (
+                  <option key={group.id} value={group.id}>
+                    {group.name}
+                  </option>
+                ))}
+              </select>
+            </div>
           )}
           
-          {currentUser && currentUser.email === 'little880536@gmail.com' && (
-            <>
-              <div className="form-group">
-                <label htmlFor="group-select">Select Group for Export</label>
-                <select
-                  id="group-select"
-                  value={selectedGroupId}
-                  onChange={(e) => setSelectedGroupId(e.target.value)}
-                  className="group-selector"
-                >
-                  <option value="">Choose a group...</option>
-                  {groups.map(group => (
-                    <option key={group.id} value={group.id}>
-                      {group.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="display-mode">Display Mode</label>
-                <select
-                  id="display-mode"
-                  value={displayMode}
-                  onChange={(e) => setDisplayMode(e.target.value)}
-                  className="display-mode-selector"
-                >
-                  <option value="list">List View</option>
-                  <option value="matrix">Matrix View (Users × Expenses)</option>
-                </select>
-              </div>
-              <button
-                onClick={handleExportAllMembers}
-                disabled={exportingAll || !selectedGroupId}
-                className="button admin-export"
-                title="Admin: Export all members' expenses for selected group"
+          {exportType === 'all-members' && currentUser && currentUser.email === 'little880536@gmail.com' && (
+            <div className="form-group">
+              <label htmlFor="display-mode">Display Mode</label>
+              <select
+                id="display-mode"
+                value={displayMode}
+                onChange={(e) => setDisplayMode(e.target.value)}
+                className="display-mode-selector"
               >
-                {exportingAll ? '📤 Exporting All...' : '👑 Export All Members'}
-              </button>
-            </>
+                <option value="list">List View</option>
+                <option value="matrix">Matrix View (Users × Expenses)</option>
+              </select>
+            </div>
           )}
+          
+          <button
+            onClick={handleUnifiedExport}
+            disabled={exporting || (exportType !== 'personal' && !selectedGroupId)}
+            className="button primary"
+          >
+            {exporting ? '📤 Exporting...' : '📥 Export'}
+          </button>
         </div>
       </div>
 

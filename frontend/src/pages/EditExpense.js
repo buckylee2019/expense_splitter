@@ -83,7 +83,7 @@ const EditExpense = () => {
           currency: expense.currency || 'TWD',
           category: expense.category || '',
           project: expense.project || '',
-          date: expense.date ? expense.date.split('T')[0] : new Date().toISOString().split('T')[0],
+          date: expense.date ? expense.date.split('T')[0] : new Date().toISOString().slice(0, 16),
           paidBy: isMultiple ? '' : expense.paidBy,
           splitType: expense.splitType || 'equal',
           notes: expense.notes || ''

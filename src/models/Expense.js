@@ -213,7 +213,7 @@ class Expense {
       category,
       minAmount,
       maxAmount,
-      sort = 'date',
+      sort = 'createdAt',
       order = 'desc',
       limit = 20,
       offset = 0
@@ -274,8 +274,7 @@ class Expense {
         IndexName: 'GroupIndex',
         KeyConditionExpression: '#group = :groupId',
         ExpressionAttributeNames,
-        ExpressionAttributeValues,
-        ScanIndexForward: order === 'asc'
+        ExpressionAttributeValues
       };
 
       if (filterExpression) {
@@ -285,17 +284,15 @@ class Expense {
       const result = await docClient.send(new QueryCommand(params));
       let items = result.Items || [];
 
-      // Sort by the specified field (DynamoDB GSI might not support all sort fields)
-      if (sort !== 'date') {
-        items.sort((a, b) => {
-          const aVal = a[sort];
-          const bVal = b[sort];
-          if (order === 'desc') {
-            return bVal > aVal ? 1 : -1;
-          }
-          return aVal > bVal ? 1 : -1;
-        });
-      }
+      // Sort by the specified field (always sort in JavaScript for consistency)
+      items.sort((a, b) => {
+        const aVal = a[sort];
+        const bVal = b[sort];
+        if (order === 'desc') {
+          return bVal > aVal ? 1 : -1;
+        }
+        return aVal > bVal ? 1 : -1;
+      });
 
       // Apply pagination
       const totalCount = items.length;
@@ -367,7 +364,7 @@ class Expense {
     const {
       limit = 20,
       offset = 0,
-      sort = 'date',
+      sort = 'createdAt',
       order = 'desc'
     } = options;
 

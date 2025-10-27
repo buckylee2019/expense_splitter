@@ -20,7 +20,7 @@ const AddExpense = () => {
     currency: 'TWD',
     category: '', // New comprehensive category system
     project: '', // Keep project field for MOZE compatibility
-    date: new Date().toISOString().split('T')[0], // Default to today in YYYY-MM-DD format
+    date: new Date().toISOString().slice(0, 16), // Default to now in YYYY-MM-DDTHH:MM format
     splitType: 'equal',
     paidBy: '',
     notes: ''
@@ -373,7 +373,7 @@ const AddExpense = () => {
           <div className="form-group">
             <label htmlFor="date">Date</label>
             <input
-              type="date"
+              type="datetime-local"
               id="date"
               name="date"
               value={formData.date}

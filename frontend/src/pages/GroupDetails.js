@@ -39,7 +39,7 @@ const GroupDetails = () => {
 
       const [groupRes, expensesRes, balancesRes, globalBalancesRes] = await Promise.all([
         api.get(`/api/groups/${groupId}`),
-        api.get(`/api/expenses?groupId=${groupId}&limit=20&sort=date&order=desc`),
+        api.get(`/api/expenses?groupId=${groupId}&limit=20&sort=createdAt&order=desc`),
         api.get(`/api/balances?groupId=${groupId}${useOptimized ? '&optimized=true' : ''}`),
         api.get(`/api/balances${useOptimized ? '?optimized=true' : ''}`) // Global balances for comparison
       ]);
@@ -79,7 +79,7 @@ const GroupDetails = () => {
     try {
       setLoadingMore(true);
       const nextPage = pagination.currentPage + 1;
-      const response = await api.get(`/api/expenses?groupId=${groupId}&limit=20&sort=date&order=desc&page=${nextPage}`);
+      const response = await api.get(`/api/expenses?groupId=${groupId}&limit=20&sort=createdAt&order=desc&page=${nextPage}`);
       
       const newExpenses = response.data.expenses || response.data;
       setExpenses(prev => [...prev, ...newExpenses]);

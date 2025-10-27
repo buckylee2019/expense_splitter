@@ -134,7 +134,7 @@ router.get('/', authMiddleware, async (req, res) => {
       groupId, 
       page = 1, 
       limit = 20, 
-      sort = 'date', 
+      sort = 'createdAt', 
       order = 'desc',
       startDate,
       endDate,
