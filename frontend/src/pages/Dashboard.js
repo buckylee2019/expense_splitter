@@ -12,7 +12,6 @@ const Dashboard = () => {
   const [balances, setBalances] = useState({ balances: [], summary: {} });
   const [groupBalances, setGroupBalances] = useState([]);
   const [useOptimized, setUseOptimized] = useState(true);
-  const [settlements, setSettlements] = useState([]);
   const [showSettlementModal, setShowSettlementModal] = useState(false);
   const [selectedBalance, setSelectedBalance] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -30,22 +29,6 @@ const Dashboard = () => {
       console.log('👤 Dashboard: Current user loaded:', userRes.data);
       setUser(userRes.data);
       updateUser(userRes.data);
-
-      // Fetch combined balances and settlements
-      console.log('📊 Dashboard: Fetching balances and settlements...');
-      const [balancesResponse, settlementsResponse] = await Promise.all([
-        api.get(`/api/balances${useOptimized ? '?optimized=true' : ''}`),
-        api.get('/api/settlements').catch(err => {
-          console.error('❌ Dashboard: Error fetching settlements:', err);
-          return { data: [] };
-        })
-      ]);
-
-      console.log('💰 Dashboard: Balances loaded:', balancesResponse.data.balances?.length || 0);
-      console.log('💵 Dashboard: Settlements loaded:', settlementsResponse.data?.length || 0);
-      
-      setBalances(balancesResponse.data);
-      setSettlements(Array.isArray(settlementsResponse.data) ? settlementsResponse.data : []);
 
       // Fetch group-specific balances by finding groups where user is a member
       console.log('🏢 Dashboard: Fetching user groups and balances...');
@@ -82,13 +65,21 @@ const Dashboard = () => {
           const filteredResults = groupBalanceResults.filter(Boolean);
           console.log('🏢 Final group balances:', filteredResults.length, 'groups with balances');
           setGroupBalances(filteredResults);
+          
+          // Set a dummy balances object to show the section
+          setBalances({ 
+            balances: filteredResults.flatMap(g => g.balances), 
+            summary: {} 
+          });
         } else {
           console.log('🏢 No groups found for user');
           setGroupBalances([]);
+          setBalances({ balances: [], summary: {} });
         }
       } catch (error) {
         console.error('❌ Error fetching user groups:', error);
         setGroupBalances([]);
+        setBalances({ balances: [], summary: {} });
       }
 
       setError('');

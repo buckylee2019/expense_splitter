@@ -86,6 +86,26 @@ const SplitConfigPopup = ({
         </div>
         
         <div className="popup-content split-details-content">
+          {/* Equal Split Controls */}
+          {activeTab === 'equal' && (
+            <div className="equal-split-controls">
+              <button
+                type="button"
+                className="deselect-all-btn"
+                onClick={() => {
+                  splits.forEach(split => {
+                    if (split.included) {
+                      onMemberToggle(split.userId);
+                    }
+                  });
+                }}
+              >
+                <i className="fi fi-rr-square"></i>
+                Deselect All
+              </button>
+            </div>
+          )}
+          
           <div className="splits-list">
             {splits.map((split, index) => {
               const member = group.members.find(m => m.user === split.userId);

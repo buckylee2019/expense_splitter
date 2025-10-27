@@ -171,6 +171,47 @@ class User {
       throw error;
     }
   }
+
+  static async addToGroup(userId, groupId) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Add group to user's groups array if not already present
+    if (!user.groups.includes(groupId)) {
+      user.groups.push(groupId);
+      user.updatedAt = new Date().toISOString();
+
+      const params = {
+        TableName: TABLE_NAME,
+        Item: user
+      };
+
+      await docClient.send(new PutCommand(params));
+    }
+
+    return user;
+  }
+
+  static async removeFromGroup(userId, groupId) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Remove group from user's groups array
+    user.groups = user.groups.filter(id => id !== groupId);
+    user.updatedAt = new Date().toISOString();
+
+    const params = {
+      TableName: TABLE_NAME,
+      Item: user
+    };
+
+    await docClient.send(new PutCommand(params));
+    return user;
+  }
 }
 
 module.exports = User;

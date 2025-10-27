@@ -81,6 +81,9 @@ router.post('/', authMiddleware, async (req, res) => {
       createdBy: req.user.id
     });
 
+    // Add the group to the creator's groups array
+    await User.addToGroup(req.user.id, group.id);
+
     res.status(201).json({
       message: 'Group created successfully',
       group
@@ -211,6 +214,9 @@ router.post('/:id/members', authMiddleware, async (req, res) => {
       joinedAt: new Date().toISOString()
     });
 
+    // Also add the group to the user's groups array
+    await User.addToGroup(userToAdd.id, req.params.id);
+
     // Populate member names
     const populatedGroup = await populateMemberNames(updatedGroup);
 
@@ -245,6 +251,11 @@ router.delete('/:id', authMiddleware, async (req, res) => {
         error: 'Cannot delete group with existing expenses. Please delete all expenses first.',
         expenseCount: expenses.length
       });
+    }
+
+    // Remove group from all members' user profiles
+    for (const member of group.members) {
+      await User.removeFromGroup(member.user, req.params.id);
     }
 
     // Delete the group
@@ -310,6 +321,11 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       });
     }
 
+    // Remove group from all members' user profiles
+    for (const member of group.members) {
+      await User.removeFromGroup(member.user, req.params.id);
+    }
+
     await group.delete();
 
     res.json({
@@ -343,6 +359,9 @@ router.delete('/:id/members/:memberId', authMiddleware, async (req, res) => {
 
     group.removeMember(req.params.memberId);
     await group.save();
+
+    // Also remove the group from the user's groups array
+    await User.removeFromGroup(req.params.memberId, req.params.id);
 
     res.json({
       message: 'Member removed successfully',

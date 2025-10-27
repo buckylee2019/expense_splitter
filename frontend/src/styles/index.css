@@ -7493,6 +7493,38 @@ input:checked + .toggle-slider:before {
   margin-top: 12px;
 }
 
+/* Equal Split Controls */
+.split-config-popup .equal-split-controls {
+  padding: 0 20px 12px;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 12px;
+}
+
+.split-config-popup .deselect-all-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--background-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.split-config-popup .deselect-all-btn:hover {
+  background: var(--background-tertiary);
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.split-config-popup .deselect-all-btn i {
+  font-size: 1rem;
+}
+
 /* Enhanced Splits List */
 .split-config-popup .splits-list {
   display: flex;

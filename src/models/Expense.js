@@ -81,7 +81,16 @@ class Expense {
     const expense = await Expense.findById(expenseId);
     if (!expense) return null;
 
-    // Check if user is related to this expense (either as payer or in splits)
+    // If it's a group expense, check if user is a member of the group
+    if (expense.group) {
+      const Group = require('./Group');
+      const group = await Group.findByUserIdAndGroupId(userId, expense.group);
+      if (group) {
+        return expense; // User is a group member, can view any expense in the group
+      }
+    }
+
+    // For non-group expenses, check if user is related to this expense
     // Handle both 'user' and 'userId' fields for backward compatibility
     const isRelated = expense.paidBy === userId || 
                      expense.splits.some(split => 
