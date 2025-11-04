@@ -6,45 +6,7 @@ A full-stack application for splitting expenses among friends and groups.
 
 ### 系統架構圖 (System Architecture)
 
-```mermaid
-graph TB
-    subgraph "前端層 Frontend Layer"
-        CF[CloudFront CDN]
-        S3[S3 Static Hosting]
-        React[React Application]
-    end
-    
-    subgraph "API 層 API Layer"
-        APIGW[API Gateway]
-        Lambda[Lambda Function<br/>Express.js]
-    end
-    
-    subgraph "資料層 Data Layer"
-        DDB[(DynamoDB)]
-        S3Storage[(S3 Storage<br/>User Avatars)]
-    end
-    
-    subgraph "認證 Authentication"
-        JWT[JWT Tokens]
-        BCrypt[BCrypt<br/>Password Hashing]
-    end
-    
-    User[使用者 User] --> CF
-    CF --> S3
-    S3 --> React
-    React --> APIGW
-    APIGW --> Lambda
-    Lambda --> JWT
-    Lambda --> BCrypt
-    Lambda --> DDB
-    Lambda --> S3Storage
-    
-    style CF fill:#ff6b35
-    style React fill:#61dafb
-    style Lambda fill:#ff9900
-    style DDB fill:#4053d6
-    style S3Storage fill:#569a31
-```
+![aws architecture](./assets/architecture.png)
 
 ### 應用程式架構 (Application Architecture)
 
