@@ -195,21 +195,6 @@ Example:
 ./deploy-all.sh prod
 ```
 
-## Application URLs
-
-After deployment, your application will be available at:
-
-- **API URL**: https://xro5pxx6oi.execute-api.us-west-2.amazonaws.com/dev
-- **S3 Website**: http://expense-splitter-frontend-224425919845.s3-website-us-west-2.amazonaws.com
-- **CloudFront URL (HTTPS)**: https://dwt4ijd80bt6i.cloudfront.net
-
-## Recent Changes
-
-- Fixed issue with edit expense button not showing for all users
-- Consolidated deployment scripts into a single unified script
-- Updated CloudFront distribution to point to the correct S3 bucket
-- Added proper bucket policies for public access
-
 ## Troubleshooting
 
 If you encounter issues with the CloudFront distribution showing stale content:
