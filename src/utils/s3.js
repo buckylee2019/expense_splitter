@@ -135,6 +135,34 @@ class S3Service {
   }
 
   /**
+   * Delete a group photo from S3
+   * @param {string} photoUrl - CloudFront URL of the photo to delete
+   * @returns {Promise<void>}
+   */
+  async deleteGroupPhoto(photoUrl) {
+    try {
+      // Extract S3 key from CloudFront URL
+      const key = this.extractS3KeyFromUrl(photoUrl);
+      if (!key) {
+        console.warn('Could not extract S3 key from photo URL:', photoUrl);
+        return;
+      }
+
+      const command = new DeleteObjectCommand({
+        Bucket: this.bucketName,
+        Key: key
+      });
+
+      await this.s3Client.send(command);
+      console.log(`Group photo deleted successfully: ${key}`);
+      
+    } catch (error) {
+      console.error('Error deleting group photo from S3:', error);
+      // Don't throw error for delete operations to avoid breaking group updates
+    }
+  }
+
+  /**
    * Extract S3 key from CloudFront URL
    * @param {string} url - CloudFront URL
    * @returns {string|null} - S3 key or null if extraction fails

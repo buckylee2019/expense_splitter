@@ -27,6 +27,7 @@ const GroupDetails = () => {
   const [groupDebts, setGroupDebts] = useState([]);
   const [sortOrder, setSortOrder] = useState('newest'); // 'newest', 'oldest'
   const [showCurrentMonthOnly, setShowCurrentMonthOnly] = useState(true); // New state for month filter
+  const [showSpendingSummary, setShowSpendingSummary] = useState(false); // Collapsed by default
   const [pagination, setPagination] = useState(null);
   const [loadingMore, setLoadingMore] = useState(false);
 
@@ -505,33 +506,49 @@ const GroupDetails = () => {
         {/* Group Spending Summary */}
         {groupSummary && (
           <div className="group-spending-summary card">
-            <div className="card-header">
+            <div className="card-header" onClick={() => setShowSpendingSummary(!showSpendingSummary)} style={{ cursor: 'pointer' }}>
               <div>
-                <h3><i className="fi fi-rr-chart-pie"></i>&nbsp;Group Spending Summary</h3>
-                <span className="card-subtitle">
-                  {group.name} • {group.currency || 'TWD'} • 
-                  {showCurrentMonthOnly ? (
-                    <span className="current-month-indicator">
-                      <i className="fi fi-rr-calendar"></i> {getCurrentMonthName()} ({groupSummary.expenseCount} of {groupSummary.totalExpenseCount} expenses)
-                    </span>
-                  ) : (
-                    <span className="all-time-indicator">
-                      <i className="fi fi-rr-time-past"></i> All Time ({groupSummary.totalExpenseCount} expenses)
-                    </span>
-                  )}
-                </span>
-              </div>
-              <div className="summary-controls">
-                <button 
-                  onClick={() => setShowCurrentMonthOnly(!showCurrentMonthOnly)}
-                  className={`button ${showCurrentMonthOnly ? 'secondary' : 'primary'} small`}
-                  title={showCurrentMonthOnly ? 'Show all expenses' : 'Show current month only'}
-                >
-                  <i className={`fi ${showCurrentMonthOnly ? 'fi-rr-time-past' : 'fi-rr-calendar'}`}></i>
-                  {showCurrentMonthOnly ? 'Show All Time' : 'Current Month'}
-                </button>
+                <h3>
+                  <i className={`fi ${showSpendingSummary ? 'fi-rr-angle-small-down' : 'fi-rr-angle-small-right'}`}></i>
+                  &nbsp;Group Spending Summary
+                </h3>
+                {!showSpendingSummary && (
+                  <span className="card-subtitle">
+                    Click to expand • {groupSummary.totalExpenseCount} expenses
+                  </span>
+                )}
               </div>
             </div>
+            
+            {showSpendingSummary && (
+              <>
+                <div className="summary-header-controls">
+                  <span className="card-subtitle">
+                    {group.name} • {group.currency || 'TWD'} • 
+                    {showCurrentMonthOnly ? (
+                      <span className="current-month-indicator">
+                        <i className="fi fi-rr-calendar"></i> {getCurrentMonthName()} ({groupSummary.expenseCount} of {groupSummary.totalExpenseCount} expenses)
+                      </span>
+                    ) : (
+                      <span className="all-time-indicator">
+                        <i className="fi fi-rr-time-past"></i> All Time ({groupSummary.totalExpenseCount} expenses)
+                      </span>
+                    )}
+                  </span>
+                  <div className="summary-controls">
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowCurrentMonthOnly(!showCurrentMonthOnly);
+                      }}
+                      className={`button ${showCurrentMonthOnly ? 'secondary' : 'primary'} small`}
+                      title={showCurrentMonthOnly ? 'Show all expenses' : 'Show current month only'}
+                    >
+                      <i className={`fi ${showCurrentMonthOnly ? 'fi-rr-time-past' : 'fi-rr-calendar'}`}></i>
+                      {showCurrentMonthOnly ? 'Show All Time' : 'Current Month'}
+                    </button>
+                  </div>
+                </div>
             
             {showCurrentMonthOnly && groupSummary.expenseCount === 0 ? (
               <div className="no-current-month-expenses">
@@ -578,6 +595,8 @@ const GroupDetails = () => {
                   </div>
                 </div>
               </div>
+            )}
+            </>
             )}
           </div>
         )}

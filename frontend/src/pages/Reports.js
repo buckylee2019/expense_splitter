@@ -169,6 +169,22 @@ const Reports = () => {
         const row = [expenseName, ...users.map(user => userAmounts[user.id] || 0)];
         csvRows.push(row.join(','));
       });
+      
+      // Calculate total paid by each user and add as negative row
+      const totalPaidByUser = {};
+      groupExpenses.forEach(expense => {
+        const paidBy = expense.paidBy;
+        if (paidBy) {
+          if (!totalPaidByUser[paidBy]) {
+            totalPaidByUser[paidBy] = 0;
+          }
+          totalPaidByUser[paidBy] += expense.amount || 0;
+        }
+      });
+      
+      // Add "total paid by you" row with negative values
+      const totalPaidRow = ['total paid by you', ...users.map(user => -(totalPaidByUser[user.id] || 0))];
+      csvRows.push(totalPaidRow.join(','));
 
       const csvContent = csvRows.join('\n');
       

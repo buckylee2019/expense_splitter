@@ -5616,7 +5616,7 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
 /* Group Banner */
 .group-banner {
   width: 100%;
-  height: 120px; /* Reduced from 200px for better web proportions */
+  height: 360px; /* Increased from 120px to 360px (3x bigger) */
   border-radius: var(--radius-lg);
   overflow: hidden;
   margin-bottom: 0; /* Removed spacing to position balance block directly under banner */
