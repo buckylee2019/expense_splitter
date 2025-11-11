@@ -818,15 +818,6 @@ const GroupDetails = () => {
               <span className="hide-mobile">Add Expense</span>
             </Link>
             
-            {/* Balance Validation Button */}
-            <button 
-              onClick={validateBalanceCalculation}
-              className="button secondary small"
-              title="Validate balance calculations (check console)"
-            >
-              <i className="fi fi-rr-calculator"></i>&nbsp;Validate
-            </button>
-            
             {expenses.length > 0 && (
               <div className="sort-controls">
                 <label htmlFor="sort-select">Sort by date:</label>

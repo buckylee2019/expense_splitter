@@ -237,3 +237,4 @@ To delete all resources and avoid charges:
 - Check CloudWatch Logs for detailed error messages
 - Use AWS X-Ray for distributed tracing (if enabled)
 - Monitor DynamoDB metrics for performance issues
+![alt text](image.png)

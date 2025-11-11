@@ -1310,9 +1310,21 @@ p {
   }
   
   .expenses-header {
-    flex-direction: column;
-    align-items: flex-start;
     gap: var(--spacing-sm);
+  }
+  
+  .expenses-header-actions {
+    gap: var(--spacing-sm);
+    flex-wrap: nowrap;
+  }
+  
+  .expenses-header-actions .button,
+  .expenses-header-actions a.button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    width: auto !important;
   }
   
   .sort-controls {
@@ -1673,6 +1685,11 @@ p {
   gap: 1rem;
 }
 
+.header-actions .button,
+.header-actions a.button {
+  width: auto;
+}
+
 .button.danger {
   background-color: #ef4444;
   color: white;
@@ -1689,19 +1706,26 @@ p {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  flex-wrap: wrap;
   gap: 1rem;
 }
 
 @media (max-width: 768px) {
   .page-header {
-    flex-direction: column;
-    align-items: flex-start;
+    gap: 0.5rem;
   }
   
   .header-actions {
-    width: 100%;
-    justify-content: flex-start;
+    gap: 0.5rem;
+    flex-wrap: nowrap;
+  }
+  
+  .header-actions .button,
+  .header-actions a.button {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    flex-shrink: 0;
+    width: auto !important;
   }
 }
 
@@ -1920,7 +1944,6 @@ p {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: var(--spacing-lg);
-  flex-wrap: wrap;
   gap: var(--spacing);
 }
 
@@ -1948,6 +1971,11 @@ p {
   align-items: center;
   gap: var(--spacing);
   flex-wrap: wrap;
+}
+
+.expenses-header-actions .button,
+.expenses-header-actions a.button {
+  width: auto;
 }
 
 .sort-controls {
