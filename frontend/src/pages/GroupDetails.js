@@ -869,70 +869,51 @@ const GroupDetails = () => {
               const userBalance = calculateUserExpenseBalance(expense);
               
               return (
-                <div key={expense.id} className="expense-card-compact card">
+                <Link 
+                  key={expense.id} 
+                  to={`/groups/${groupId}/expenses/${expense.id}`}
+                  className="expense-card-compact card"
+                  style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+                >
                   <div className="expense-main">
-                    <div className="expense-info">
-                      <h4 className="expense-title">{expense.description}</h4>
-                      {expense.project && (
-                        <div className="expense-project">📁 {expense.project}</div>
-                      )}
-                      <div className="expense-meta">
-                        <span className="expense-date">
-                          {new Date(expense.date).toLocaleDateString()}
-                        </span>
-                        <span className="expense-payer">
-                          by {expense.paidByName || 'Unknown'}
-                        </span>
-                        <CategoryBadge category={expense.category} />
+                    {/* Date column on left */}
+                    <div className="expense-date-column">
+                      <div className="expense-month">
+                        {new Date(expense.date).toLocaleDateString('en-US', { month: 'short' })}
                       </div>
-                      
-                      {/* User's debt/credit for this expense */}
-                      {userBalance && (
-                        <div className={`expense-user-balance ${userBalance.type}`}>
-                          {userBalance.type === 'credit' ? (
-                            <span className="balance-credit">
-                              <i className="fi fi-rr-arrow-up"></i>
-                              You get back {userBalance.amount.toFixed(2)} {userBalance.currency}
-                            </span>
-                          ) : userBalance.type === 'debt' ? (
-                            <span className="balance-debt">
-                              <i className="fi fi-rr-arrow-down"></i>
-                              You owe {userBalance.amount.toFixed(2)} {userBalance.currency}
-                            </span>
-                          ) : (
-                            <span className="balance-settled">
-                              <i className="fi fi-rr-check"></i>
-                              You're settled
-                            </span>
-                          )}
-                        </div>
-                      )}
+                      <div className="expense-day">
+                        {new Date(expense.date).getDate()}
+                      </div>
                     </div>
                     
-                    <div className="expense-amount">
-                      <span className="currency">{expense.currency}</span>
-                      <span className="amount">{expense.amount.toFixed(2)}</span>
+                    {/* Main content */}
+                    <div className="expense-content">
+                      <div className="expense-header-row">
+                        <h4 className="expense-title">{expense.description}</h4>
+                        {/* User's debt/credit */}
+                        {userBalance && userBalance.type === 'debt' && (
+                          <div className="expense-user-balance-inline">
+                            You owe ${userBalance.amount.toFixed(2)}
+                          </div>
+                        )}
+                        {userBalance && userBalance.type === 'credit' && (
+                          <div className="expense-user-balance-inline credit">
+                            You get back ${userBalance.amount.toFixed(2)}
+                          </div>
+                        )}
+                      </div>
+                      
+                      <div className="expense-footer-row">
+                        <div className="expense-category-info">
+                          <CategoryBadge category={expense.category} />
+                        </div>
+                        <div className="expense-payer-amount">
+                          {expense.paidByName || 'Unknown'} Paid ${expense.amount.toFixed(0)}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="expense-actions">
-                    <Link 
-                      to={`/groups/${groupId}/expenses/${expense.id}`}
-                      className="view-details-btn"
-                    >
-                      View Details
-                    </Link>
-                    {currentUser && expense.paidBy === currentUser.id && (
-                      <button 
-                        onClick={() => handleDeleteExpense(expense.id)}
-                        className="delete-button-small"
-                        title="Delete expense"
-                      >
-                        <i className="fi fi-rr-trash"></i>
-                      </button>
-                    )}
-                  </div>
-                </div>
+                </Link>
               );
             })}
           </div>

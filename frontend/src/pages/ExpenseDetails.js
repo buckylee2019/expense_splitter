@@ -158,120 +158,92 @@ const ExpenseDetails = () => {
           </div>
         </div>
 
-        {/* Payers Information */}
-        <div className="payers-details card">
-          <h2>Who Paid</h2>
-          <div className="payers-list">
-            {expense.isMultiplePayers && Array.isArray(expense.paidBy) ? (
-              expense.paidBy.map((payer, index) => (
-                <div key={index} className="payer-detail-item">
-                  <div className="payer-user">
-                    <UserPhoto 
-                      user={{
-                        name: payer.userName,
-                        avatarUrl: payer.userAvatarUrl,
-                        avatar: payer.userAvatar
-                      }} 
-                      size="small" 
-                      className="payer-user-photo" 
-                    />
-                    <div className="payer-user-info">
-                      <span className="user-name">{payer.userName || 'Unknown User'}</span>
-                      <span className="payer-badge">Payer</span>
-                    </div>
-                  </div>
-                  <div className="payer-amount">
-                    <span className="currency">{expense.currency}</span>
-                    <span className="amount">{payer.amount.toFixed(2)}</span>
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div className="payer-detail-item">
-                <div className="payer-user">
-                  <UserPhoto 
-                    user={{
-                      name: expense.paidByName,
-                      avatarUrl: null,
-                      avatar: null
-                    }} 
-                    size="small" 
-                    className="payer-user-photo" 
-                  />
-                  <div className="payer-user-info">
-                    <span className="user-name">{expense.paidByName || 'Unknown User'}</span>
-                    <span className="payer-badge">Payer</span>
-                  </div>
-                </div>
-                <div className="payer-amount">
-                  <span className="currency">{expense.currency}</span>
-                  <span className="amount">{expense.amount.toFixed(2)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
 
         <div className="splits-details card">
           <h2>Split Breakdown</h2>
-          <div className="splits-list">
-            {expense.splits.map((split, index) => {
-              // Calculate how much this person paid
-              let amountPaid = 0;
+          <div className="splits-tree">
+            {(() => {
+              const payerGroups = {};
+              
+              // Identify payers and get their info from group members
               if (expense.isMultiplePayers && Array.isArray(expense.paidBy)) {
-                const payer = expense.paidBy.find(p => p.userId === (split.userId || split.user));
-                amountPaid = payer ? payer.amount : 0;
-              } else if ((split.userId || split.user) === expense.paidBy) {
-                amountPaid = expense.amount;
+                expense.paidBy.forEach(payer => {
+                  const member = group?.members?.find(m => m.id === payer.userId);
+                  if (member) {
+                    payerGroups[payer.userId] = {
+                      name: member.name,
+                      paid: payer.amount,
+                      avatarUrl: member.avatarUrl,
+                      avatar: member.avatar,
+                      owes: []
+                    };
+                  }
+                });
+              } else {
+                const member = group?.members?.find(m => m.id === expense.paidBy);
+                if (member) {
+                  payerGroups[expense.paidBy] = {
+                    name: member.name,
+                    paid: expense.amount,
+                    avatarUrl: member.avatarUrl,
+                    avatar: member.avatar,
+                    owes: []
+                  };
+                }
               }
               
-              // Calculate balance (what they paid minus what they owe)
-              const balance = amountPaid - split.amount;
-              const isPayer = amountPaid > 0;
+              // Add splits to owes list
+              expense.splits.forEach(split => {
+                Object.keys(payerGroups).forEach(payerId => {
+                  payerGroups[payerId].owes.push({
+                    name: split.userName,
+                    amount: split.amount,
+                    avatarUrl: split.userAvatarUrl,
+                    avatar: split.userAvatar,
+                    isCurrentUser: split.userName === currentUser?.name
+                  });
+                });
+              });
               
-              return (
-                <div key={index} className="split-detail-item">
-                  <div className="split-user">
+              return Object.values(payerGroups).map((payer, idx) => (
+                <div key={idx} className="tree-group">
+                  <div className="tree-root">
                     <UserPhoto 
                       user={{
-                        name: split.userName,
-                        avatarUrl: split.userAvatarUrl,
-                        avatar: split.userAvatar
+                        name: payer.name,
+                        avatarUrl: payer.avatarUrl,
+                        avatar: payer.avatar
                       }} 
-                      size="small" 
-                      className="split-user-photo" 
+                      size="medium" 
                     />
-                    <div className="split-user-info">
-                      <span className="user-name">{split.userName || 'Unknown User'}</span>
-                      {isPayer && (
-                        <span className="payer-badge">Payer</span>
-                      )}
-                    </div>
+                    <span className="tree-root-text">{payer.name} paid ${payer.paid.toFixed(2)}</span>
                   </div>
-                  <div className="split-amounts">
-                    <div className="split-amount">
-                      <span className="amount-label">Owes:</span>
-                      <span className="currency">{expense.currency}</span>
-                      <span className="amount">{split.amount.toFixed(2)}</span>
-                    </div>
-                    {isPayer && (
-                      <div className="paid-amount">
-                        <span className="amount-label">Paid:</span>
-                        <span className="currency">{expense.currency}</span>
-                        <span className="amount">{amountPaid.toFixed(2)}</span>
+                  {payer.owes.length > 0 ? (
+                    payer.owes.map((ower, oIdx) => (
+                      <div key={oIdx} className={`tree-branch ${oIdx === payer.owes.length - 1 ? 'last' : ''}`}>
+                        <span className="tree-line"></span>
+                        <UserPhoto 
+                          user={{
+                            name: ower.name,
+                            avatarUrl: ower.avatarUrl,
+                            avatar: ower.avatar
+                          }} 
+                          size="small" 
+                        />
+                        <span className={ower.isCurrentUser ? 'tree-text highlight' : 'tree-text'}>
+                          {ower.isCurrentUser ? 'You owe' : `${ower.name} owes`} ${ower.amount.toFixed(2)}
+                        </span>
                       </div>
-                    )}
-                    <div className={`balance-amount ${balance > 0 ? 'positive' : balance < 0 ? 'negative' : 'zero'}`}>
-                      <span className="amount-label">
-                        {balance > 0 ? 'Gets back:' : balance < 0 ? 'Still owes:' : 'Settled:'}
-                      </span>
-                      <span className="currency">{expense.currency}</span>
-                      <span className="amount">{Math.abs(balance).toFixed(2)}</span>
+                    ))
+                  ) : (
+                    <div className="tree-branch last">
+                      <span className="tree-line"></span>
+                      <span className="tree-text">No splits</span>
                     </div>
-                  </div>
+                  )}
                 </div>
-              );
-            })}
+              ));
+            })()}
           </div>
           
           <div className="split-summary">
