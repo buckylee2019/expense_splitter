@@ -208,14 +208,23 @@ const Dashboard = () => {
                   </div>
                 ) : (
                   groupBalances.map(groupBalance => (
-                    <div key={groupBalance.groupId} className="group-balance-section">
+
+                    <Link 
+                      key={groupBalance.groupId} 
+                      to={`/groups/${groupBalance.groupId}`}
+                      className="group-balance-section"
+                      style={{ textDecoration: 'none', color: 'inherit', cursor: 'pointer' }}
+                    >
                       <div className="group-balance-header">
                         <h3>{groupBalance.groupName}</h3>
                         <div className="group-header-actions">
                           <span className="group-balance-count">{groupBalance.balances.length} balances</span>
                           <button 
                             className="button primary small"
-                            onClick={() => handleGroupSettleClick(groupBalance)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              handleGroupSettleClick(groupBalance);
+                            }}
                             title="Settle all balances in this group"
                           >
                             <i className="fi fi-rr-hand-holding-usd"></i>
@@ -239,7 +248,7 @@ const Dashboard = () => {
                           </div>
                         ))}
                       </div>
-                    </div>
+                    </Link>
                   ))
                 )}
               </div>

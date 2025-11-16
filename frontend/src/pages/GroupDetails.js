@@ -293,39 +293,6 @@ const GroupDetails = () => {
     console.log('GroupDetails component mounted');
   }, [fetchGroupData]);
 
-  // Add event listeners for automatic refresh
-  useEffect(() => {
-    const handleFocus = () => {
-      console.log('Group details focused, refreshing data...');
-      fetchGroupData();
-    };
-
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('Group details visible, refreshing data...');
-        fetchGroupData();
-      }
-    };
-
-    const handlePopState = () => {
-      console.log('Navigation detected in group details, refreshing...');
-      fetchGroupData();
-    };
-
-    // Refresh when window gains focus
-    window.addEventListener('focus', handleFocus);
-    // Refresh when tab becomes visible
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    // Refresh on navigation
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('focus', handleFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [fetchGroupData]);
-
   const handleDeleteExpense = async (expenseId) => {
     if (!window.confirm('Are you sure you want to delete this expense?')) {
       return;
