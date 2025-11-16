@@ -5,6 +5,7 @@ Parameters:
   Environment:
     Type: String
     Default: dev
+    AllowedValues: [dev, staging, prod]
     Description: Environment name
 
 Resources:
