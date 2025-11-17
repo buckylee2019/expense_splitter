@@ -13,7 +13,7 @@ Resources:
   FrontendBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub 'expense-splitter-frontend-${Environment}-${AWS::AccountId}'
+      BucketName: !Sub 'expense-splitter-frontend-${Environment}-${AWS::Region}-${AWS::AccountId}'
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: index.html

@@ -68,42 +68,40 @@ const ExpenseDetails = () => {
     <div className="expense-details-page">
       <div className="page-header">
         <div className="breadcrumb">
-          <Link to="/dashboard">Dashboard</Link>
+          <Link to="/groups">Groups</Link>
           <span> / </span>
           <Link to={`/groups/${groupId}`}>{group.name}</Link>
-          <span> / </span>
-          <span>{expense.description}</span>
         </div>
         
         <h1 className="expense-name">{expense.description}</h1>
-        
-        <div className="header-actions">
-          <Link to={`/groups/${groupId}`} className="button secondary">
-            ← Back to Group
-          </Link>
-          {currentUser && (
-            <>
-              <Link 
-                to={`/groups/${groupId}/expenses/${expenseId}/edit`}
-                className="button primary"
-                title="Edit expense"
-              >
-                <i className="fi fi-rr-edit"></i>
-                <span className="hide-mobile">Edit</span>
-              </Link>
-              {currentUser.id === expense.paidBy && (
-                <button 
-                  onClick={handleDeleteExpense}
+      </div>
+      
+      <div className="header-actions">
+        <Link to={`/groups/${groupId}`} className="button secondary">
+          ← Back to Group
+        </Link>
+        {currentUser && (
+          <>
+            <Link 
+              to={`/groups/${groupId}/expenses/${expenseId}/edit`}
+              className="button primary"
+              title="Edit expense"
+            >
+              <i className="fi fi-rr-edit"></i>
+              <span className="hide-mobile">Edit</span>
+            </Link>
+            {currentUser.id === expense.paidBy && (
+              <button 
+                onClick={handleDeleteExpense}
                 className="button danger"
                 title="Delete expense"
               >
                 <i className="fi fi-rr-trash"></i>
                 <span className="hide-mobile">Delete</span>
-                </button>
-              )}
-            </>
-          )}
-        </div>
+              </button>
+            )}
+          </>
+        )}
       </div>
 
       <div className="expense-details-content">

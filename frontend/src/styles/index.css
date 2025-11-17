@@ -2252,6 +2252,20 @@ p {
   padding: 1rem;
 }
 
+.expense-details-page .page-header {
+  display: block;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.expense-details-page .page-header h1 {
+  margin-top: var(--spacing);
+}
+
+.expense-details-page .header-actions {
+  margin-bottom: var(--spacing-lg);
+}
+
 .page-header {
   display: flex;
   justify-content: space-between;
