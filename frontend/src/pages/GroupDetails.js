@@ -448,7 +448,7 @@ const GroupDetails = () => {
           <div 
             className="banner-image"
             style={{
-              backgroundImage: `url(${group.photoUrl || group.photo || '/background.png'})`,
+              backgroundImage: `url(${group.photoUrl || group.photo || '/group_background.png'})`,
             }}
           >
             <div className="banner-overlay">

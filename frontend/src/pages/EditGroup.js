@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import ImageCropper from '../components/ImageCropper';
 
 const EditGroup = () => {
   const { id } = useParams();
@@ -18,6 +19,8 @@ const EditGroup = () => {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
+  const [imageToCrop, setImageToCrop] = useState(null);
 
   useEffect(() => {
     fetchGroup();
@@ -93,14 +96,26 @@ const EditGroup = () => {
       return;
     }
 
-    console.log('File validation passed, processing...');
+    console.log('File validation passed, showing cropper...');
     
-    // Compress image if it's larger than 1MB
-    let processedFile = file;
-    if (file.size > 1 * 1024 * 1024) {
-      console.log('Compressing large image...');
-      processedFile = await compressImage(file);
-      console.log('Image compressed from', file.size, 'to', processedFile.size);
+    // Show cropper
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setImageToCrop(e.target.result);
+      setShowCropper(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedBlob) => {
+    console.log('Crop complete, blob size:', croppedBlob.size);
+    
+    // Compress if needed
+    let processedFile = croppedBlob;
+    if (croppedBlob.size > 1 * 1024 * 1024) {
+      console.log('Compressing cropped image...');
+      processedFile = await compressImage(croppedBlob);
+      console.log('Image compressed from', croppedBlob.size, 'to', processedFile.size);
     }
     
     setPhotoFile(processedFile);
@@ -108,11 +123,17 @@ const EditGroup = () => {
     // Create preview
     const reader = new FileReader();
     reader.onload = (e) => {
-      console.log('Preview created, data length:', e.target.result.length);
-      // S3 can handle much larger files, so we don't need the strict size limit
       setPhotoPreview(e.target.result);
     };
     reader.readAsDataURL(processedFile);
+    
+    setShowCropper(false);
+    setImageToCrop(null);
+  };
+
+  const handleCropCancel = () => {
+    setShowCropper(false);
+    setImageToCrop(null);
   };
 
   const saveGroupPhoto = async () => {
@@ -410,6 +431,15 @@ const EditGroup = () => {
           </div>
         </div>
       </div>
+      
+      {showCropper && imageToCrop && (
+        <ImageCropper
+          imageSrc={imageToCrop}
+          onCropComplete={handleCropComplete}
+          onCancel={handleCropCancel}
+          aspectRatio={16 / 9}
+        />
+      )}
     </div>
   );
 };

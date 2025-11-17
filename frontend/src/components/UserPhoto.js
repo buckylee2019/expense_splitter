@@ -36,21 +36,12 @@ const UserPhoto = ({ user, size = 'small', className = '' }) => {
 
   const sizeClass = size === 'large' ? 'profile-avatar' : 'user-photo';
 
-  // Use avatarUrl (S3) first, then fallback to legacy avatar field
-  const avatarSrc = user?.avatarUrl || user?.avatar;
+  // Use avatarUrl (S3) first, then fallback to legacy avatar field, then default icon
+  const avatarSrc = user?.avatarUrl || user?.avatar || '/user_icon.png';
 
   return (
     <div className={`${sizeClass} ${className}`}>
-      {avatarSrc ? (
-        <img src={avatarSrc} alt={user.name || 'User'} />
-      ) : (
-        <div 
-          className={size === 'large' ? 'avatar-placeholder' : 'user-photo-placeholder'}
-          style={{ background: getPlaceholderColor(user?.name) }}
-        >
-          {getInitials(user?.name)}
-        </div>
-      )}
+      <img src={avatarSrc} alt={user?.name || 'User'} />
     </div>
   );
 };
