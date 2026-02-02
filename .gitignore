@@ -116,3 +116,4 @@ cloudformation/outputs.json
 
 # Build files
 frontend/build/
+cdk/cdk.out/
