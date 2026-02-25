@@ -851,12 +851,12 @@ const GroupDetails = () => {
                         {/* User's debt/credit */}
                         {userBalance && userBalance.type === 'debt' && (
                           <div className="expense-user-balance-inline">
-                            You owe ${userBalance.amount.toFixed(2)}
+                            You owe {userBalance.currency} {userBalance.amount.toFixed(2)}
                           </div>
                         )}
                         {userBalance && userBalance.type === 'credit' && (
                           <div className="expense-user-balance-inline credit">
-                            You get back ${userBalance.amount.toFixed(2)}
+                            You get back {userBalance.currency} {userBalance.amount.toFixed(2)}
                           </div>
                         )}
                       </div>
@@ -866,7 +866,7 @@ const GroupDetails = () => {
                           <CategoryBadge category={expense.category} />
                         </div>
                         <div className="expense-payer-amount">
-                          {expense.paidByName || 'Unknown'} Paid ${expense.amount.toFixed(0)}
+                          {expense.paidByName || 'Unknown'} Paid {expense.currency || 'TWD'} {expense.amount.toFixed(0)}
                         </div>
                       </div>
                     </div>

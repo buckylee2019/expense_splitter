@@ -214,7 +214,7 @@ const ExpenseDetails = () => {
                       }} 
                       size="medium" 
                     />
-                    <span className="tree-root-text">{payer.name} paid ${payer.paid.toFixed(2)}</span>
+                    <span className="tree-root-text">{payer.name} paid {expense.currency || 'TWD'} {payer.paid.toFixed(2)}</span>
                   </div>
                   {payer.owes.length > 0 ? (
                     payer.owes.map((ower, oIdx) => (
@@ -229,7 +229,7 @@ const ExpenseDetails = () => {
                           size="small" 
                         />
                         <span className={ower.isCurrentUser ? 'tree-text highlight' : 'tree-text'}>
-                          {ower.isCurrentUser ? 'You owe' : `${ower.name} owes`} ${ower.amount.toFixed(2)}
+                          {ower.isCurrentUser ? 'You owe' : `${ower.name} owes`} {expense.currency || 'TWD'} {ower.amount.toFixed(2)}
                         </span>
                       </div>
                     ))
