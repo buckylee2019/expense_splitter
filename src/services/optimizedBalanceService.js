@@ -360,7 +360,7 @@ const getGroupOptimizedTransfers = async (groupId) => {
       });
     });
     
-    // Apply settlements
+    // Apply settlements to net balances
     const settlements = await Settlement.findByGroupId(groupId);
     settlements.forEach(settlement => {
       const currency = settlement.currency || 'TWD';
@@ -372,12 +372,18 @@ const getGroupOptimizedTransfers = async (groupId) => {
       if (!netBalances[fromUser][currency]) netBalances[fromUser][currency] = 0;
       if (!netBalances[toUser][currency]) netBalances[toUser][currency] = 0;
       
-      netBalances[fromUser][currency] += settlement.amount; // fromUser owes less (net balance improves)
-      netBalances[toUser][currency] -= settlement.amount;   // toUser is owed less (net balance decreases)
+      // When fromUser pays toUser:
+      // - fromUser's debt decreases (net balance increases)
+      // - toUser's credit decreases (net balance decreases)
+      netBalances[fromUser][currency] += settlement.amount;
+      netBalances[toUser][currency] -= settlement.amount;
     });
     
-    // Generate optimized transfers
+    // Generate optimized transfers from adjusted net balances
     const optimizedTransfers = optimizeTransfers(netBalances);
+    
+    console.log('[DEBUG] Net balances after settlements:', JSON.stringify(netBalances, null, 2));
+    console.log('[DEBUG] Optimized transfers:', JSON.stringify(optimizedTransfers, null, 2));
     
     // Populate user names for transfers
     const transfersWithNames = [];

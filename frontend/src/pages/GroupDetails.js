@@ -38,15 +38,34 @@ const GroupDetails = () => {
       const userRes = await api.get('/api/users/profile');
       setCurrentUser(userRes.data);
 
-      const [groupRes, expensesRes, balancesRes, globalBalancesRes] = await Promise.all([
+      const [groupRes, expensesRes, settlementsRes, balancesRes, globalBalancesRes] = await Promise.all([
         api.get(`/api/groups/${groupId}`),
         api.get(`/api/expenses?groupId=${groupId}&limit=20&sort=createdAt&order=desc`),
+        api.get(`/api/settlements?groupId=${groupId}`),
         api.get(`/api/balances?groupId=${groupId}${useOptimized ? '&optimized=true' : ''}`),
         api.get(`/api/balances${useOptimized ? '?optimized=true' : ''}`) // Global balances for comparison
       ]);
 
       setGroup(groupRes.data);
-      setExpenses(expensesRes.data.expenses || expensesRes.data);
+      
+      // Merge expenses and settlements, sort by date
+      const expensesList = (expensesRes.data.expenses || expensesRes.data).map(e => ({
+        ...e,
+        type: 'expense',
+        date: e.createdAt
+      }));
+      
+      const settlementsList = (settlementsRes.data || []).map(s => ({
+        ...s,
+        type: 'settlement',
+        date: s.settledAt || s.createdAt
+      }));
+      
+      const merged = [...expensesList, ...settlementsList].sort((a, b) => 
+        new Date(b.date) - new Date(a.date)
+      );
+      
+      setExpenses(merged);
       setPagination(expensesRes.data.pagination || null);
       setBalances(balancesRes.data.balances);
       setGlobalBalances(globalBalancesRes.data.balances);
@@ -98,7 +117,7 @@ const GroupDetails = () => {
 
   // Calculate user's debt/credit for a specific expense
   const calculateUserExpenseBalance = (expense) => {
-    if (!currentUser) return null;
+    if (!currentUser || !expense.splits) return null;
     
     // Find user's split
     const userSplit = expense.splits.find(split => 
@@ -163,7 +182,11 @@ const GroupDetails = () => {
     // Calculate expected balances manually
     const expectedBalances = {};
     
-    expenses.forEach(expense => {
+    expenses.forEach(item => {
+      // Skip settlements
+      if (item.type === 'settlement' || !item.splits) return;
+      
+      const expense = item;
       const userPaid = expense.paidBy === currentUser.id;
       const userSplit = expense.splits.find(split => 
         split.user === currentUser.id || split.userId === currentUser.id
@@ -385,7 +408,11 @@ const GroupDetails = () => {
     let paymentsMade = 0; // This would come from settlements data
     let paymentsReceived = 0; // This would come from settlements data
 
-    filteredExpenses.forEach(expense => {
+    filteredExpenses.forEach(item => {
+      // Skip settlements in spending summary
+      if (item.type === 'settlement') return;
+      
+      const expense = item;
       const amount = parseFloat(expense.amount) || 0;
       totalGroupSpending += amount;
 
@@ -395,7 +422,7 @@ const GroupDetails = () => {
       }
 
       // Find user's split amount
-      const userSplit = expense.splits.find(split => 
+      const userSplit = expense.splits?.find(split => 
         (split.user === currentUserId || split.userId === currentUserId)
       );
       if (userSplit) {
@@ -823,7 +850,64 @@ const GroupDetails = () => {
           </div>
         ) : (
           <div className="expenses-list">
-            {sortedExpenses.map(expense => {
+            {sortedExpenses.map(item => {
+              if (item.type === 'settlement') {
+                // Render settlement
+                return (
+                  <div 
+                    key={item.id} 
+                    className="expense-card-compact card settlement-card"
+                    style={{ backgroundColor: '#f0f9ff', borderLeft: '4px solid #3b82f6' }}
+                  >
+                    <div className="expense-main">
+                      {/* Date column on left */}
+                      <div className="expense-date-column">
+                        <div className="expense-month">
+                          {new Date(item.date).toLocaleDateString('en-US', { month: 'short' })}
+                        </div>
+                        <div className="expense-day">
+                          {new Date(item.date).getDate()}
+                        </div>
+                      </div>
+                      
+                      {/* Main content */}
+                      <div className="expense-content">
+                        <div className="expense-header-row">
+                          <h4 className="expense-title">
+                            💰 {item.fromName || 'Unknown'} paid {item.toName || 'Unknown'}
+                          </h4>
+                          <div className="expense-user-balance-inline" style={{ color: '#3b82f6' }}>
+                            {item.currency || 'TWD'} {item.amount.toFixed(2)}
+                          </div>
+                        </div>
+                        
+                        <div className="expense-footer-row">
+                          <div className="expense-category-info">
+                            <span style={{ 
+                              padding: '4px 12px', 
+                              backgroundColor: '#dbeafe', 
+                              color: '#1e40af',
+                              borderRadius: '12px',
+                              fontSize: '12px',
+                              fontWeight: '500'
+                            }}>
+                              Settlement
+                            </span>
+                          </div>
+                          {item.notes && (
+                            <div className="expense-payer-amount" style={{ color: '#6b7280' }}>
+                              {item.notes}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              
+              // Render expense
+              const expense = item;
               const userBalance = calculateUserExpenseBalance(expense);
               
               return (

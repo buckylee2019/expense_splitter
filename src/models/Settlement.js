@@ -116,7 +116,32 @@ class Settlement {
 
     try {
       const result = await docClient.send(new QueryCommand(params));
-      return result.Items ? result.Items.map(item => new Settlement(item)) : [];
+      
+      // Add user names
+      const settlements = result.Items ? await Promise.all(result.Items.map(async item => {
+        const settlement = new Settlement(item);
+        
+        const User = require('./User');
+        try {
+          if (settlement.from) {
+            const fromUser = await User.findById(settlement.from);
+            settlement.fromName = fromUser?.name || fromUser?.email || settlement.from;
+          }
+          
+          if (settlement.to) {
+            const toUser = await User.findById(settlement.to);
+            settlement.toName = toUser?.name || toUser?.email || settlement.to;
+          }
+        } catch (err) {
+          console.error('Error fetching user details for settlement:', err);
+          settlement.fromName = settlement.from;
+          settlement.toName = settlement.to;
+        }
+        
+        return settlement;
+      })) : [];
+      
+      return settlements;
     } catch (error) {
       throw error;
     }

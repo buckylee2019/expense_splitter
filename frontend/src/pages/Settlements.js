@@ -55,7 +55,12 @@ const Settlements = () => {
       console.log('Balances data:', balancesRes.data);
       console.log('Current user:', userRes.data);
       
-      setSettlements(settlementsRes.data);
+      // Sort settlements by date (newest first)
+      const sortedSettlements = (settlementsRes.data || []).sort((a, b) => {
+        return new Date(b.settledAt) - new Date(a.settledAt);
+      });
+      
+      setSettlements(sortedSettlements);
       setGroups(groupsRes.data);
       setBalances(balancesRes.data.balances || []);
       setCurrentUser(userRes.data);
@@ -165,8 +170,17 @@ const Settlements = () => {
   };
 
   const handleDeleteSettlement = async (settlementId) => {
+    console.log('Attempting to delete settlement:', settlementId);
+    
+    if (!settlementId) {
+      setError('Settlement ID is missing');
+      setTimeout(() => setError(''), 5000);
+      return;
+    }
+    
     if (window.confirm('Are you sure you want to delete this settlement? This action cannot be undone.')) {
       try {
+        console.log('Calling API to delete settlement:', settlementId);
         await api.delete(`/api/settlements/${settlementId}`);
         setSuccessMessage('Settlement deleted successfully');
         fetchData(); // Refresh the data
