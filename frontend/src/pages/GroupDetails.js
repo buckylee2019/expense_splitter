@@ -402,23 +402,45 @@ const GroupDetails = () => {
 
     const currentUserId = currentUser.id;
     const filteredExpenses = getFilteredExpenses();
-    let totalGroupSpending = 0;
-    let totalUserPaid = 0;
-    let totalUserShare = 0;
-    let paymentsMade = 0; // This would come from settlements data
-    let paymentsReceived = 0; // This would come from settlements data
+    const byCurrency = {};
+    let expenseCount = 0;
 
     filteredExpenses.forEach(item => {
-      // Skip settlements in spending summary
-      if (item.type === 'settlement') return;
+      if (item.type === 'settlement') {
+        // Process settlements: adjust net balance
+        const settlement = item;
+        const currency = settlement.currency || 'TWD';
+        const amount = parseFloat(settlement.amount) || 0;
+
+        if (!byCurrency[currency]) {
+          byCurrency[currency] = { totalGroupSpending: 0, totalUserPaid: 0, totalUserShare: 0, settlements: 0 };
+        }
+
+        // If current user paid (fromUser), they reduced their debt
+        if (settlement.fromUser === currentUserId) {
+          byCurrency[currency].settlements -= amount;
+        }
+        // If current user received (toUser), they received money owed
+        if (settlement.toUser === currentUserId) {
+          byCurrency[currency].settlements += amount;
+        }
+        return;
+      }
       
+      expenseCount++;
       const expense = item;
+      const currency = expense.currency || 'TWD';
       const amount = parseFloat(expense.amount) || 0;
-      totalGroupSpending += amount;
+
+      if (!byCurrency[currency]) {
+        byCurrency[currency] = { totalGroupSpending: 0, totalUserPaid: 0, totalUserShare: 0, settlements: 0 };
+      }
+
+      byCurrency[currency].totalGroupSpending += amount;
 
       // Check if current user paid for this expense
       if (expense.paidBy === currentUserId) {
-        totalUserPaid += amount;
+        byCurrency[currency].totalUserPaid += amount;
       }
 
       // Find user's split amount
@@ -426,22 +448,17 @@ const GroupDetails = () => {
         (split.user === currentUserId || split.userId === currentUserId)
       );
       if (userSplit) {
-        totalUserShare += parseFloat(userSplit.amount) || 0;
+        byCurrency[currency].totalUserShare += parseFloat(userSplit.amount) || 0;
       }
     });
 
-    // Calculate net balance change (what user paid - what user owes)
-    const netBalanceChange = totalUserPaid - totalUserShare;
+    // Count total expenses (excluding settlements)
+    const totalExpenseCount = expenses.filter(e => e.type !== 'settlement').length;
 
     return {
-      totalGroupSpending,
-      totalUserPaid,
-      totalUserShare,
-      paymentsMade, // TODO: Get from settlements API
-      paymentsReceived, // TODO: Get from settlements API
-      netBalanceChange,
-      expenseCount: filteredExpenses.length,
-      totalExpenseCount: expenses.length
+      byCurrency,
+      expenseCount,
+      totalExpenseCount
     };
   };
 
@@ -561,33 +578,90 @@ const GroupDetails = () => {
               </div>
             ) : (
               <div className="summary-grid">
+                {/* Display by currency - horizontal cards */}
                 <div className="summary-item">
                   <div className="summary-label">Total group spending</div>
-                  <div className="summary-value primary">
-                    {group.currency || 'TWD'} {groupSummary.totalGroupSpending.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </div>
+                  {Object.entries(groupSummary.byCurrency).map(([currency, data]) => (
+                    <div key={currency} className="summary-value">
+                      {currency} {data.totalGroupSpending.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  ))}
                 </div>
+                
                 <div className="summary-item">
                   <div className="summary-label">Total you paid for</div>
-                  <div className="summary-value">
-                    {group.currency || 'TWD'} {groupSummary.totalUserPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </div>
+                  {Object.entries(groupSummary.byCurrency).map(([currency, data]) => (
+                    <div key={currency} className="summary-value">
+                      {currency} {data.totalUserPaid.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  ))}
                 </div>
+                
                 <div className="summary-item">
                   <div className="summary-label">Your total share</div>
-                  <div className="summary-value">
-                    {group.currency || 'TWD'} {groupSummary.totalUserShare.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </div>
+                  {Object.entries(groupSummary.byCurrency).map(([currency, data]) => (
+                    <div key={currency} className="summary-value">
+                      {currency} {data.totalUserShare.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+                  ))}
                 </div>
+                
                 <div className="summary-item">
                   <div className="summary-label">Net balance</div>
-                  <div className={`summary-value ${groupSummary.netBalanceChange >= 0 ? 'positive' : 'negative'}`}>
-                    {groupSummary.netBalanceChange >= 0 ? '+' : ''}{group.currency || 'TWD'} {groupSummary.netBalanceChange.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </div>
-                  <div className="summary-note">
-                    {groupSummary.netBalanceChange >= 0 ? 'You are owed money' : 'You owe money'}
-                  </div>
+                  {Object.entries(groupSummary.byCurrency).map(([currency, data]) => {
+                    const netBalance = data.totalUserPaid - data.totalUserShare + data.settlements;
+                    return (
+                      <div key={currency}>
+                        <div className={`summary-value ${netBalance >= 0 ? 'positive' : 'negative'}`}>
+                          {netBalance >= 0 ? '+' : ''}{currency} {netBalance.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                        <div className="summary-note">
+                          {netBalance >= 0 ? 'You are owed money' : 'You owe money'}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
+                
+                {/* Overall Balance Summary */}
+                {balances.length > 0 && (
+                  <>
+                    {(() => {
+                      const summary = {};
+                      balances.forEach(b => {
+                        if (!summary[b.currency]) summary[b.currency] = { owed: 0, owes: 0 };
+                        if (b.type === 'owes_you') summary[b.currency].owed += b.amount;
+                        else summary[b.currency].owes += b.amount;
+                      });
+                      
+                      // Also include currencies from groupSummary that might not be in balances
+                      Object.keys(groupSummary.byCurrency).forEach(currency => {
+                        if (!summary[currency]) {
+                          summary[currency] = { owed: 0, owes: 0 };
+                        }
+                      });
+                      
+                      return Object.entries(summary).map(([currency, amounts]) => {
+                        const net = amounts.owed - amounts.owes;
+                        // Skip if net is zero
+                        if (Math.abs(net) < 0.01) return null;
+                        
+                        return (
+                          <div key={currency} className="summary-item overall-balance-summary">
+                            <div className={`overall-balance-inline ${net > 0 ? 'positive' : 'negative'}`}>
+                              <div className="summary-label">
+                                {net > 0 ? '💰 Overall, you are owed' : '💸 Overall, you owe'}
+                              </div>
+                              <div className="summary-value">
+                                {currency} {Math.abs(net).toFixed(2)}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      }).filter(Boolean);
+                    })()}
+                  </>
+                )}
               </div>
             )}
             </>

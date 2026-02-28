@@ -200,6 +200,32 @@ const Dashboard = () => {
               </div>
             </div>
             
+            {/* Overall Summary */}
+            <div className="balance-overall-summary">
+              {(() => {
+                const summary = {};
+                balances.balances.forEach(b => {
+                  if (!summary[b.currency]) summary[b.currency] = { owed: 0, owes: 0 };
+                  if (b.type === 'owes_you') summary[b.currency].owed += b.amount;
+                  else summary[b.currency].owes += b.amount;
+                });
+                
+                return Object.entries(summary).map(([currency, amounts]) => {
+                  const net = amounts.owed - amounts.owes;
+                  return (
+                    <div key={currency} className={`overall-balance ${net > 0 ? 'positive' : 'negative'}`}>
+                      <span className="overall-label">
+                        {net > 0 ? '💰 Overall, you are owed' : '💸 Overall, you owe'}
+                      </span>
+                      <span className="overall-amount">
+                        {currency} {Math.abs(net).toFixed(2)}
+                      </span>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+            
             <div className="balances-container">
               <div className="group-balances">
                 {groupBalances.length === 0 ? (
