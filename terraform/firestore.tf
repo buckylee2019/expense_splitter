@@ -1,6 +1,6 @@
 resource "google_firestore_database" "main" {
   name        = "(default)"
-  location_id = var.region
+  location_id = "asia-east1"
   type        = "FIRESTORE_NATIVE"
 
   depends_on = [google_project_service.apis]

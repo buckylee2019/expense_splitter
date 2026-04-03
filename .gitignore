@@ -118,3 +118,12 @@ cloudformation/outputs.json
 frontend/build/
 cdk/cdk.out/
 cdk.out/
+
+# Terraform
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+terraform/tfplan
+
+# Firebase
+.firebase/

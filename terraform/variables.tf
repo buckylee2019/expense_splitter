@@ -6,7 +6,7 @@ variable "project_id" {
 variable "region" {
   description = "GCP region for resources"
   type        = string
-  default     = "us-central1"
+  default     = "asia-east1"
 }
 
 variable "jwt_secret" {

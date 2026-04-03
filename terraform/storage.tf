@@ -1,7 +1,7 @@
 # Photos bucket
 resource "google_storage_bucket" "photos" {
   name     = "${var.project_id}-expense-splitter-photos"
-  location = var.region
+  location = "US-CENTRAL1"
 
   uniform_bucket_level_access = true
 
@@ -25,7 +25,7 @@ resource "google_storage_bucket_iam_member" "photos_public_read" {
 # Frontend static site bucket
 resource "google_storage_bucket" "frontend" {
   name     = "${var.project_id}-expense-splitter-frontend"
-  location = var.region
+  location = "US-CENTRAL1"
 
   uniform_bucket_level_access = true
 
