@@ -9,8 +9,7 @@ router.post('/register', async (req, res) => {
   try {
     console.log('Registration attempt:', { body: req.body });
     console.log('Environment variables:', {
-      AWS_REGION: process.env.AWS_REGION,
-      USERS_TABLE_NAME: process.env.USERS_TABLE_NAME,
+      GCP_PROJECT_ID: process.env.GCP_PROJECT_ID,
       NODE_ENV: process.env.NODE_ENV
     });
     

@@ -1,8 +1,7 @@
-const { docClient } = require('../config/dynamodb');
-const { PutCommand, GetCommand, QueryCommand, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
+const { db } = require('../config/firestore');
 const { v4: uuidv4 } = require('uuid');
 
-const TABLE_NAME = process.env.SETTLEMENTS_TABLE_NAME || 'ExpenseSplitter-Settlements';
+const COLLECTION = 'settlements';
 
 class Settlement {
   constructor(data) {
@@ -17,145 +16,104 @@ class Settlement {
     this.settledAt = data.settledAt || new Date().toISOString();
     this.createdAt = data.createdAt || new Date().toISOString();
     this.updatedAt = data.updatedAt || new Date().toISOString();
-    this.recordedBy = data.recordedBy; // Track who recorded the settlement
-    this.isMultiGroupSettlement = data.isMultiGroupSettlement || false; // Flag for multi-group settlements
+    this.recordedBy = data.recordedBy;
+    this.isMultiGroupSettlement = data.isMultiGroupSettlement || false;
   }
 
   static async create(settlementData) {
     const settlement = new Settlement(settlementData);
-    
-    const params = {
-      TableName: TABLE_NAME,
-      Item: settlement
-    };
 
-    await docClient.send(new PutCommand(params));
+    await db.collection(COLLECTION).doc(settlement.id).set({ ...settlement });
     return settlement;
   }
 
   static async findById(id) {
-    const params = {
-      TableName: TABLE_NAME,
-      Key: { id }
-    };
+    const doc = await db.collection(COLLECTION).doc(id).get();
 
-    try {
-      const result = await docClient.send(new GetCommand(params));
-      if (result.Item) {
-        return new Settlement(result.Item);
-      }
+    if (!doc.exists) {
       return null;
-    } catch (error) {
-      throw error;
     }
+
+    return new Settlement(doc.data());
   }
 
   static async findByUserId(userId) {
-    const params = {
-      TableName: TABLE_NAME,
-      FilterExpression: '#from = :userId OR #to = :userId OR #recordedBy = :userId',
-      ExpressionAttributeNames: {
-        '#from': 'from',
-        '#to': 'to',
-        '#recordedBy': 'recordedBy'
-      },
-      ExpressionAttributeValues: {
-        ':userId': userId
-      }
-    };
+    // Fetch all and filter (matches original DynamoDB Scan behavior)
+    const snapshot = await db.collection(COLLECTION).get();
+    const allSettlements = [];
+    snapshot.forEach(doc => allSettlements.push(doc.data()));
 
-    try {
-      console.log(`Finding settlements for user: ${userId}`);
-      const result = await docClient.send(new ScanCommand(params));
-      console.log(`Found ${result.Items ? result.Items.length : 0} settlements`);
-      
-      // Add user-friendly names for display
-      const settlements = result.Items ? await Promise.all(result.Items.map(async item => {
-        const settlement = new Settlement(item);
-        
-        // Get user names for from and to fields
-        const User = require('./User');
-        try {
-          if (settlement.from) {
-            const fromUser = await User.findById(settlement.from);
-            settlement.fromName = fromUser?.name || fromUser?.email || settlement.from;
-          }
-          
-          if (settlement.to) {
-            const toUser = await User.findById(settlement.to);
-            settlement.toName = toUser?.name || toUser?.email || settlement.to;
-          }
-        } catch (err) {
-          console.error('Error fetching user details for settlement:', err);
-          settlement.fromName = settlement.from;
-          settlement.toName = settlement.to;
+    const filtered = allSettlements.filter(item =>
+      item.from === userId || item.to === userId || item.recordedBy === userId
+    );
+
+    console.log(`Finding settlements for user: ${userId}`);
+    console.log(`Found ${filtered.length} settlements`);
+
+    const settlements = await Promise.all(filtered.map(async item => {
+      const settlement = new Settlement(item);
+
+      const User = require('./User');
+      try {
+        if (settlement.from) {
+          const fromUser = await User.findById(settlement.from);
+          settlement.fromName = fromUser?.name || fromUser?.email || settlement.from;
         }
-        
-        return settlement;
-      })) : [];
-      
-      return settlements;
-    } catch (error) {
-      console.error('Error finding settlements by user ID:', error);
-      throw error;
-    }
+
+        if (settlement.to) {
+          const toUser = await User.findById(settlement.to);
+          settlement.toName = toUser?.name || toUser?.email || settlement.to;
+        }
+      } catch (err) {
+        console.error('Error fetching user details for settlement:', err);
+        settlement.fromName = settlement.from;
+        settlement.toName = settlement.to;
+      }
+
+      return settlement;
+    }));
+
+    return settlements;
   }
 
   static async findByGroupId(groupId) {
-    const params = {
-      TableName: TABLE_NAME,
-      IndexName: 'GroupIndex',
-      KeyConditionExpression: '#group = :groupId',
-      ExpressionAttributeNames: {
-        '#group': 'group'
-      },
-      ExpressionAttributeValues: {
-        ':groupId': groupId
-      }
-    };
+    const snapshot = await db.collection(COLLECTION)
+      .where('group', '==', groupId)
+      .get();
 
-    try {
-      const result = await docClient.send(new QueryCommand(params));
-      
-      // Add user names
-      const settlements = result.Items ? await Promise.all(result.Items.map(async item => {
-        const settlement = new Settlement(item);
-        
-        const User = require('./User');
-        try {
-          if (settlement.from) {
-            const fromUser = await User.findById(settlement.from);
-            settlement.fromName = fromUser?.name || fromUser?.email || settlement.from;
-          }
-          
-          if (settlement.to) {
-            const toUser = await User.findById(settlement.to);
-            settlement.toName = toUser?.name || toUser?.email || settlement.to;
-          }
-        } catch (err) {
-          console.error('Error fetching user details for settlement:', err);
-          settlement.fromName = settlement.from;
-          settlement.toName = settlement.to;
+    const items = [];
+    snapshot.forEach(doc => items.push(doc.data()));
+
+    const settlements = await Promise.all(items.map(async item => {
+      const settlement = new Settlement(item);
+
+      const User = require('./User');
+      try {
+        if (settlement.from) {
+          const fromUser = await User.findById(settlement.from);
+          settlement.fromName = fromUser?.name || fromUser?.email || settlement.from;
         }
-        
-        return settlement;
-      })) : [];
-      
-      return settlements;
-    } catch (error) {
-      throw error;
-    }
+
+        if (settlement.to) {
+          const toUser = await User.findById(settlement.to);
+          settlement.toName = toUser?.name || toUser?.email || settlement.to;
+        }
+      } catch (err) {
+        console.error('Error fetching user details for settlement:', err);
+        settlement.fromName = settlement.from;
+        settlement.toName = settlement.to;
+      }
+
+      return settlement;
+    }));
+
+    return settlements;
   }
 
   async save() {
     this.updatedAt = new Date().toISOString();
-    
-    const params = {
-      TableName: TABLE_NAME,
-      Item: this
-    };
 
-    await docClient.send(new PutCommand(params));
+    await db.collection(COLLECTION).doc(this.id).set({ ...this });
     return this;
   }
 
@@ -164,22 +122,12 @@ class Settlement {
   }
 
   async delete() {
-    const params = {
-      TableName: TABLE_NAME,
-      Key: { id: this.id }
-    };
-
-    await docClient.send(new DeleteCommand(params));
+    await db.collection(COLLECTION).doc(this.id).delete();
     return true;
   }
 
   static async deleteById(id) {
-    const params = {
-      TableName: TABLE_NAME,
-      Key: { id }
-    };
-
-    await docClient.send(new DeleteCommand(params));
+    await db.collection(COLLECTION).doc(id).delete();
     return true;
   }
 }

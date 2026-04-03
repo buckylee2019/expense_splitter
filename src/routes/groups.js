@@ -3,7 +3,7 @@ const Group = require('../models/Group');
 const User = require('../models/User');
 const Expense = require('../models/Expense');
 const { authMiddleware } = require('../utils/auth');
-const s3Service = require('../utils/s3');
+const s3Service = require('../utils/gcs');
 
 const router = express.Router();
 
@@ -414,7 +414,7 @@ router.put('/:id/photo', authMiddleware, async (req, res) => {
     
     try {
       // Delete old photo if it exists
-      if (group.photoUrl && group.photoUrl.includes(process.env.PHOTOS_CLOUDFRONT_DOMAIN)) {
+      if (group.photoUrl && group.photoUrl.includes(process.env.PHOTOS_BASE_URL)) {
         console.log('Deleting old photo:', group.photoUrl);
         await s3Service.deleteGroupPhoto(group.photoUrl);
       }
@@ -485,7 +485,7 @@ router.delete('/:id/photo', authMiddleware, async (req, res) => {
     }
 
     // Delete photo from S3 if it exists
-    if (group.photoUrl && group.photoUrl.includes(process.env.PHOTOS_CLOUDFRONT_DOMAIN)) {
+    if (group.photoUrl && group.photoUrl.includes(process.env.PHOTOS_BASE_URL)) {
       console.log('Deleting photo from S3:', group.photoUrl);
       await s3Service.deleteGroupPhoto(group.photoUrl);
     }

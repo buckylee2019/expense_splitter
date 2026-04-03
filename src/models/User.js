@@ -1,9 +1,8 @@
-const { docClient } = require('../config/dynamodb');
-const { PutCommand, GetCommand, QueryCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { db } = require('../config/firestore');
 const bcrypt = require('bcryptjs');
 const { v4: uuidv4 } = require('uuid');
 
-const TABLE_NAME = process.env.USERS_TABLE_NAME || 'ExpenseSplitter-Users';
+const COLLECTION = 'users';
 
 class User {
   constructor(data) {
@@ -12,8 +11,8 @@ class User {
     this.email = data.email;
     this.password = data.password;
     this.phone = data.phone || '';
-    this.avatar = data.avatar || ''; // Legacy field for backward compatibility
-    this.avatarUrl = data.avatarUrl || null; // New S3 CloudFront URL field
+    this.avatar = data.avatar || '';
+    this.avatarUrl = data.avatarUrl || null;
     this.friends = data.friends || [];
     this.groups = data.groups || [];
     this.createdAt = data.createdAt || new Date().toISOString();
@@ -22,95 +21,55 @@ class User {
 
   static async create(userData) {
     console.log('Creating user with data:', { ...userData, password: '[REDACTED]' });
-    console.log('Using table:', TABLE_NAME);
-    
+
     const user = new User(userData);
-    
-    // Hash password
+
     if (user.password) {
       user.password = await bcrypt.hash(user.password, 8);
     }
 
-    const params = {
-      TableName: TABLE_NAME,
-      Item: user,
-      ConditionExpression: 'attribute_not_exists(email)'
-    };
+    // Use a transaction to enforce email uniqueness
+    await db.runTransaction(async (t) => {
+      const existing = await db.collection(COLLECTION)
+        .where('email', '==', user.email)
+        .limit(1)
+        .get();
 
-    try {
-      console.log('Sending PutCommand to DynamoDB:', { 
-        TableName: params.TableName,
-        ConditionExpression: params.ConditionExpression
-      });
-      await docClient.send(new PutCommand(params));
-      return user;
-    } catch (error) {
-      console.error('Error creating user:', error);
-      if (error.name === 'ConditionalCheckFailedException') {
+      if (!existing.empty) {
         throw new Error('User already exists');
       }
-      throw error;
-    }
+
+      t.set(db.collection(COLLECTION).doc(user.id), { ...user });
+    });
+
+    return user;
   }
 
   static async findByEmail(email) {
     console.log('Finding user by email:', email);
-    console.log('Using table:', TABLE_NAME);
-    
-    const params = {
-      TableName: TABLE_NAME,
-      IndexName: 'EmailIndex',
-      KeyConditionExpression: 'email = :email',
-      ExpressionAttributeValues: {
-        ':email': email
-      }
-    };
 
-    try {
-      console.log('Sending QueryCommand to DynamoDB:', {
-        TableName: params.TableName,
-        IndexName: params.IndexName,
-        KeyConditionExpression: params.KeyConditionExpression
-      });
-      const result = await docClient.send(new QueryCommand(params));
-      console.log('Query result:', { 
-        found: result.Items && result.Items.length > 0,
-        count: result.Items ? result.Items.length : 0
-      });
-      if (result.Items && result.Items.length > 0) {
-        return new User(result.Items[0]);
-      }
+    const snapshot = await db.collection(COLLECTION)
+      .where('email', '==', email)
+      .limit(1)
+      .get();
+
+    if (snapshot.empty) {
       return null;
-    } catch (error) {
-      console.error('Error finding user by email:', error);
-      throw error;
     }
+
+    return new User(snapshot.docs[0].data());
   }
 
   static async findById(id) {
     console.log('Finding user by ID:', id);
-    console.log('Using table:', TABLE_NAME);
-    
-    const params = {
-      TableName: TABLE_NAME,
-      Key: { id }
-    };
 
-    try {
-      console.log('Sending GetCommand to DynamoDB:', {
-        TableName: params.TableName,
-        Key: params.Key
-      });
-      const result = await docClient.send(new GetCommand(params));
-      console.log('Get result:', { found: !!result.Item });
-      if (result.Item) {
-        return new User(result.Item);
-      }
+    const doc = await db.collection(COLLECTION).doc(id).get();
+
+    if (!doc.exists) {
       return null;
-    } catch (error) {
-      console.error('Error finding user by ID:', error);
-      throw error;
     }
+
+    return new User(doc.data());
   }
 
   async comparePassword(candidatePassword) {
@@ -119,20 +78,9 @@ class User {
 
   async save() {
     this.updatedAt = new Date().toISOString();
-    
-    const params = {
-      TableName: TABLE_NAME,
-      Item: this
-    };
 
-    try {
-      console.log('Saving user:', { id: this.id, email: this.email });
-      await docClient.send(new PutCommand(params));
-      return this;
-    } catch (error) {
-      console.error('Error saving user:', error);
-      throw error;
-    }
+    await db.collection(COLLECTION).doc(this.id).set({ ...this });
+    return this;
   }
 
   toJSON() {
@@ -143,33 +91,21 @@ class User {
 
   static async searchByEmail(emailQuery, excludeId) {
     console.log('Searching users by email:', { emailQuery, excludeId });
-    console.log('Using table:', TABLE_NAME);
-    
-    const params = {
-      TableName: TABLE_NAME,
-      FilterExpression: 'contains(email, :email) AND id <> :excludeId',
-      ExpressionAttributeValues: {
-        ':email': emailQuery,
-        ':excludeId': excludeId
-      },
-      ProjectionExpression: 'id, #name, email',
-      ExpressionAttributeNames: {
-        '#name': 'name'
-      }
-    };
 
-    try {
-      console.log('Sending QueryCommand to DynamoDB:', {
-        TableName: params.TableName,
-        FilterExpression: params.FilterExpression
-      });
-      const result = await docClient.send(new QueryCommand(params));
-      console.log('Search result:', { count: result.Items ? result.Items.length : 0 });
-      return result.Items || [];
-    } catch (error) {
-      console.error('Error searching users by email:', error);
-      throw error;
-    }
+    // Firestore doesn't support 'contains' on strings, so fetch all and filter in JS
+    // (matches original DynamoDB Scan + FilterExpression behavior)
+    const snapshot = await db.collection(COLLECTION).get();
+    const results = [];
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      if (data.email && data.email.includes(emailQuery) && data.id !== excludeId) {
+        results.push({ id: data.id, name: data.name, email: data.email });
+      }
+    });
+
+    console.log('Search result:', { count: results.length });
+    return results;
   }
 
   static async addToGroup(userId, groupId) {
@@ -178,17 +114,10 @@ class User {
       throw new Error('User not found');
     }
 
-    // Add group to user's groups array if not already present
     if (!user.groups.includes(groupId)) {
       user.groups.push(groupId);
       user.updatedAt = new Date().toISOString();
-
-      const params = {
-        TableName: TABLE_NAME,
-        Item: user
-      };
-
-      await docClient.send(new PutCommand(params));
+      await db.collection(COLLECTION).doc(user.id).set({ ...user });
     }
 
     return user;
@@ -200,16 +129,9 @@ class User {
       throw new Error('User not found');
     }
 
-    // Remove group from user's groups array
     user.groups = user.groups.filter(id => id !== groupId);
     user.updatedAt = new Date().toISOString();
-
-    const params = {
-      TableName: TABLE_NAME,
-      Item: user
-    };
-
-    await docClient.send(new PutCommand(params));
+    await db.collection(COLLECTION).doc(user.id).set({ ...user });
     return user;
   }
 }

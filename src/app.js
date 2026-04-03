@@ -58,7 +58,7 @@ const startServer = async () => {
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
     console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    console.log(`AWS Region: ${process.env.AWS_REGION || 'us-east-1'}`);
+    console.log(`GCP Project: ${process.env.GCP_PROJECT_ID || 'not set'}`);
   });
 };
 

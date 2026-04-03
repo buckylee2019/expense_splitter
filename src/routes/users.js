@@ -1,7 +1,7 @@
 const express = require('express');
 const User = require('../models/User');
 const { authMiddleware } = require('../utils/auth');
-const s3Service = require('../utils/s3');
+const s3Service = require('../utils/gcs');
 
 const router = express.Router();
 
@@ -27,7 +27,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
     if (avatar !== undefined) {
       if (avatar === null || avatar === '') {
         // Remove avatar
-        if (req.user.avatarUrl && req.user.avatarUrl.includes(process.env.PHOTOS_CLOUDFRONT_DOMAIN)) {
+        if (req.user.avatarUrl && req.user.avatarUrl.includes(process.env.PHOTOS_BASE_URL)) {
           console.log('Deleting old avatar:', req.user.avatarUrl);
           await s3Service.deleteUserAvatar(req.user.avatarUrl);
         }
@@ -50,7 +50,7 @@ router.put('/profile', authMiddleware, async (req, res) => {
         
         try {
           // Delete old avatar if it exists
-          if (req.user.avatarUrl && req.user.avatarUrl.includes(process.env.PHOTOS_CLOUDFRONT_DOMAIN)) {
+          if (req.user.avatarUrl && req.user.avatarUrl.includes(process.env.PHOTOS_BASE_URL)) {
             console.log('Deleting old avatar:', req.user.avatarUrl);
             await s3Service.deleteUserAvatar(req.user.avatarUrl);
           }
