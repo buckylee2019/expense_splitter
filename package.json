@@ -8,11 +8,7 @@
     "dev": "nodemon src/app.js",
     "test": "jest",
     "test:watch": "jest --watch",
-    "build": "npm install --production",
-    "deploy:dev": "./scripts/deploy.sh dev",
-    "deploy:staging": "./scripts/deploy.sh staging",
-    "deploy:prod": "./scripts/deploy.sh prod",
-    "package": "rm -f deployment.zip && zip -r deployment.zip lambda.js src/ package.json package-lock.json node_modules/ -x 'node_modules/aws-sdk/*' 'node_modules/lodash/*' '*.git*' 'tests/*' '*.md'"
+    "build": "npm install --production"
   },
   "keywords": [
     "expense",
@@ -35,9 +31,6 @@
     "uuid": "^9.0.1"
   },
   "devDependencies": {
-    "@aws-sdk/client-dynamodb": "^3.1023.0",
-    "@aws-sdk/client-s3": "^3.1023.0",
-    "@aws-sdk/lib-dynamodb": "^3.1023.0",
     "jest": "^29.6.2",
     "nodemon": "^3.0.1",
     "supertest": "^6.3.3"

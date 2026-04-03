@@ -1,14 +1,50 @@
 # SplitX Application
 
-A full-stack application for splitting expenses among friends and groups.
+A full-stack application for splitting expenses among friends and groups, deployed on Google Cloud Platform.
 
-## 專案架構 (Project Architecture)
+## Live URL
 
-### 系統架構圖 (System Architecture)
+- **Frontend**: https://splitx-tw.web.app
+- **API**: https://expense-splitter-6vjteiok3q-de.a.run.app
 
-![aws architecture](./assets/architecture.png)
+## 系統架構 (System Architecture)
 
-### 應用程式架構 (Application Architecture)
+```
+                       使用者
+                      ┌──┴──┐
+                 前端  │     │  API
+                      ▼     ▼
+            ┌─────────────┐ ┌──────────────────────┐
+            │  Firebase    │ │  Cloud Run           │
+            │  Hosting     │ │  asia-east1          │
+            │              │ │                      │
+            │  React SPA   │ │  Express.js (Node 22)│
+            │  splitx-tw   │ │  Container, 0→10     │
+            │  .web.app    │ │  512MB, 1 vCPU       │
+            └─────────────┘ └──────┬──────┬────────┘
+                                   │      │
+                                   ▼      ▼
+                     ┌──────────────┐ ┌──────────────┐
+                     │  Firestore   │ │ Cloud Storage │
+                     │  Native mode │ │ Photos Bucket │
+                     │  asia-east1  │ │ (Public Read) │
+                     └──────────────┘ └──────────────┘
+```
+
+## 技術棧 (Tech Stack)
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, React Router, Chart.js, Axios |
+| Backend | Node.js 22, Express.js |
+| Database | Google Cloud Firestore (Native mode) |
+| Storage | Google Cloud Storage |
+| Hosting | Firebase Hosting (frontend), Cloud Run (API) |
+| IaC | Terraform |
+| Auth | JWT + bcrypt |
+| Secrets | Google Secret Manager |
+
+## 應用程式架構 (Application Architecture)
 
 ```mermaid
 graph LR
@@ -23,7 +59,7 @@ graph LR
         Routes[Routes<br/>Auth/Users/Groups/Expenses]
         Models[Models<br/>User/Group/Expense]
         ServicesB[Services<br/>Balance/Settlement]
-        Utils[Utils<br/>Auth/S3]
+        Utils[Utils<br/>Auth/GCS]
     end
     
     Pages --> Components
@@ -39,7 +75,7 @@ graph LR
     style Models fill:#f0db4f
 ```
 
-### 資料模型關係 (Data Model Relationships)
+## 資料模型 (Data Model)
 
 ```mermaid
 erDiagram
@@ -92,76 +128,86 @@ erDiagram
     }
 ```
 
-### 部署流程 (Deployment Flow)
+## 專案結構 (Project Structure)
 
-```mermaid
-flowchart TD
-    Start([開始部署]) --> Choice{選擇部署類型}
-    
-    Choice -->|Backend| BuildBE[建置 Backend<br/>npm install]
-    Choice -->|Frontend| BuildFE[建置 Frontend<br/>npm run build]
-    Choice -->|Both| BuildBoth[建置兩者]
-    
-    BuildBE --> PackageLambda[打包 Lambda<br/>deployment.zip]
-    PackageLambda --> UpdateLambda[更新 Lambda 函數]
-    UpdateLambda --> TestAPI[測試 API]
-    
-    BuildFE --> BuildReact[React 建置<br/>create-react-app]
-    BuildReact --> UploadS3[上傳到 S3]
-    UploadS3 --> InvalidateCF[清除 CloudFront 快取]
-    
-    BuildBoth --> PackageLambda
-    BuildBoth --> BuildReact
-    
-    TestAPI --> Success([部署完成])
-    InvalidateCF --> Success
-    
-    style Start fill:#90EE90
-    style Success fill:#90EE90
-    style BuildBE fill:#FFD700
-    style BuildFE fill:#87CEEB
+```
+expense_splitter/
+├── src/                    # Backend (Express.js)
+│   ├── app.js              # Express server
+│   ├── config/
+│   │   └── firestore.js    # Firestore client
+│   ├── models/             # User, Group, Expense, Settlement
+│   ├── routes/             # API endpoints
+│   ├── services/           # Balance & settlement logic
+│   └── utils/              # Auth middleware, GCS service
+├── frontend/               # React SPA
+│   ├── src/
+│   │   ├── pages/          # Login, Dashboard, Groups, Reports
+│   │   ├── components/     # Reusable UI components
+│   │   ├── services/       # API client (Axios)
+│   │   └── contexts/       # Auth context
+│   └── package.json
+├── terraform/              # Infrastructure as Code
+│   ├── main.tf             # Provider + GCP APIs
+│   ├── cloud_run.tf        # Cloud Run + Artifact Registry + Secrets
+│   ├── firestore.tf        # Firestore DB + indexes
+│   ├── storage.tf          # Cloud Storage buckets
+│   ├── iam.tf              # Service account + roles
+│   ├── variables.tf        # project_id, region, jwt_secret
+│   └── outputs.tf          # URLs
+├── scripts/
+│   └── migrate-dynamodb-to-firestore.js  # Data migration tool
+├── Dockerfile              # Cloud Run container
+├── firebase.json           # Firebase Hosting config
+└── GCP-DEPLOYMENT.md       # Detailed deployment guide
 ```
 
-
-## Deployment Instructions
-
-We've consolidated all deployment scripts into a single `deploy-all.sh` script that can handle both backend and frontend deployments.
-### Using the Unified Deployment Script
+## 本地開發 (Local Development)
 
 ```bash
-# Make the script executable if needed
-chmod +x deploy-all.sh
+# Backend
+cp .env.example .env        # Fill in GCP credentials
+npm install
+npm run dev                  # http://localhost:3000
 
-# Run the deployment script
-./deploy-all.sh [environment]
+# Frontend
+cd frontend
+npm install
+npm start                    # http://localhost:3001 (proxy to :3000)
 ```
 
-The script will prompt you to choose what you want to deploy:
-1. Backend only
-2. Frontend only
-3. Both backend and frontend
-4. Just invalidate CloudFront cache
+## 部署 (Deployment)
 
-### Environment Options
+詳細部署步驟請參考 [GCP-DEPLOYMENT.md](./GCP-DEPLOYMENT.md)。
 
-- `dev` (default): Development environment
-- `staging`: Staging environment
-- `prod`: Production environment
+快速部署流程：
 
-Example:
 ```bash
-# Deploy to development environment (default)
-./deploy-all.sh
+# 1. 基礎設施
+cd terraform && terraform apply -var="project_id=bucky-day-1" -var="jwt_secret=..."
 
-# Deploy to production environment
-./deploy-all.sh prod
+# 2. Backend (Cloud Build)
+gcloud builds submit --tag asia-east1-docker.pkg.dev/bucky-day-1/expense-splitter/api:latest --region=asia-east1
+
+# 3. Frontend (Firebase)
+cd frontend && REACT_APP_API_URL=$(terraform -chdir=../terraform output -raw api_url) npm run build
+cd .. && firebase deploy --only hosting
 ```
 
-## Troubleshooting
+## API Endpoints
 
-If you encounter issues with the CloudFront distribution showing stale content:
-1. Run the deployment script and choose option 4 to invalidate the CloudFront cache
-2. Wait 5-15 minutes for the changes to propagate through the CloudFront network
-3. Try accessing the site in an incognito/private browsing window or clear your browser cache
-
-For any other issues, check the CloudWatch logs for the Lambda function or contact support.
+| Method | Path | Description |
+|---|---|---|
+| POST | `/api/auth/register` | Register |
+| POST | `/api/auth/login` | Login |
+| GET | `/api/users/profile` | Get profile |
+| PUT | `/api/users/profile` | Update profile |
+| GET/POST | `/api/groups` | List / Create groups |
+| GET/PUT/DELETE | `/api/groups/:id` | Group CRUD |
+| POST | `/api/groups/:id/members` | Add member |
+| GET/POST | `/api/expenses` | List / Create expenses |
+| GET/PUT/DELETE | `/api/expenses/:id` | Expense CRUD |
+| GET/POST | `/api/settlements` | List / Create settlements |
+| GET | `/api/balances` | Get balances |
+| GET | `/api/reports/monthly/:year/:month` | Monthly report |
+| GET | `/health` | Health check |

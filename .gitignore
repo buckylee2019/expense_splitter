@@ -91,10 +91,6 @@ temp/
 logs
 *.log
 
-# AWS deployment packages
-*.zip
-lambda-deployment*.zip
-
 # IDE files
 .vscode/
 .idea/
@@ -111,13 +107,8 @@ lambda-deployment*.zip
 ehthumbs.db
 Thumbs.db
 
-# CloudFormation outputs
-cloudformation/outputs.json
-
 # Build files
 frontend/build/
-cdk/cdk.out/
-cdk.out/
 
 # Terraform
 terraform/.terraform/
