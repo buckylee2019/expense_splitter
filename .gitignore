@@ -115,6 +115,8 @@ terraform/.terraform/
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
 terraform/tfplan
+terraform/*.tfvars
+terraform/*.tfvars.json
 
 # Firebase
 .firebase/

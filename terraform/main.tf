@@ -7,6 +7,11 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "gcs" {
+    bucket = "bucky-day-1-terraform-state"
+    prefix = "expense-splitter"
+  }
 }
 
 provider "google" {
