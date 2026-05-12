@@ -7,6 +7,7 @@ import SplitConfigPopup from '../components/SplitConfigPopup';
 import PaidByPopup from '../components/PaidByPopup';
 import MultiplePaidByPopup from '../components/MultiplePaidByPopup';
 import { parseCategoryString } from '../data/expenseCategories';
+import { toDatetimeLocal } from '../utils/dateUtils';
 
 const EditExpense = () => {
   const { groupId, expenseId } = useParams();
@@ -20,7 +21,7 @@ const EditExpense = () => {
     currency: 'TWD',
     category: '',
     project: '',
-    date: new Date().toISOString().split('T')[0],
+    date: toDatetimeLocal(),
     splitType: 'equal',
     paidBy: '',
     notes: ''
@@ -83,7 +84,7 @@ const EditExpense = () => {
           currency: expense.currency || 'TWD',
           category: expense.category || '',
           project: expense.project || '',
-          date: expense.date ? expense.date.split('T')[0] : new Date().toISOString().slice(0, 16),
+          date: toDatetimeLocal(expense.date),
           paidBy: isMultiple ? '' : expense.paidBy,
           splitType: expense.splitType || 'equal',
           notes: expense.notes || ''
@@ -327,13 +328,13 @@ const EditExpense = () => {
           <div className="form-group">
             <label htmlFor="date">Date</label>
             <input
-              type="date"
+              type="datetime-local"
               id="date"
               name="date"
               value={formData.date}
               onChange={handleChange}
               required
-              max={new Date().toISOString().split('T')[0]}
+              max={toDatetimeLocal()}
             />
           </div>
         </div>

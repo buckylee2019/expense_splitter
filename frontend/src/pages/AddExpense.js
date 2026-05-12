@@ -7,6 +7,7 @@ import SplitConfigPopup from '../components/SplitConfigPopup';
 import PaidByPopup from '../components/PaidByPopup';
 import MultiplePaidByPopup from '../components/MultiplePaidByPopup';
 import { parseCategoryString } from '../data/expenseCategories';
+import { toDatetimeLocal } from '../utils/dateUtils';
 
 const AddExpense = () => {
   const { groupId } = useParams();
@@ -20,7 +21,7 @@ const AddExpense = () => {
     currency: 'TWD',
     category: '', // New comprehensive category system
     project: '', // Keep project field for MOZE compatibility
-    date: new Date().toISOString().slice(0, 16), // Default to now in YYYY-MM-DDTHH:MM format
+    date: toDatetimeLocal(),
     splitType: 'equal',
     paidBy: '',
     notes: ''
@@ -379,7 +380,7 @@ const AddExpense = () => {
               value={formData.date}
               onChange={handleChange}
               required
-              max={new Date().toISOString().split('T')[0]}
+              max={toDatetimeLocal()}
             />
           </div>
         </div>
