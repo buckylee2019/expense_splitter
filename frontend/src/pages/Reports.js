@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-import CategoryPieChart from '../components/CategoryPieChart';
+import CategoryPieChart, { getExpenseCurrencies, parseCategory } from '../components/CategoryPieChart';
 import '../styles/Reports.css';
 
 const Reports = () => {
@@ -16,6 +16,9 @@ const Reports = () => {
   const [selectedGroupId, setSelectedGroupId] = useState('');
   const [displayMode, setDisplayMode] = useState('list'); // 'list' or 'matrix'
   const [exportType, setExportType] = useState('personal'); // 'personal', 'all-members', 'group-balances'
+  // Pie chart selection; the expense details below are filtered the same way
+  const [chartCurrency, setChartCurrency] = useState(null);
+  const [chartCategory, setChartCategory] = useState({ main: null, sub: null });
 
   // Generate year options (current year and previous 5 years)
   const yearOptions = [];
@@ -42,6 +45,8 @@ const Reports = () => {
   useEffect(() => {
     fetchCurrentUser();
     fetchReport();
+    setChartCurrency(null);
+    setChartCategory({ main: null, sub: null });
   }, [selectedYear, selectedMonth]);
 
   const fetchCurrentUser = async () => {
@@ -361,6 +366,25 @@ const Reports = () => {
     : [];
   const primaryCurrency = reportCurrencies[0];
 
+  // Expenses matching the pie chart selection (currency, then category)
+  const allExpenses = reportData ? reportData.expenses : [];
+  const expenseCurrencies = getExpenseCurrencies(allExpenses);
+  const activeCurrency = expenseCurrencies.includes(chartCurrency) ? chartCurrency : expenseCurrencies[0];
+  const filteredExpenses = allExpenses.filter(expense => {
+    if ((expense.currency || 'TWD') !== activeCurrency) return false;
+    if (!chartCategory.main) return true;
+    const { main, sub } = parseCategory(expense.category);
+    if (main !== chartCategory.main) return false;
+    return !chartCategory.sub || (sub || '其他') === chartCategory.sub;
+  });
+  const isFiltered = filteredExpenses.length !== allExpenses.length;
+
+  const handleChartCurrencyChange = (currency) => {
+    setChartCurrency(currency);
+    // The drilled-in category may not exist in the other currency
+    setChartCategory({ main: null, sub: null });
+  };
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('zh-TW', {
@@ -379,13 +403,13 @@ const Reports = () => {
   };
 
   const renderMatrixView = () => {
-    if (!reportData || !reportData.expenses.length) return null;
+    if (!reportData || !filteredExpenses.length) return null;
 
     // Get all unique users from all expenses
     const allUsers = new Map();
     const expenseMatrix = {};
 
-    reportData.expenses.forEach(expense => {
+    filteredExpenses.forEach(expense => {
       expense.splits?.forEach(split => {
         const userId = split.user || split.userId;
         if (userId && split.userName) {
@@ -401,7 +425,7 @@ const Reports = () => {
     const users = Array.from(allUsers.entries()).map(([id, name]) => ({ id, name }));
 
     // Fill the matrix
-    reportData.expenses.forEach(expense => {
+    filteredExpenses.forEach(expense => {
       expense.splits?.forEach(split => {
         const userId = split.user || split.userId;
         if (userId) {
@@ -603,9 +627,14 @@ const Reports = () => {
             {/* Category Pie Chart */}
             <div className="chart-section">
               <h2>Category Distribution</h2>
-              <CategoryPieChart 
-                expenses={reportData.expenses} 
+              <CategoryPieChart
+                expenses={reportData.expenses}
                 title={`Expenses by Category - ${selectedYear}/${selectedMonth}`}
+                currency={activeCurrency}
+                onCurrencyChange={handleChartCurrencyChange}
+                mainCategory={chartCategory.main}
+                subCategory={chartCategory.sub}
+                onCategoryChange={(main, sub) => setChartCategory({ main, sub })}
               />
             </div>
 
@@ -660,8 +689,30 @@ const Reports = () => {
 
           {/* Expense List */}
           <div className="expense-list-section card">
-            <h2>📋 Expense Details ({reportData.expenses.length} items)</h2>
-            
+            <h2>
+              📋 Expense Details ({isFiltered
+                ? `${filteredExpenses.length} of ${reportData.expenses.length}`
+                : reportData.expenses.length} items)
+            </h2>
+
+            {isFiltered && (
+              <div className="details-filter">
+                <span className="details-filter-label">Filtered by chart:</span>
+                {expenseCurrencies.length > 1 && <span className="details-filter-chip">{activeCurrency}</span>}
+                {chartCategory.main && <span className="details-filter-chip">{chartCategory.main}</span>}
+                {chartCategory.sub && <span className="details-filter-chip">{chartCategory.sub}</span>}
+                {chartCategory.main && (
+                  <button
+                    type="button"
+                    className="details-filter-clear"
+                    onClick={() => setChartCategory({ main: null, sub: null })}
+                  >
+                    Clear category
+                  </button>
+                )}
+              </div>
+            )}
+
             {reportData.expenses.length === 0 ? (
               <div className="no-expenses">
                 <p>No expenses found for {selectedYear}/{selectedMonth}</p>
@@ -683,7 +734,7 @@ const Reports = () => {
                 </div>
                 
                 <div className="table-body">
-                  {reportData.expenses
+                  {[...filteredExpenses]
                     .sort((a, b) => new Date(b.date) - new Date(a.date))
                     .map(expense => (
                       <div key={expense.id} className="table-row">

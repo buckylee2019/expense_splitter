@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Chart as ChartJS,
   ArcElement,
@@ -12,52 +12,66 @@ import { expenseCategories } from '../data/expenseCategories';
 // Register Chart.js components
 ChartJS.register(ArcElement, Tooltip, Legend, Title);
 
-const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
-  const [currentView, setCurrentView] = useState('main'); // 'main' or specific main category
-  const [breadcrumb, setBreadcrumb] = useState([]);
-  const [selectedCurrency, setSelectedCurrency] = useState(null);
-
-  // Amounts in different currencies can't share one pie (no FX conversion),
-  // so chart one currency at a time, defaulting to the most-used one.
-  const currencyCounts = {};
+// Currencies present in the expenses, most-used first
+export const getExpenseCurrencies = (expenses) => {
+  const counts = {};
   (expenses || []).forEach(expense => {
     const currency = expense.currency || 'TWD';
-    currencyCounts[currency] = (currencyCounts[currency] || 0) + 1;
+    counts[currency] = (counts[currency] || 0) + 1;
   });
-  const currencies = Object.keys(currencyCounts).sort((a, b) => currencyCounts[b] - currencyCounts[a]);
-  const currency = currencies.includes(selectedCurrency) ? selectedCurrency : currencies[0];
-  const currencyExpenses = (expenses || []).filter(expense => (expense.currency || 'TWD') === currency);
+  return Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+};
 
-  // Parse category string to get main category and subcategory
-  const parseCategory = (categoryString) => {
-    if (!categoryString) return { main: 'Uncategorized', sub: null };
-    
-    // Handle different category formats
-    if (categoryString.includes(' ')) {
-      // Format: "🍽️ 餐飲" or "main-sub" or "main sub"
-      const parts = categoryString.split(/[\s-]/);
-      if (parts.length >= 2) {
-        const main = parts[0].replace(/[🍽️🚗🏠🎬🛒💊📚⚡📱👕✈️🎁🏋️🐕🔧💼]/g, '').trim();
-        const sub = parts.slice(1).join(' ').trim();
-        return { main: main || 'Uncategorized', sub: sub || null };
-      }
+// Parse category string to get main category and subcategory
+export const parseCategory = (categoryString) => {
+  if (!categoryString) return { main: 'Uncategorized', sub: null };
+  
+  // Handle different category formats
+  if (categoryString.includes(' ')) {
+    // Format: "🍽️ 餐飲" or "main-sub" or "main sub"
+    const parts = categoryString.split(/[\s-]/);
+    if (parts.length >= 2) {
+      const main = parts[0].replace(/[🍽️🚗🏠🎬🛒💊📚⚡📱👕✈️🎁🏋️🐕🔧💼]/g, '').trim();
+      const sub = parts.slice(1).join(' ').trim();
+      return { main: main || 'Uncategorized', sub: sub || null };
     }
-    
-    // Check if it's a known main category
-    if (expenseCategories[categoryString]) {
-      return { main: categoryString, sub: null };
-    }
-    
-    // Try to find main category by checking if categoryString contains a known main category
-    for (const mainCat of Object.keys(expenseCategories)) {
-      if (categoryString.includes(mainCat)) {
-        const sub = categoryString.replace(mainCat, '').replace(/[-\s]/g, '').trim();
-        return { main: mainCat, sub: sub || null };
-      }
-    }
-    
+  }
+  
+  // Check if it's a known main category
+  if (expenseCategories[categoryString]) {
     return { main: categoryString, sub: null };
-  };
+  }
+  
+  // Try to find main category by checking if categoryString contains a known main category
+  for (const mainCat of Object.keys(expenseCategories)) {
+    if (categoryString.includes(mainCat)) {
+      const sub = categoryString.replace(mainCat, '').replace(/[-\s]/g, '').trim();
+      return { main: mainCat, sub: sub || null };
+    }
+  }
+  
+  return { main: categoryString, sub: null };
+};
+
+// Amounts are the user's own share, matching the report summary. Amounts in
+// different currencies can't share one pie (no FX conversion), so the chart
+// shows one currency at a time.
+//
+// Controlled: the parent owns currency / mainCategory / subCategory so it can
+// filter other views (e.g. the expense details list) the same way.
+const CategoryPieChart = ({
+  expenses,
+  title = "Expenses by Category",
+  currency,
+  onCurrencyChange,
+  mainCategory = null,
+  subCategory = null,
+  onCategoryChange
+}) => {
+  const currencies = getExpenseCurrencies(expenses);
+  const currencyExpenses = (expenses || []).filter(expense => (expense.currency || 'TWD') === currency);
+  const currentView = mainCategory || 'main';
+  const breadcrumb = mainCategory ? ['All Categories', mainCategory] : [];
 
   // Process expenses for main categories
   const processMainCategoryData = () => {
@@ -68,7 +82,7 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
       if (!categoryTotals[main]) {
         categoryTotals[main] = 0;
       }
-      categoryTotals[main] += expense.amount;
+      categoryTotals[main] += expense.userAmount || 0;
     });
 
     return categoryTotals;
@@ -85,7 +99,7 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
         if (!subCategoryTotals[subCategory]) {
           subCategoryTotals[subCategory] = 0;
         }
-        subCategoryTotals[subCategory] += expense.amount;
+        subCategoryTotals[subCategory] += expense.userAmount || 0;
       }
     });
 
@@ -149,17 +163,16 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
   };
 
   // Handle chart click for drill-down
+  // Main view: drill into the clicked category. Subcategory view: select the
+  // clicked subcategory, or clear the selection when it's clicked again.
   const handleChartClick = (event, elements) => {
-    if (elements.length > 0 && currentView === 'main') {
-      const clickedIndex = elements[0].index;
-      const categories = Object.keys(getCurrentData());
-      const clickedCategory = categories[clickedIndex];
-      
-      // Check if this main category has subcategories
-      if (expenseCategories[clickedCategory] && expenseCategories[clickedCategory].length > 0) {
-        setCurrentView(clickedCategory);
-        setBreadcrumb(['All Categories', clickedCategory]);
-      }
+    if (elements.length === 0) return;
+    const clicked = Object.keys(getCurrentData())[elements[0].index];
+
+    if (currentView === 'main') {
+      onCategoryChange(clicked, null);
+    } else {
+      onCategoryChange(mainCategory, clicked === subCategory ? null : clicked);
     }
   };
 
@@ -175,8 +188,7 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
   // Handle breadcrumb navigation
   const handleBreadcrumbClick = (level) => {
     if (level === 0) {
-      setCurrentView('main');
-      setBreadcrumb([]);
+      onCategoryChange(null, null);
     }
   };
 
@@ -210,7 +222,8 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
         borderWidth: 2,
         borderColor: '#ffffff',
         hoverBorderWidth: 3,
-        hoverBorderColor: '#ffffff'
+        hoverBorderColor: '#ffffff',
+        offset: categories.map(cat => (cat === subCategory ? 16 : 0))
       }
     ]
   };
@@ -292,12 +305,7 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
               key={c}
               type="button"
               className={`chart-currency-tab ${c === currency ? 'active' : ''}`}
-              onClick={() => {
-                // Drop back to the main view; the drilled-in category may not exist in this currency
-                setSelectedCurrency(c);
-                setCurrentView('main');
-                setBreadcrumb([]);
-              }}
+              onClick={() => onCurrencyChange(c)}
             >
               {c}
             </button>
@@ -328,11 +336,11 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
       </div>
 
       {/* Instructions for drill-down */}
-      {currentView === 'main' && (
-        <div className="chart-instructions">
-          💡 Click on a category slice to see its subcategories
-        </div>
-      )}
+      <div className="chart-instructions">
+        {currentView === 'main'
+          ? '💡 Click on a category slice to see its subcategories'
+          : '💡 Click on a subcategory to filter the details below'}
+      </div>
 
       <div className="category-summary">
         <div className="summary-stats">

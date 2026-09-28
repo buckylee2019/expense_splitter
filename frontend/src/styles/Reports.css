@@ -470,3 +470,35 @@
   border-radius: 4px;
   font-size: 14px;
 }
+
+/* Expense details filtered by the category pie chart */
+.details-filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.details-filter-label {
+  color: #666;
+}
+
+.details-filter-chip {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: #eef1fb;
+  color: #3b4a8a;
+  font-weight: 600;
+}
+
+.details-filter-clear {
+  border: none;
+  background: none;
+  padding: 0;
+  color: #3b82f6;
+  font-size: 0.85rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
