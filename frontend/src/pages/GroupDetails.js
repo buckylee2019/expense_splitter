@@ -970,7 +970,7 @@ const GroupDetails = () => {
                           </div>
                           {item.notes && (
                             <div className="expense-payer-amount" style={{ color: '#6b7280' }}>
-                              {item.notes}
+                              <span className="expense-payer-name">{item.notes}</span>
                             </div>
                           )}
                         </div>
@@ -1024,7 +1024,8 @@ const GroupDetails = () => {
                           <CategoryBadge category={expense.category} />
                         </div>
                         <div className="expense-payer-amount">
-                          {expense.paidByName || 'Unknown'} Paid {expense.currency || 'TWD'} {expense.amount.toFixed(0)}
+                          <span className="expense-payer-name">{expense.paidByName || 'Unknown'}</span>
+                          &nbsp;Paid {expense.currency || 'TWD'} {expense.amount.toFixed(0)}
                         </div>
                       </div>
                     </div>

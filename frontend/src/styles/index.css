@@ -2017,6 +2017,8 @@ p {
   gap: var(--spacing-sm); /* Reduced from var(--spacing) */
   max-height: 60vh; /* Allow up to 60% of viewport height */
   overflow-y: auto;
+  overflow-x: hidden; /* overflow-y alone makes x 'auto' too, so wide cards scrolled sideways */
+  touch-action: pan-y; /* vertical swipes only on mobile */
   padding-right: var(--spacing-xs); /* Space for scrollbar */
 }
 
@@ -2112,6 +2114,8 @@ p {
   font-weight: 600;
   line-height: 1.3;
   flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .expense-user-balance-inline {
@@ -2139,8 +2143,17 @@ p {
 }
 
 .expense-payer-amount {
+  display: flex;
   font-weight: 500;
   white-space: nowrap;
+  min-width: 0;
+}
+
+/* Truncate a long payer name rather than the amount */
+.expense-payer-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Legacy styles for compatibility */
