@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import ImageCropper from '../components/ImageCropper';
+import AddMember from '../components/AddMember';
 
 const EditGroup = () => {
   const { id } = useParams();
@@ -15,7 +16,6 @@ const EditGroup = () => {
     photo: null,
     members: []
   });
-  const [newMemberEmail, setNewMemberEmail] = useState('');
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState('');
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -223,22 +223,6 @@ const EditGroup = () => {
     }
   };
 
-  const handleAddMember = async (e) => {
-    e.preventDefault();
-    if (!newMemberEmail.trim()) return;
-
-    try {
-      await api.post(`/api/groups/${id}/members`, {
-        email: newMemberEmail.trim()
-      });
-      setNewMemberEmail('');
-      fetchGroup(); // Refresh group data
-    } catch (error) {
-      console.error('Error adding member:', error);
-      setError(error.response?.data?.error || 'Failed to add member');
-    }
-  };
-
   const handleRemoveMember = async (memberId, memberName) => {
     if (window.confirm(`Remove ${memberName} from this group?`)) {
       try {
@@ -384,23 +368,11 @@ const EditGroup = () => {
         <div className="group-members-section">
           <h2>Group Members ({group.members?.length || 0})</h2>
           
-          <form onSubmit={handleAddMember} className="add-member-form">
-            <div className="form-group">
-              <label htmlFor="newMemberEmail">Add New Member</label>
-              <div className="input-group">
-                <input
-                  type="email"
-                  id="newMemberEmail"
-                  value={newMemberEmail}
-                  onChange={(e) => setNewMemberEmail(e.target.value)}
-                  placeholder="Enter email address"
-                />
-                <button type="submit" className="btn btn-primary">
-                  Add
-                </button>
-              </div>
-            </div>
-          </form>
+          <AddMember
+            groupId={id}
+            existingMemberIds={(group.members || []).map(m => m.user)}
+            onMemberAdded={fetchGroup}
+          />
 
           <div className="members-list">
             {group.members?.map(member => (

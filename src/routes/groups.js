@@ -111,47 +111,6 @@ router.get('/:id', authMiddleware, async (req, res) => {
   }
 });
 
-// Add member to group
-router.post('/:id/members', authMiddleware, async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    const group = await Group.findById(req.params.id);
-    if (!group) {
-      return res.status(404).json({ error: 'Group not found' });
-    }
-
-    // Check if user is admin
-    if (!group.isAdmin(req.user.id)) {
-      return res.status(403).json({ error: 'Insufficient permissions' });
-    }
-
-    const userToAdd = await User.findByEmail(email);
-    if (!userToAdd) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-
-    // Check if user is already a member
-    const isAlreadyMember = group.members.some(
-      member => member.user === userToAdd.id
-    );
-
-    if (isAlreadyMember) {
-      return res.status(400).json({ error: 'User is already a member' });
-    }
-
-    group.addMember(userToAdd.id, 'member');
-    await group.save();
-
-    res.json({
-      message: 'Member added successfully',
-      group
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
 // Get group expenses
 router.get('/:id/expenses', authMiddleware, async (req, res) => {
   try {
@@ -175,13 +134,13 @@ router.get('/:id/expenses', authMiddleware, async (req, res) => {
   }
 });
 
-// Add member to group
+// Add member to group, by userId (from contacts/search) or by email
 router.post('/:id/members', authMiddleware, async (req, res) => {
   try {
-    const { email } = req.body;
+    const { userId, email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email is required' });
+    if (!userId && !email) {
+      return res.status(400).json({ error: 'userId or email is required' });
     }
 
     // Find the group
@@ -196,9 +155,9 @@ router.post('/:id/members', authMiddleware, async (req, res) => {
     }
 
     // Find the user to add
-    const userToAdd = await User.findByEmail(email);
+    const userToAdd = userId ? await User.findById(userId) : await User.findByEmail(email);
     if (!userToAdd) {
-      return res.status(404).json({ error: 'User not found with this email' });
+      return res.status(404).json({ error: userId ? 'User not found' : 'User not found with this email' });
     }
 
     // Check if user is already a member

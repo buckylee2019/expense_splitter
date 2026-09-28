@@ -1,5 +1,6 @@
 const express = require('express');
 const User = require('../models/User');
+const Group = require('../models/Group');
 const { authMiddleware } = require('../utils/auth');
 const s3Service = require('../utils/gcs');
 
@@ -95,6 +96,57 @@ router.put('/profile', authMiddleware, async (req, res) => {
   }
 });
 
+// Search users by name (partial) or email (exact).
+// Must be registered before '/:id' or Express treats "search" as an id.
+router.get('/search', authMiddleware, async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+
+    if (q.length < 2) {
+      return res.status(400).json({ error: 'Query must be at least 2 characters' });
+    }
+
+    const users = await User.search(q, req.user.id);
+    res.json(users);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// People the current user shares at least one group with, most shared first
+router.get('/contacts', authMiddleware, async (req, res) => {
+  try {
+    const groups = await Group.findByUserId(req.user.id);
+
+    const sharedCounts = new Map();
+    for (const group of groups) {
+      for (const member of group.members) {
+        const memberId = typeof member === 'object' ? member.user : member;
+        if (memberId && memberId !== req.user.id) {
+          sharedCounts.set(memberId, (sharedCounts.get(memberId) || 0) + 1);
+        }
+      }
+    }
+
+    const users = await Promise.all([...sharedCounts.keys()].map(id => User.findById(id)));
+    const contacts = users
+      .filter(Boolean)
+      .map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatarUrl: user.avatarUrl,
+        avatar: user.avatar,
+        sharedGroups: sharedCounts.get(user.id)
+      }))
+      .sort((a, b) => b.sharedGroups - a.sharedGroups || (a.name || '').localeCompare(b.name || ''));
+
+    res.json(contacts);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Get user by ID
 router.get('/:id', authMiddleware, async (req, res) => {
   try {
@@ -103,22 +155,6 @@ router.get('/:id', authMiddleware, async (req, res) => {
       return res.status(404).json({ error: 'User not found' });
     }
     res.json({ id: user.id, name: user.name, email: user.email });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-// Search users by email
-router.get('/search', authMiddleware, async (req, res) => {
-  try {
-    const { email } = req.query;
-    
-    if (!email) {
-      return res.status(400).json({ error: 'Email query parameter required' });
-    }
-
-    const users = await User.searchByEmail(email, req.user.id);
-    res.json(users);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }

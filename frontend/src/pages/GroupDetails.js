@@ -1187,8 +1187,10 @@ const GroupDetails = () => {
           <div className="modal-content">
             <AddMember 
               groupId={groupId}
+              existingMemberIds={group.members.map(m => m.user)}
               onMemberAdded={handleMemberAdded}
               onCancel={() => setShowAddMember(false)}
+              autoFocus
             />
           </div>
         </div>

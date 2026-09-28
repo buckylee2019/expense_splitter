@@ -89,23 +89,46 @@ class User {
     return user;
   }
 
-  static async searchByEmail(emailQuery, excludeId) {
-    console.log('Searching users by email:', { emailQuery, excludeId });
+  // Search by partial name, or by exact email. Partial email matching is not
+  // allowed so the search can't be used to enumerate addresses; emails in the
+  // results are masked for the same reason.
+  static async search(query, excludeId, limit = 10) {
+    const q = query.trim().toLowerCase();
+    console.log('Searching users:', { q, excludeId });
 
     // Firestore doesn't support 'contains' on strings, so fetch all and filter in JS
-    // (matches original DynamoDB Scan + FilterExpression behavior)
     const snapshot = await db.collection(COLLECTION).get();
     const results = [];
 
     snapshot.forEach(doc => {
       const data = doc.data();
-      if (data.email && data.email.includes(emailQuery) && data.id !== excludeId) {
-        results.push({ id: data.id, name: data.name, email: data.email });
+      if (data.id === excludeId) return;
+
+      const nameMatch = data.name && data.name.toLowerCase().includes(q);
+      const emailMatch = data.email && data.email.toLowerCase() === q;
+      if (nameMatch || emailMatch) {
+        results.push({
+          id: data.id,
+          name: data.name,
+          email: User.maskEmail(data.email),
+          avatarUrl: data.avatarUrl || null,
+          avatar: data.avatar || ''
+        });
       }
     });
 
+    results.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     console.log('Search result:', { count: results.length });
-    return results;
+    return results.slice(0, limit);
+  }
+
+  // "buckylee@example.com" -> "bu******@example.com"
+  static maskEmail(email) {
+    if (!email) return '';
+    const [local, domain] = email.split('@');
+    if (!domain) return email;
+    const visible = local.slice(0, Math.min(2, local.length));
+    return `${visible}${'*'.repeat(Math.max(local.length - visible.length, 1))}@${domain}`;
   }
 
   static async addToGroup(userId, groupId) {

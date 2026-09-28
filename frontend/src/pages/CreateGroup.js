@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import MemberPicker from '../components/MemberPicker';
+import UserPhoto from '../components/UserPhoto';
 
 const CreateGroup = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: ''
   });
-  const [members, setMembers] = useState(['']);
+  const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
@@ -20,21 +22,12 @@ const CreateGroup = () => {
     });
   };
 
-  const handleMemberChange = (index, value) => {
-    const newMembers = [...members];
-    newMembers[index] = value;
-    setMembers(newMembers);
+  const selectMember = (user) => {
+    setMembers(prev => (prev.some(m => m.id === user.id) ? prev : [...prev, user]));
   };
 
-  const addMemberField = () => {
-    setMembers([...members, '']);
-  };
-
-  const removeMemberField = (index) => {
-    if (members.length > 1) {
-      const newMembers = members.filter((_, i) => i !== index);
-      setMembers(newMembers);
-    }
+  const removeMember = (userId) => {
+    setMembers(prev => prev.filter(m => m.id !== userId));
   };
 
   const handleSubmit = async (e) => {
@@ -48,13 +41,11 @@ const CreateGroup = () => {
       const groupId = groupResponse.data.group.id;
 
       // Add members to the group
-      const validMembers = members.filter(email => email.trim() !== '');
-      
-      for (const email of validMembers) {
+      for (const member of members) {
         try {
-          await api.post(`/api/groups/${groupId}/members`, { email: email.trim() });
+          await api.post(`/api/groups/${groupId}/members`, { userId: member.id });
         } catch (memberError) {
-          console.warn(`Failed to add member ${email}:`, memberError.response?.data?.error);
+          console.warn(`Failed to add member ${member.name}:`, memberError.response?.data?.error);
         }
       }
 
@@ -98,37 +89,32 @@ const CreateGroup = () => {
         <div className="members-section">
           <h3>Add Members (Optional)</h3>
           <p className="help-text">
-            You can add members now or invite them later. Enter their email addresses.
+            You can add members now or invite them later.
           </p>
-          
-          {members.map((member, index) => (
-            <div key={index} className="member-input-group">
-              <input
-                type="email"
-                value={member}
-                onChange={(e) => handleMemberChange(index, e.target.value)}
-                placeholder="Enter email address"
-                className="member-input"
-              />
-              {members.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => removeMemberField(index)}
-                  className="remove-member-btn"
-                >
-                  Remove
-                </button>
-              )}
-            </div>
-          ))}
-          
-          <button
-            type="button"
-            onClick={addMemberField}
-            className="add-member-btn button secondary"
-          >
-            Add Another Member
-          </button>
+
+          {members.length > 0 && (
+            <ul className="selected-members">
+              {members.map(member => (
+                <li key={member.id} className="selected-member">
+                  <UserPhoto user={member} />
+                  <span>{member.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeMember(member.id)}
+                    className="selected-member-remove"
+                    aria-label={`Remove ${member.name}`}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <MemberPicker
+            excludeIds={members.map(m => m.id)}
+            onSelect={selectMember}
+          />
         </div>
 
         <div className="form-actions">
