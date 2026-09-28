@@ -352,6 +352,15 @@ const Reports = () => {
     return `${currency} ${amount.toFixed(2)}`;
   };
 
+  // Currencies in this month's report, most-used first. Totals are kept per
+  // currency because there is no FX conversion.
+  const reportCurrencies = reportData
+    ? Object.entries(reportData.summary.byCurrency)
+        .sort(([, a], [, b]) => b.count - a.count)
+        .map(([currency]) => currency)
+    : [];
+  const primaryCurrency = reportCurrencies[0];
+
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('zh-TW', {
@@ -551,21 +560,42 @@ const Reports = () => {
               
               <div className="stat-item">
                 <span className="stat-label">Total Amount</span>
-                <span className="stat-value">{formatCurrency(reportData.summary.totalAmount)}</span>
+                <div className="stat-values">
+                  {reportCurrencies.map(currency => (
+                    <span key={currency} className="stat-value">
+                      {formatCurrency(reportData.summary.byCurrency[currency].totalAmount, currency)}
+                    </span>
+                  ))}
+                </div>
               </div>
-              
+
               <div className="stat-item">
                 <span className="stat-label">Amount Paid</span>
-                <span className="stat-value paid">{formatCurrency(reportData.summary.totalPaid)}</span>
+                <div className="stat-values">
+                  {reportCurrencies.map(currency => (
+                    <span key={currency} className="stat-value paid">
+                      {formatCurrency(reportData.summary.byCurrency[currency].totalPaid, currency)}
+                    </span>
+                  ))}
+                </div>
               </div>
-              
+
               <div className="stat-item">
                 <span className="stat-label">Net Balance</span>
-                <span className={`stat-value ${reportData.summary.totalOwed >= 0 ? 'owed' : 'owing'}`}>
-                  {reportData.summary.totalOwed >= 0 ? '+' : ''}{formatCurrency(reportData.summary.totalOwed)}
-                </span>
+                <div className="stat-values">
+                  {reportCurrencies.map(currency => {
+                    const owed = reportData.summary.byCurrency[currency].totalOwed;
+                    return (
+                      <span key={currency} className={`stat-value ${owed >= 0 ? 'owed' : 'owing'}`}>
+                        {owed >= 0 ? '+' : ''}{formatCurrency(owed, currency)}
+                      </span>
+                    );
+                  })}
+                </div>
                 <small className="stat-note">
-                  {reportData.summary.totalOwed >= 0 ? 'You are owed money' : 'You owe money'}
+                  {reportCurrencies.length > 1
+                    ? 'Per currency: + you are owed, − you owe'
+                    : (reportData.summary.byCurrency[primaryCurrency]?.totalOwed ?? 0) >= 0 ? 'You are owed money' : 'You owe money'}
                 </small>
               </div>
             </div>
@@ -585,11 +615,23 @@ const Reports = () => {
                 <h3><i className="fi fi-rr-calculator"></i> By Category</h3>
                 <div className="category-list">
                   {Object.entries(reportData.summary.byCategory)
-                    .sort(([,a], [,b]) => b - a)
-                    .map(([category, amount]) => (
+                    // Sort by the most-used currency first, then the others in order
+                    .sort(([, a], [, b]) => {
+                      for (const currency of reportCurrencies) {
+                        const diff = (b[currency] || 0) - (a[currency] || 0);
+                        if (diff !== 0) return diff;
+                      }
+                      return 0;
+                    })
+                    .map(([category, amounts]) => (
                       <div key={category} className="category-item">
                         <span className="category-name">{category}</span>
-                        <span className="category-amount">{formatCurrency(amount)}</span>
+                        <span className="category-amount">
+                          {reportCurrencies
+                            .filter(currency => amounts[currency])
+                            .map(currency => formatCurrency(amounts[currency], currency))
+                            .join(' · ')}
+                        </span>
                       </div>
                     ))}
                 </div>
@@ -601,14 +643,16 @@ const Reports = () => {
               <div className="currency-breakdown">
                 <h3>💱 By Currency</h3>
                 <div className="currency-list">
-                  {Object.entries(reportData.summary.byCurrency)
-                    .sort(([,a], [,b]) => b - a)
-                    .map(([currency, amount]) => (
-                      <div key={currency} className="currency-item">
-                        <span className="currency-name">{currency}</span>
-                        <span className="currency-amount">{formatCurrency(amount, currency)}</span>
-                      </div>
-                    ))}
+                  {reportCurrencies.map(currency => (
+                    <div key={currency} className="currency-item">
+                      <span className="currency-name">
+                        {currency} ({reportData.summary.byCurrency[currency].count} expenses)
+                      </span>
+                      <span className="currency-amount">
+                        {formatCurrency(reportData.summary.byCurrency[currency].totalAmount, currency)}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             )}

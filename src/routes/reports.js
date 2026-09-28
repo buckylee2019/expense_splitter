@@ -90,35 +90,42 @@ router.get('/monthly/:year/:month', authMiddleware, async (req, res) => {
       })
     );
     
-    // Calculate summary statistics based on user's split amounts
+    // Calculate summary statistics based on user's split amounts. Amounts in
+    // different currencies are never added together (there is no FX
+    // conversion), so every total is kept per currency.
+    //   byCurrency: { TWD: { count, totalAmount, totalPaid, totalOwed } }
+    //   byCategory: { '飲食-午餐': { TWD: 120, JPY: 1500 } }
     const summary = {
       totalExpenses: expensesWithDetails.length,
-      totalAmount: expensesWithDetails.reduce((sum, exp) => sum + exp.userAmount, 0), // User's total share
-      totalPaid: expensesWithDetails.filter(exp => exp.isPaidByUser).reduce((sum, exp) => sum + exp.amount, 0), // What user paid
-      totalOwed: 0, // Will be calculated below as totalPaid - totalAmount
       byCategory: {},
       byCurrency: {}
     };
-    
-    // Calculate net amount owed: AMOUNT PAID - TOTAL AMOUNT
-    // Positive = user is owed money, Negative = user owes money
-    summary.totalOwed = summary.totalPaid - summary.totalAmount;
-    
-    // Group by category and currency using user's split amounts
+
     expensesWithDetails.forEach(expense => {
       const category = expense.category || '其他';
       const currency = expense.currency || 'TWD';
       const amount = expense.userAmount; // Always use user's split amount
-      
-      if (!summary.byCategory[category]) {
-        summary.byCategory[category] = 0;
-      }
-      summary.byCategory[category] += amount;
-      
+
       if (!summary.byCurrency[currency]) {
-        summary.byCurrency[currency] = 0;
+        summary.byCurrency[currency] = { count: 0, totalAmount: 0, totalPaid: 0, totalOwed: 0 };
       }
-      summary.byCurrency[currency] += amount;
+      const totals = summary.byCurrency[currency];
+      totals.count += 1;
+      totals.totalAmount += amount; // User's share
+      if (expense.isPaidByUser) {
+        totals.totalPaid += expense.amount; // What user paid
+      }
+
+      if (!summary.byCategory[category]) {
+        summary.byCategory[category] = {};
+      }
+      summary.byCategory[category][currency] = (summary.byCategory[category][currency] || 0) + amount;
+    });
+
+    // Net amount owed: AMOUNT PAID - TOTAL AMOUNT
+    // Positive = user is owed money, Negative = user owes money
+    Object.values(summary.byCurrency).forEach(totals => {
+      totals.totalOwed = totals.totalPaid - totals.totalAmount;
     });
     
     res.json({

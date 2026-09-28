@@ -15,6 +15,18 @@ ChartJS.register(ArcElement, Tooltip, Legend, Title);
 const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
   const [currentView, setCurrentView] = useState('main'); // 'main' or specific main category
   const [breadcrumb, setBreadcrumb] = useState([]);
+  const [selectedCurrency, setSelectedCurrency] = useState(null);
+
+  // Amounts in different currencies can't share one pie (no FX conversion),
+  // so chart one currency at a time, defaulting to the most-used one.
+  const currencyCounts = {};
+  (expenses || []).forEach(expense => {
+    const currency = expense.currency || 'TWD';
+    currencyCounts[currency] = (currencyCounts[currency] || 0) + 1;
+  });
+  const currencies = Object.keys(currencyCounts).sort((a, b) => currencyCounts[b] - currencyCounts[a]);
+  const currency = currencies.includes(selectedCurrency) ? selectedCurrency : currencies[0];
+  const currencyExpenses = (expenses || []).filter(expense => (expense.currency || 'TWD') === currency);
 
   // Parse category string to get main category and subcategory
   const parseCategory = (categoryString) => {
@@ -51,7 +63,7 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
   const processMainCategoryData = () => {
     const categoryTotals = {};
     
-    expenses.forEach(expense => {
+    currencyExpenses.forEach(expense => {
       const { main } = parseCategory(expense.category);
       if (!categoryTotals[main]) {
         categoryTotals[main] = 0;
@@ -66,7 +78,7 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
   const processSubCategoryData = (mainCategory) => {
     const subCategoryTotals = {};
     
-    expenses.forEach(expense => {
+    currencyExpenses.forEach(expense => {
       const { main, sub } = parseCategory(expense.category);
       if (main === mainCategory) {
         const subCategory = sub || '其他';
@@ -254,7 +266,7 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
             const label = context.label || '';
             const value = context.parsed;
             const percentage = ((value / total) * 100).toFixed(1);
-            return `${label}: TWD ${value.toFixed(2)} (${percentage}%)`;
+            return `${label}: ${currency} ${value.toFixed(2)} (${percentage}%)`;
           }
         },
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -273,6 +285,26 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
 
   return (
     <div className="pie-chart-container">
+      {currencies.length > 1 && (
+        <div className="chart-currency-tabs">
+          {currencies.map(c => (
+            <button
+              key={c}
+              type="button"
+              className={`chart-currency-tab ${c === currency ? 'active' : ''}`}
+              onClick={() => {
+                // Drop back to the main view; the drilled-in category may not exist in this currency
+                setSelectedCurrency(c);
+                setCurrentView('main');
+                setBreadcrumb([]);
+              }}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Breadcrumb Navigation */}
       {breadcrumb.length > 0 && (
         <div className="chart-breadcrumb">
@@ -312,7 +344,7 @@ const CategoryPieChart = ({ expenses, title = "Expenses by Category" }) => {
           </div>
           <div className="stat-item">
             <span className="stat-label">Total Amount</span>
-            <span className="stat-value">TWD {total.toFixed(2)}</span>
+            <span className="stat-value">{currency} {total.toFixed(2)}</span>
           </div>
           <div className="stat-item">
             <span className="stat-label">

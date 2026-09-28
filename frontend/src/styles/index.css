@@ -5324,6 +5324,39 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
   line-height: 1.2;
 }
 
+/* Currency switcher above the category pie chart */
+.chart-currency-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.chart-currency-tab {
+  padding: 0.25rem 0.9rem;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--card-background);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chart-currency-tab.active {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: #fff;
+}
+
+/* One line per currency (report summary) */
+.stat-values {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
 /* No data message styling */
 .no-data-message {
   text-align: center;
@@ -5379,6 +5412,10 @@ input[type="date"]::-webkit-calendar-picker-indicator:hover {
     flex-direction: row;
     justify-content: space-between;
     text-align: left;
+  }
+
+  .stat-values {
+    align-items: flex-end;
   }
   
   .stat-label {
