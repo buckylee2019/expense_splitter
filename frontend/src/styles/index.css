@@ -2808,6 +2808,15 @@ p {
   white-space: nowrap;
 }
 
+.add-member-success {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  background: #e8f7ee;
+  color: #1e7b45;
+  font-size: 0.875rem;
+}
+
 .selected-members {
   list-style: none;
   margin: 0 0 1rem;

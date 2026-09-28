@@ -371,7 +371,8 @@ const EditGroup = () => {
           <AddMember
             groupId={id}
             existingMemberIds={(group.members || []).map(m => m.user)}
-            onMemberAdded={fetchGroup}
+            // Only take the member list, so unsaved name/description edits survive
+            onMemberAdded={updatedGroup => setGroup(prev => ({ ...prev, members: updatedGroup.members }))}
           />
 
           <div className="members-list">

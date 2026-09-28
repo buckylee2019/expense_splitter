@@ -4,6 +4,7 @@ import MemberPicker from './MemberPicker';
 
 const AddMember = ({ groupId, existingMemberIds = [], onMemberAdded, onCancel, autoFocus = false }) => {
   const [error, setError] = useState('');
+  const [addedNames, setAddedNames] = useState([]);
 
   const handleAdd = async (user) => {
     setError('');
@@ -12,6 +13,7 @@ const AddMember = ({ groupId, existingMemberIds = [], onMemberAdded, onCancel, a
       const response = await api.post(`/api/groups/${groupId}/members`, {
         userId: user.id
       });
+      setAddedNames(prev => [...prev, user.name]);
       onMemberAdded(response.data.group);
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to add member');
@@ -24,6 +26,11 @@ const AddMember = ({ groupId, existingMemberIds = [], onMemberAdded, onCancel, a
       <h3>Add New Member</h3>
 
       {error && <div className="error">{error}</div>}
+      {addedNames.length > 0 && (
+        <div className="add-member-success">
+          <i className="fi fi-rr-check"></i> Added {addedNames.join(', ')}
+        </div>
+      )}
 
       <MemberPicker
         excludeIds={existingMemberIds}
@@ -38,7 +45,7 @@ const AddMember = ({ groupId, existingMemberIds = [], onMemberAdded, onCancel, a
             onClick={onCancel}
             className="btn btn-secondary"
           >
-            Cancel
+            {addedNames.length > 0 ? 'Done' : 'Cancel'}
           </button>
         </div>
       )}

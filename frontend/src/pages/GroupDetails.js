@@ -333,11 +333,11 @@ const GroupDetails = () => {
 
   // Add manual refresh function
   // Check if current user is admin of the group
+  // Keep the modal open so several people can be added in a row. The response
+  // already has the populated member list, and a new member has no expenses
+  // yet, so there's nothing else to refetch.
   const handleMemberAdded = (updatedGroup) => {
     setGroup(updatedGroup);
-    setShowAddMember(false);
-    // Refresh all data to ensure consistency
-    fetchGroupData();
   };
 
   const handleRemoveMember = async (memberUserId) => {
