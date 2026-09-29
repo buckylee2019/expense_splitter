@@ -380,7 +380,6 @@ const AddExpense = () => {
               value={formData.date}
               onChange={handleChange}
               required
-              max={toDatetimeLocal()}
             />
           </div>
         </div>
