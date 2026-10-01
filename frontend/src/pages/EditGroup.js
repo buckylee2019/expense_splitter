@@ -329,9 +329,15 @@ const EditGroup = () => {
               <div className="photo-upload-section">
                 <div className="current-photo-preview">
                   <img 
-                    src={photoPreview || group.photoUrl || group.photo || '/background.png'} 
+                    src={photoPreview || group.photoUrl || group.photo || '/group_background.png'}
                     alt="Group banner preview"
                     className="photo-preview"
+                    onError={e => {
+                      // Fall back to the default banner if the stored photo URL is dead
+                      if (!e.currentTarget.src.endsWith('/group_background.png')) {
+                        e.currentTarget.src = '/group_background.png';
+                      }
+                    }}
                   />
                 </div>
                 <div className="photo-upload-controls">
