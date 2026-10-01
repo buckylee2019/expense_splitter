@@ -230,7 +230,10 @@ const EditGroup = () => {
         fetchGroup(); // Refresh group data
       } catch (error) {
         console.error('Error removing member:', error);
-        setError(error.response?.data?.error || 'Failed to remove member');
+        // The page-level error banner is out of view down here, so alert instead
+        alert(error.response?.status === 403
+          ? 'Only group admins can remove members.'
+          : 'Failed to remove member: ' + (error.response?.data?.error || error.message));
       }
     }
   };
