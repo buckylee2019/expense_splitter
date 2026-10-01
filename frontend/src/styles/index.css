@@ -8796,3 +8796,7 @@ input:checked + .toggle-slider:before {
     gap: 0.25rem;
   }
 }
+
+.group-member-options .add-member-option > .btn {
+  flex-shrink: 0;
+}

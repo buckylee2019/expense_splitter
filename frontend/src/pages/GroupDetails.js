@@ -1107,36 +1107,40 @@ const GroupDetails = () => {
 
               {/* Remove Member Section */}
               <div className="settings-section">
-                <h4><i className="fi fi-rr-user-remove"></i> Remove Members</h4>
-                <p>Remove members from this group</p>
-                <div className="members-management-list">
+                <h4><i className="fi fi-rr-users"></i> Members</h4>
+                <p>{isGroupAdmin() ? 'Remove members from this group' : 'Only group admins can remove members'}</p>
+                <ul className="add-member-options group-member-options">
                   {group.members.map(member => {
                     const isCurrentUser = member.user === currentUser?.id;
                     const isAdmin = member.role === 'admin';
                     const canRemove = isGroupAdmin() && !isCurrentUser && group.members.length > 1;
+                    const memberName = member.userName || member.user;
                     
                     return (
-                      <div key={member.user} className="member-management-item">
-                        <div className="member-info">
-                          <span className="member-name">
-                            {member.userName || member.user}
+                      <li key={member.user} className="add-member-option">
+                        <UserPhoto user={{ ...member, name: memberName }} />
+                        <div className="add-member-option-info">
+                          <span className="add-member-option-name">
+                            {memberName}
                             {isCurrentUser && <span className="you-indicator"> (You)</span>}
-                            {isAdmin && <span className="admin-indicator">★ Admin</span>}
+                            {isAdmin && <span className="group-member-admin">👑 Admin</span>}
                           </span>
+                          {member.email && <span className="add-member-option-meta">{member.email}</span>}
                         </div>
                         {canRemove && (
                           <button 
                             onClick={() => handleRemoveMember(member.user)}
                             className="btn btn-small btn-danger"
-                            title="Remove member"
+                            title={`Remove ${memberName}`}
+                            aria-label={`Remove ${memberName}`}
                           >
                             <i className="fi fi-rr-trash"></i>
                           </button>
                         )}
-                      </div>
+                      </li>
                     );
                   })}
-                </div>
+                </ul>
               </div>
 
               {/* Expense Splitting Settings */}

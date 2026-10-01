@@ -432,8 +432,9 @@ const EditGroup = () => {
                         onClick={() => handleRemoveMember(memberId, memberName)}
                         className="btn btn-danger btn-small"
                         title={`Remove ${memberName}`}
+                        aria-label={`Remove ${memberName}`}
                       >
-                        Remove
+                        <i className="fi fi-rr-trash"></i>
                       </button>
                     </div>
                   )}
