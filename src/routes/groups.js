@@ -143,15 +143,10 @@ router.post('/:id/members', authMiddleware, async (req, res) => {
       return res.status(400).json({ error: 'userId or email is required' });
     }
 
-    // Find the group
+    // Any member can add people; removing members stays admin-only
     const group = await Group.findByUserIdAndGroupId(req.user.id, req.params.id);
     if (!group) {
       return res.status(404).json({ error: 'Group not found or user not a member' });
-    }
-
-    // Check if user is admin of the group
-    if (!group.isAdmin(req.user.id)) {
-      return res.status(403).json({ error: 'Only group admins can add members' });
     }
 
     // Find the user to add
