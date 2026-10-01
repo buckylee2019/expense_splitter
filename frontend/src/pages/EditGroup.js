@@ -23,10 +23,19 @@ const EditGroup = () => {
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [openMenuId, setOpenMenuId] = useState(null);
 
   useEffect(() => {
     fetchGroup();
   }, [id]);
+
+  // Close the member action menu on any outside click
+  useEffect(() => {
+    if (!openMenuId) return;
+    const close = () => setOpenMenuId(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, [openMenuId]);
 
   // AuthContext's user is only set at login, so it's empty after a reload
   useEffect(() => {
@@ -421,21 +430,40 @@ const EditGroup = () => {
                     <span className="add-member-option-meta">{member.email || 'No email'}</span>
                   </div>
                   {isCurrentUserAdmin && (
-                    <div className="member-actions">
+                    <div className="member-menu">
                       <button
-                        onClick={() => handleChangeRole(memberId, memberName, member.role === 'admin' ? 'member' : 'admin')}
-                        className="btn btn-secondary btn-small"
+                        type="button"
+                        className="member-menu-toggle"
+                        aria-label={`Actions for ${memberName}`}
+                        aria-expanded={openMenuId === memberId}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setOpenMenuId(openMenuId === memberId ? null : memberId);
+                        }}
                       >
-                        {member.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                        <i className="fi fi-rr-menu-dots-vertical"></i>
                       </button>
-                      <button
-                        onClick={() => handleRemoveMember(memberId, memberName)}
-                        className="btn btn-danger btn-small"
-                        title={`Remove ${memberName}`}
-                        aria-label={`Remove ${memberName}`}
-                      >
-                        <i className="fi fi-rr-trash"></i>
-                      </button>
+                      {openMenuId === memberId && (
+                        <div className="member-menu-dropdown" role="menu">
+                          <button
+                            type="button"
+                            role="menuitem"
+                            onClick={() => handleChangeRole(memberId, memberName, member.role === 'admin' ? 'member' : 'admin')}
+                          >
+                            <i className="fi fi-rr-crown"></i>
+                            {member.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                          </button>
+                          <button
+                            type="button"
+                            role="menuitem"
+                            className="danger"
+                            onClick={() => handleRemoveMember(memberId, memberName)}
+                          >
+                            <i className="fi fi-rr-trash"></i>
+                            Remove from group
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </li>
