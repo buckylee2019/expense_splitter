@@ -8855,7 +8855,9 @@ input:checked + .toggle-slider:before {
   gap: 0.5rem;
 }
 
-.photo-action-btn {
+/* Scoped under .photo-actions so .form-group label (display: block,
+   margin-bottom) doesn't win on the <label> "Change photo" button */
+.photo-actions .photo-action-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -8870,6 +8872,7 @@ input:checked + .toggle-slider:before {
   line-height: 1;
   cursor: pointer;
   white-space: nowrap;
+  margin: 0;
 }
 
 .photo-action-btn i {
