@@ -8808,3 +8808,13 @@ input:checked + .toggle-slider:before {
     align-items: center;
   }
 }
+
+.group-members-section .member-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.group-members-section .member-actions .btn {
+  white-space: nowrap;
+}

@@ -326,6 +326,45 @@ router.delete('/:id/members/:memberId', authMiddleware, async (req, res) => {
   }
 });
 
+// Change a member's role (admin <-> member)
+router.put('/:id/members/:memberId/role', authMiddleware, async (req, res) => {
+  try {
+    const { role } = req.body;
+    if (!['admin', 'member'].includes(role)) {
+      return res.status(400).json({ error: "role must be 'admin' or 'member'" });
+    }
+
+    const group = await Group.findById(req.params.id);
+    if (!group) {
+      return res.status(404).json({ error: 'Group not found' });
+    }
+
+    if (!group.isAdmin(req.user.id)) {
+      return res.status(403).json({ error: 'Only group admins can change roles' });
+    }
+
+    const member = group.members.find(m => m.user === req.params.memberId);
+    if (!member) {
+      return res.status(404).json({ error: 'Member not found in this group' });
+    }
+
+    const admins = group.members.filter(m => m.role === 'admin');
+    if (member.role === 'admin' && role === 'member' && admins.length === 1) {
+      return res.status(400).json({ error: 'Cannot demote the last admin of the group' });
+    }
+
+    member.role = role;
+    await group.save();
+
+    res.json({
+      message: 'Member role updated',
+      group: await populateMemberNames(group)
+    });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 // Update group photo
 router.put('/:id/photo', authMiddleware, async (req, res) => {
   try {

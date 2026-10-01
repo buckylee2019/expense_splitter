@@ -21,10 +21,18 @@ const EditGroup = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
   const [imageToCrop, setImageToCrop] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     fetchGroup();
   }, [id]);
+
+  // AuthContext's user is only set at login, so it's empty after a reload
+  useEffect(() => {
+    api.get('/api/users/profile')
+      .then(res => setCurrentUser(res.data))
+      .catch(err => console.error('Error fetching profile:', err));
+  }, []);
 
   const fetchGroup = async () => {
     try {
@@ -238,6 +246,25 @@ const EditGroup = () => {
     }
   };
 
+  const handleChangeRole = async (memberId, memberName, role) => {
+    const prompt = role === 'admin'
+      ? `Make ${memberName} an admin? Admins can remove members and edit the group.`
+      : `Remove admin rights from ${memberName}?`;
+    if (!window.confirm(prompt)) return;
+    try {
+      const res = await api.put(`/api/groups/${id}/members/${memberId}/role`, { role });
+      // Only take the member list, so unsaved name/description edits survive
+      setGroup(prev => ({ ...prev, members: res.data.group.members }));
+    } catch (error) {
+      console.error('Error changing member role:', error);
+      alert('Failed to change role: ' + (error.response?.data?.error || error.message));
+    }
+  };
+
+  const isCurrentUserAdmin = !!currentUser && (group.members || []).some(
+    m => m.user === currentUser.id && m.role === 'admin'
+  );
+
   if (loading) {
     return (
       <div className="container">
@@ -392,16 +419,30 @@ const EditGroup = () => {
                     {member.role === 'admin' ? '👑 Admin' : '👤 Member'}
                   </span>
                 </div>
-                <button
-                  onClick={() => handleRemoveMember(
-                    member.user || member.id, 
-                    member.userName || member.name || member.email || 'this member'
-                  )}
-                  className="btn btn-sm btn-danger"
-                  title={`Remove ${member.userName || member.name || member.email || 'member'}`}
-                >
-                  Remove
-                </button>
+                {isCurrentUserAdmin && (
+                  <div className="member-actions">
+                    <button
+                      onClick={() => handleChangeRole(
+                        member.user || member.id,
+                        member.userName || member.name || member.email || 'this member',
+                        member.role === 'admin' ? 'member' : 'admin'
+                      )}
+                      className="btn btn-sm btn-secondary"
+                    >
+                      {member.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                    </button>
+                    <button
+                      onClick={() => handleRemoveMember(
+                        member.user || member.id, 
+                        member.userName || member.name || member.email || 'this member'
+                      )}
+                      className="btn btn-sm btn-danger"
+                      title={`Remove ${member.userName || member.name || member.email || 'member'}`}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
