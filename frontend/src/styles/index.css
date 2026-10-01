@@ -8847,3 +8847,45 @@ input:checked + .toggle-slider:before {
 .member-menu-dropdown button.danger {
   color: #dc3545;
 }
+
+/* Edit Group photo actions: one uniform button style, staying in a row on mobile */
+.photo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.photo-action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 36px;
+  padding: 0 0.9rem;
+  border: 1px solid #d0d5db;
+  border-radius: 8px;
+  background: white;
+  color: #333;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.photo-action-btn i {
+  display: flex;
+  font-size: 0.95rem;
+}
+
+.photo-action-btn:hover {
+  background: #f8f9fa;
+}
+
+.photo-action-btn.danger {
+  color: #dc3545;
+}
+
+.photo-pending-note {
+  font-size: 0.85rem;
+  color: #b7791f;
+}
