@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import ImageCropper from '../components/ImageCropper';
 import AddMember from '../components/AddMember';
+import UserPhoto from '../components/UserPhoto';
 
 const EditGroup = () => {
   const { id } = useParams();
@@ -405,47 +406,41 @@ const EditGroup = () => {
             onMemberAdded={updatedGroup => setGroup(prev => ({ ...prev, members: updatedGroup.members }))}
           />
 
-          <div className="members-list">
-            {group.members?.map(member => (
-              <div key={member.user || member.id} className="member-item">
-                <div className="member-info">
-                  <span className="member-name">
-                    {member.userName || member.name || member.email || 'Unknown User'}
-                  </span>
-                  <span className="member-email">
-                    {member.email || 'No email'}
-                  </span>
-                  <span className="member-role">
-                    {member.role === 'admin' ? '👑 Admin' : '👤 Member'}
-                  </span>
-                </div>
-                {isCurrentUserAdmin && (
-                  <div className="member-actions">
-                    <button
-                      onClick={() => handleChangeRole(
-                        member.user || member.id,
-                        member.userName || member.name || member.email || 'this member',
-                        member.role === 'admin' ? 'member' : 'admin'
-                      )}
-                      className="btn btn-sm btn-secondary"
-                    >
-                      {member.role === 'admin' ? 'Remove admin' : 'Make admin'}
-                    </button>
-                    <button
-                      onClick={() => handleRemoveMember(
-                        member.user || member.id, 
-                        member.userName || member.name || member.email || 'this member'
-                      )}
-                      className="btn btn-sm btn-danger"
-                      title={`Remove ${member.userName || member.name || member.email || 'member'}`}
-                    >
-                      Remove
-                    </button>
+          <ul className="add-member-options group-member-options">
+            {group.members?.map(member => {
+              const memberId = member.user || member.id;
+              const memberName = member.userName || member.name || member.email || 'Unknown User';
+              return (
+                <li key={memberId} className="add-member-option">
+                  <UserPhoto user={{ ...member, name: memberName }} />
+                  <div className="add-member-option-info">
+                    <span className="add-member-option-name">
+                      {memberName}
+                      {member.role === 'admin' && <span className="group-member-admin">👑 Admin</span>}
+                    </span>
+                    <span className="add-member-option-meta">{member.email || 'No email'}</span>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
+                  {isCurrentUserAdmin && (
+                    <div className="member-actions">
+                      <button
+                        onClick={() => handleChangeRole(memberId, memberName, member.role === 'admin' ? 'member' : 'admin')}
+                        className="btn btn-secondary btn-small"
+                      >
+                        {member.role === 'admin' ? 'Remove admin' : 'Make admin'}
+                      </button>
+                      <button
+                        onClick={() => handleRemoveMember(memberId, memberName)}
+                        className="btn btn-danger btn-small"
+                        title={`Remove ${memberName}`}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </div>
       
