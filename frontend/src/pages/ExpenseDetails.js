@@ -90,16 +90,16 @@ const ExpenseDetails = () => {
               <i className="fi fi-rr-edit"></i>
               <span className="hide-mobile">Edit</span>
             </Link>
-            {currentUser.id === expense.paidBy && (
-              <button 
-                onClick={handleDeleteExpense}
-                className="button danger"
-                title="Delete expense"
-              >
-                <i className="fi fi-rr-trash"></i>
-                <span className="hide-mobile">Delete</span>
-              </button>
-            )}
+            {/* Any group member can delete (matches the backend). The old
+                payer-only check also never matched multi-payer expenses. */}
+            <button 
+              onClick={handleDeleteExpense}
+              className="button danger"
+              title="Delete expense"
+            >
+              <i className="fi fi-rr-trash"></i>
+              <span className="hide-mobile">Delete</span>
+            </button>
           </>
         )}
       </div>
