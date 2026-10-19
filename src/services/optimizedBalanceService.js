@@ -263,7 +263,8 @@ const optimizeTransfersForCurrency = (netBalances, currency) => {
  */
 const formatBalancesForUser = async (transfers, userId) => {
   const formattedBalances = [];
-  
+  const users = await User.findByIds(transfers.flatMap(t => [t.from, t.to]));
+
   for (const transfer of transfers) {
     let otherUserId, type, amount;
     
@@ -280,7 +281,7 @@ const formatBalancesForUser = async (transfers, userId) => {
     }
     
     // Get user details
-    const user = await User.findById(otherUserId);
+    const user = users.get(otherUserId);
     if (user) {
       formattedBalances.push({
         user: user.toJSON(),
@@ -387,10 +388,16 @@ const getGroupOptimizedTransfers = async (groupId) => {
     
     // Populate user names for transfers
     const transfersWithNames = [];
+    let users = new Map();
+    try {
+      users = await User.findByIds(optimizedTransfers.flatMap(t => [t.from, t.to]));
+    } catch (error) {
+      console.error('Error fetching user details for transfers:', error);
+    }
     for (const transfer of optimizedTransfers) {
       try {
-        const fromUser = await User.findById(transfer.from);
-        const toUser = await User.findById(transfer.to);
+        const fromUser = users.get(transfer.from);
+        const toUser = users.get(transfer.to);
         
         transfersWithNames.push({
           ...transfer,

@@ -24,6 +24,24 @@ resource "google_firestore_index" "expenses_group" {
   depends_on = [google_firestore_database.main]
 }
 
+# Index for the paginated group expense list (GroupDetails sorts by date desc)
+resource "google_firestore_index" "expenses_group_date" {
+  collection = "expenses"
+  database   = google_firestore_database.main.name
+
+  fields {
+    field_path = "group"
+    order      = "ASCENDING"
+  }
+
+  fields {
+    field_path = "date"
+    order      = "DESCENDING"
+  }
+
+  depends_on = [google_firestore_database.main]
+}
+
 # Index for querying settlements by group
 resource "google_firestore_index" "settlements_group" {
   collection = "settlements"

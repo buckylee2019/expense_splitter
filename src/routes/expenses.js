@@ -9,7 +9,18 @@ const router = express.Router();
 // Helper function to populate user names in expenses
 const populateUserNames = async (expenses) => {
   const populatedExpenses = [];
-  
+
+  // Fetch every referenced user once up front
+  let users = new Map();
+  try {
+    users = await User.findByIds(expenses.flatMap(expense => [
+      ...(Array.isArray(expense.paidBy) ? expense.paidBy.map(payer => payer.userId) : [expense.paidBy]),
+      ...(expense.splits || []).map(split => split.user || split.userId)
+    ]));
+  } catch (error) {
+    console.error('Error fetching users for expenses:', error);
+  }
+
   for (const expense of expenses) {
     const expenseData = expense.toJSON ? expense.toJSON() : expense;
     
@@ -30,7 +41,7 @@ const populateUserNames = async (expenses) => {
             continue;
           }
           
-          const user = await User.findById(payer.userId);
+          const user = users.get(payer.userId);
           if (!user) {
             console.warn('User not found for payer ID:', payer.userId);
             populatedPayers.push({
@@ -56,7 +67,7 @@ const populateUserNames = async (expenses) => {
           console.warn('Expense found without paidBy:', expenseData.id);
           expenseData.paidByName = 'Unknown User';
         } else {
-          const paidByUser = await User.findById(expenseData.paidBy);
+          const paidByUser = users.get(expenseData.paidBy);
           if (!paidByUser) {
             console.warn('User not found for paidBy ID:', expenseData.paidBy);
             expenseData.paidByName = 'Unknown User';
@@ -92,7 +103,7 @@ const populateUserNames = async (expenses) => {
           continue;
         }
         
-        const user = await User.findById(userId);
+        const user = users.get(userId);
         if (!user) {
           console.warn('User not found for ID:', userId);
           populatedSplits.push({

@@ -72,6 +72,20 @@ class User {
     return new User(doc.data());
   }
 
+  // Batch lookup for display names: one getAll over the distinct ids instead of
+  // a read per reference. Returns Map<id, User>; missing users are absent.
+  static async findByIds(ids) {
+    const unique = [...new Set(ids.filter(id => typeof id === 'string' && id))];
+    const users = new Map();
+    if (unique.length === 0) return users;
+
+    const docs = await db.getAll(...unique.map(id => db.collection(COLLECTION).doc(id)));
+    docs.forEach(doc => {
+      if (doc.exists) users.set(doc.id, new User(doc.data()));
+    });
+    return users;
+  }
+
   async comparePassword(candidatePassword) {
     return bcrypt.compare(candidatePassword, this.password);
   }

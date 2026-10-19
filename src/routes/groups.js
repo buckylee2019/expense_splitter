@@ -12,9 +12,15 @@ const populateMemberNames = async (group) => {
   const groupData = group.toJSON ? group.toJSON() : group;
   
   const populatedMembers = [];
+  let users = new Map();
+  try {
+    users = await User.findByIds(groupData.members.map(member => member.user));
+  } catch (error) {
+    console.error('Error fetching users for group members:', error);
+  }
   for (const member of groupData.members) {
     try {
-      const user = await User.findById(member.user);
+      const user = users.get(member.user);
       populatedMembers.push({
         ...member,
         userName: user ? user.name : 'Unknown User',
@@ -51,10 +57,9 @@ router.get('/', authMiddleware, async (req, res) => {
     // Add expense count to each group
     const groupsWithCounts = await Promise.all(
       groups.map(async (group) => {
-        const expenses = await Expense.findByGroupId(group.id);
         return {
           ...group,
-          expenseCount: expenses.length
+          expenseCount: await Expense.countByGroupId(group.id)
         };
       })
     );

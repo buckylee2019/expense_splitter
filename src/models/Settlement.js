@@ -1,3 +1,4 @@
+const { Filter } = require('@google-cloud/firestore');
 const { db } = require('../config/firestore');
 const { v4: uuidv4 } = require('uuid');
 
@@ -38,42 +39,19 @@ class Settlement {
   }
 
   static async findByUserId(userId) {
-    // Fetch all and filter (matches original DynamoDB Scan behavior)
-    const snapshot = await db.collection(COLLECTION).get();
-    const allSettlements = [];
-    snapshot.forEach(doc => allSettlements.push(doc.data()));
-
-    const filtered = allSettlements.filter(item =>
-      item.from === userId || item.to === userId || item.recordedBy === userId
-    );
+    const snapshot = await db.collection(COLLECTION)
+      .where(Filter.or(
+        Filter.where('from', '==', userId),
+        Filter.where('to', '==', userId),
+        Filter.where('recordedBy', '==', userId)
+      ))
+      .get();
+    const filtered = snapshot.docs.map(doc => doc.data());
 
     console.log(`Finding settlements for user: ${userId}`);
     console.log(`Found ${filtered.length} settlements`);
 
-    const settlements = await Promise.all(filtered.map(async item => {
-      const settlement = new Settlement(item);
-
-      const User = require('./User');
-      try {
-        if (settlement.from) {
-          const fromUser = await User.findById(settlement.from);
-          settlement.fromName = fromUser?.name || fromUser?.email || settlement.from;
-        }
-
-        if (settlement.to) {
-          const toUser = await User.findById(settlement.to);
-          settlement.toName = toUser?.name || toUser?.email || settlement.to;
-        }
-      } catch (err) {
-        console.error('Error fetching user details for settlement:', err);
-        settlement.fromName = settlement.from;
-        settlement.toName = settlement.to;
-      }
-
-      return settlement;
-    }));
-
-    return settlements;
+    return Settlement.withUserNames(filtered);
   }
 
   static async findByGroupId(groupId) {
@@ -84,28 +62,31 @@ class Settlement {
     const items = [];
     snapshot.forEach(doc => items.push(doc.data()));
 
-    const settlements = await Promise.all(items.map(async item => {
-      const settlement = new Settlement(item);
+    return Settlement.withUserNames(items);
+  }
 
-      const User = require('./User');
-      try {
-        if (settlement.from) {
-          const fromUser = await User.findById(settlement.from);
-          settlement.fromName = fromUser?.name || fromUser?.email || settlement.from;
-        }
+  // Attach fromName/toName, fetching each distinct user once
+  static async withUserNames(items) {
+    const settlements = items.map(item => new Settlement(item));
 
-        if (settlement.to) {
-          const toUser = await User.findById(settlement.to);
-          settlement.toName = toUser?.name || toUser?.email || settlement.to;
-        }
-      } catch (err) {
-        console.error('Error fetching user details for settlement:', err);
-        settlement.fromName = settlement.from;
-        settlement.toName = settlement.to;
+    const User = require('./User');
+    let users = new Map();
+    try {
+      users = await User.findByIds(settlements.flatMap(s => [s.from, s.to]));
+    } catch (err) {
+      console.error('Error fetching user details for settlements:', err);
+    }
+
+    settlements.forEach(settlement => {
+      if (settlement.from) {
+        const fromUser = users.get(settlement.from);
+        settlement.fromName = fromUser?.name || fromUser?.email || settlement.from;
       }
-
-      return settlement;
-    }));
+      if (settlement.to) {
+        const toUser = users.get(settlement.to);
+        settlement.toName = toUser?.name || toUser?.email || settlement.to;
+      }
+    });
 
     return settlements;
   }

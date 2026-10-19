@@ -2,6 +2,7 @@ const { db } = require('../config/firestore');
 const { v4: uuidv4 } = require('uuid');
 
 const COLLECTION = 'expenses';
+const INDEXED_DESC_SORTS = ['date', 'createdAt'];
 
 class Expense {
   constructor(data) {
@@ -45,13 +46,21 @@ class Expense {
     const allExpenses = [];
     snapshot.forEach(doc => allExpenses.push(new Expense(doc.data())));
 
-    return allExpenses.filter(expense => {
-      const isPayer = expense.paidBy === userId;
-      const isInSplits = expense.splits.some(split =>
-        split.user === userId || split.userId === userId
-      );
-      return isPayer || isInSplits;
-    });
+    return allExpenses.filter(expense => Expense.involvesUser(expense, userId));
+  }
+
+  // Same scoping as findByUserId, but only reads the group's expenses
+  static async findByUserIdInGroup(userId, groupId) {
+    const expenses = await Expense.findByGroupId(groupId);
+    return expenses.filter(expense => Expense.involvesUser(expense, userId));
+  }
+
+  static involvesUser(expense, userId) {
+    const isPayer = expense.paidBy === userId;
+    const isInSplits = expense.splits.some(split =>
+      split.user === userId || split.userId === userId
+    );
+    return isPayer || isInSplits;
   }
 
   static async findByUserIdAndExpenseId(userId, expenseId) {
@@ -82,6 +91,14 @@ class Expense {
     const expenses = [];
     snapshot.forEach(doc => expenses.push(new Expense(doc.data())));
     return expenses;
+  }
+
+  static async countByGroupId(groupId) {
+    const snapshot = await db.collection(COLLECTION)
+      .where('group', '==', groupId)
+      .count()
+      .get();
+    return snapshot.data().count;
   }
 
   async save() {
@@ -133,7 +150,30 @@ class Expense {
       offset = 0
     } = options;
 
-    // Query by group, then filter in JS (same pattern as original)
+    // Unfiltered listing (what GroupDetails requests): let Firestore sort and
+    // paginate so we read one page instead of the whole group. Each sort field
+    // needs a composite index (group ASC, <field> DESC) — see terraform/firestore.tf.
+    const hasFilters = startDate || endDate || search || category ||
+      minAmount !== undefined || maxAmount !== undefined;
+    if (!hasFilters && order === 'desc' && INDEXED_DESC_SORTS.includes(sort)) {
+      try {
+        const base = db.collection(COLLECTION).where('group', '==', groupId);
+        const [pageSnap, countSnap] = await Promise.all([
+          base.orderBy(sort, 'desc').offset(offset).limit(limit).get(),
+          base.count().get()
+        ]);
+        return {
+          expenses: pageSnap.docs.map(doc => new Expense(doc.data())),
+          totalCount: countSnap.data().count
+        };
+      } catch (err) {
+        // FAILED_PRECONDITION = index missing or still building; fall back to the scan.
+        if (err.code !== 9) throw err;
+        console.warn(`Expense index for sort=${sort} unavailable, falling back to full group scan`);
+      }
+    }
+
+    // Filtered listing: query by group, then filter in JS (same pattern as original)
     const snapshot = await db.collection(COLLECTION)
       .where('group', '==', groupId)
       .get();

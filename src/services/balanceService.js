@@ -5,13 +5,11 @@ const User = require('../models/User');
 // Calculate balances between users, separated by currency
 const calculateBalances = async (userId, groupId = null) => {
   try {
-    // Get all expenses where the user is involved (either as payer or in splits)
-    const expenses = await Expense.findByUserId(userId);
-    
-    // Filter by group if specified
-    const filteredExpenses = groupId 
-      ? expenses.filter(expense => expense.group === groupId)
-      : expenses;
+    // Get all expenses where the user is involved (either as payer or in splits),
+    // scoped to the group when one is given
+    const filteredExpenses = groupId
+      ? await Expense.findByUserIdInGroup(userId, groupId)
+      : await Expense.findByUserId(userId);
 
     // Use nested object: balances[userId][currency] = amount
     const balances = {};
@@ -125,10 +123,11 @@ const calculateBalances = async (userId, groupId = null) => {
 
     // Get user details and format response, separated by currency
     const result = [];
+    const users = await User.findByIds(Object.keys(balances));
     for (const [userId, currencyBalances] of Object.entries(balances)) {
       for (const [currency, balance] of Object.entries(currencyBalances)) {
         if (Math.abs(balance) > 0.01) {
-          const user = await User.findById(userId);
+          const user = users.get(userId);
           if (user) {
             result.push({
               user: user.toJSON(),
