@@ -16,6 +16,12 @@ class Expense {
     this.group = data.group;
     this.splits = data.splits || [];
     this.splitType = data.splitType;
+    // Itemized split (splitType 'itemized'): receipt lines with who shares each,
+    // plus service charge / discount adjustments shared pro rata. `splits` is
+    // derived from these by the API.
+    this.items = data.items || [];
+    this.adjustments = data.adjustments || [];
+    this.receipt = data.receipt || null; // { key, merchant, model, scannedAt }
     this.date = data.date || new Date().toISOString();
     this.notes = data.notes;
     this.project = data.project;

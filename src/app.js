@@ -9,6 +9,7 @@ const expenseRoutes = require('./routes/expenses');
 const settlementRoutes = require('./routes/settlements');
 const balanceRoutes = require('./routes/balances');
 const reportRoutes = require('./routes/reports');
+const receiptRoutes = require('./routes/receipts');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use('/api/expenses', expenseRoutes);
 app.use('/api/settlements', settlementRoutes);
 app.use('/api/balances', balanceRoutes);
 app.use('/api/reports', reportRoutes);
+app.use('/api/receipts', receiptRoutes);
 
 // Health check endpoint
 app.get('/health', (req, res) => {

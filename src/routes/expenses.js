@@ -3,8 +3,49 @@ const Expense = require('../models/Expense');
 const Group = require('../models/Group');
 const User = require('../models/User');
 const { authMiddleware } = require('../utils/auth');
+const gcsService = require('../utils/gcs');
+const { computeItemizedSplits, ItemizedSplitError } = require('../utils/itemizedSplit');
 
 const router = express.Router();
+
+// For splitType 'itemized': clean the receipt items/adjustments, check every
+// assignee is a group member, and derive the splits from them (the client's
+// splits are ignored). Throws ItemizedSplitError on invalid input.
+const buildItemizedSplit = (group, { items, adjustments, amount, currency }) => {
+  const memberIds = new Set(group.members.map(member => member.user));
+  const cleanItems = (Array.isArray(items) ? items : []).map(item => ({
+    name: String(item.name || '').trim().slice(0, 100),
+    quantity: Number(item.quantity) || 1,
+    amount: Number(item.amount),
+    assignees: [...new Set(Array.isArray(item.assignees) ? item.assignees : [])]
+  }));
+  cleanItems.forEach(item => {
+    const outsider = item.assignees.find(userId => !memberIds.has(userId));
+    if (outsider) {
+      throw new ItemizedSplitError('NOT_A_MEMBER', `${item.name || 'An item'} is assigned to someone outside this group`);
+    }
+  });
+  const cleanAdjustments = (Array.isArray(adjustments) ? adjustments : []).map(adj => ({
+    type: String(adj.type || 'other'),
+    label: String(adj.label || '').trim().slice(0, 100),
+    amount: Number(adj.amount)
+  }));
+  const { splits } = computeItemizedSplits({ items: cleanItems, adjustments: cleanAdjustments, total: amount, currency });
+  return { items: cleanItems, adjustments: cleanAdjustments, splits };
+};
+
+// A receipt reference is only accepted if it points at this group's uploads
+const cleanReceipt = (receipt, groupId) => {
+  if (!receipt || typeof receipt.key !== 'string' || !receipt.key.startsWith(`receipts/${groupId}/`)) {
+    return null;
+  }
+  return {
+    key: receipt.key,
+    merchant: receipt.merchant ? String(receipt.merchant).slice(0, 100) : null,
+    model: receipt.model ? String(receipt.model).slice(0, 50) : null,
+    scannedAt: receipt.scannedAt || new Date().toISOString()
+  };
+};
 
 // Helper function to populate user names in expenses
 const populateUserNames = async (expenses) => {
@@ -240,11 +281,19 @@ router.post('/', authMiddleware, async (req, res) => {
       paidBy,
       isMultiplePayers,
       date,
-      notes
+      notes,
+      items,
+      adjustments,
+      receipt
     } = req.body;
 
     // Accept both 'group' and 'groupId' for backward compatibility
     const expenseGroupId = group || groupId;
+    let itemized = null;
+
+    if (splitType === 'itemized' && !expenseGroupId) {
+      return res.status(400).json({ error: 'Itemized splits are only available for group expenses' });
+    }
 
     // Validate group membership if group expense
     if (expenseGroupId) {
@@ -271,6 +320,10 @@ router.post('/', authMiddleware, async (req, res) => {
           }
         }
       }
+
+      if (splitType === 'itemized') {
+        itemized = buildItemizedSplit(group, { items, adjustments, amount, currency });
+      }
     }
 
     // Use provided paidBy or default to current user
@@ -281,8 +334,9 @@ router.post('/', authMiddleware, async (req, res) => {
       expensePaidBy = paidBy || req.user.id; // Single payer ID
     }
 
-    // Validate splits total
-    const totalSplit = splits.reduce((sum, split) => sum + split.amount, 0);
+    // Validate splits total (itemized splits are derived, so they always add up)
+    const expenseSplits = itemized ? itemized.splits : splits;
+    const totalSplit = expenseSplits.reduce((sum, split) => sum + split.amount, 0);
     if (Math.abs(totalSplit - amount) > 0.01) {
       return res.status(400).json({ error: 'Split amounts must equal total amount' });
     }
@@ -297,7 +351,10 @@ router.post('/', authMiddleware, async (req, res) => {
       isMultiplePayers: isMultiplePayers || false,
       group: expenseGroupId,
       splitType,
-      splits,
+      splits: expenseSplits,
+      items: itemized ? itemized.items : [],
+      adjustments: itemized ? itemized.adjustments : [],
+      receipt: expenseGroupId ? cleanReceipt(receipt, expenseGroupId) : null,
       date: date || new Date().toISOString(),
       notes
     });
@@ -307,7 +364,7 @@ router.post('/', authMiddleware, async (req, res) => {
       expense
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ error: error.message, code: error.code });
   }
 });
 
@@ -359,7 +416,11 @@ router.put('/:id', authMiddleware, async (req, res) => {
       paidBy,
       isMultiplePayers,
       date,
-      notes
+      notes,
+      splitType,
+      items,
+      adjustments,
+      receipt
     } = req.body;
 
     console.log('PUT request body notes field:', notes);
@@ -400,8 +461,25 @@ router.put('/:id', authMiddleware, async (req, res) => {
       }
     }
 
+    // Itemized: recompute splits from the (updated or existing) items whenever
+    // the expense is or becomes itemized
+    const nextSplitType = splitType || existingExpense.splitType;
+    let itemized = null;
+    if (nextSplitType === 'itemized') {
+      const group = existingExpense.group && await Group.findByUserIdAndGroupId(req.user.id, existingExpense.group);
+      if (!group) {
+        return res.status(400).json({ error: 'Itemized splits are only available for group expenses' });
+      }
+      itemized = buildItemizedSplit(group, {
+        items: items !== undefined ? items : existingExpense.items,
+        adjustments: adjustments !== undefined ? adjustments : existingExpense.adjustments,
+        amount: amount !== undefined ? parseFloat(amount) : existingExpense.amount,
+        currency: currency || existingExpense.currency
+      });
+    }
+
     // Validate splits total
-    if (splits && amount) {
+    if (!itemized && splits && amount) {
       const totalSplit = splits.reduce((sum, split) => sum + split.amount, 0);
       if (Math.abs(totalSplit - amount) > 0.01) {
         return res.status(400).json({ error: 'Split amounts must equal total amount' });
@@ -417,7 +495,14 @@ router.put('/:id', authMiddleware, async (req, res) => {
       project: project !== undefined ? project : existingExpense.project,
       paidBy: paidBy || existingExpense.paidBy,
       isMultiplePayers: isMultiplePayers !== undefined ? isMultiplePayers : existingExpense.isMultiplePayers,
-      splits: splits || existingExpense.splits,
+      splitType: nextSplitType || null,
+      splits: itemized ? itemized.splits : (splits || existingExpense.splits),
+      // Switching away from itemized drops the item assignments (the receipt photo stays)
+      items: itemized ? itemized.items : [],
+      adjustments: itemized ? itemized.adjustments : [],
+      receipt: receipt !== undefined && existingExpense.group
+        ? cleanReceipt(receipt, existingExpense.group)
+        : (existingExpense.receipt || null),
       date: date || existingExpense.date,
       notes: notes !== undefined ? notes : existingExpense.notes,
       updatedAt: new Date().toISOString()
@@ -435,7 +520,24 @@ router.put('/:id', authMiddleware, async (req, res) => {
       expense: populatedExpenses[0]
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(400).json({ error: error.message, code: error.code });
+  }
+});
+
+// Receipt photo for an expense, streamed to group members only
+router.get('/:id/receipt', authMiddleware, async (req, res) => {
+  try {
+    const expense = await Expense.findByUserIdAndExpenseId(req.user.id, req.params.id);
+    if (!expense || !expense.receipt?.key) {
+      return res.status(404).json({ error: 'Receipt not found' });
+    }
+    const { stream, contentType } = await gcsService.openReceipt(expense.receipt.key);
+    res.set({ 'Content-Type': contentType, 'Cache-Control': 'private, max-age=3600' });
+    stream.on('error', () => res.status(404).end());
+    stream.pipe(res);
+  } catch (error) {
+    console.error('Error fetching receipt:', error);
+    res.status(404).json({ error: 'Receipt not found' });
   }
 });
 

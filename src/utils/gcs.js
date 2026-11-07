@@ -6,6 +6,26 @@ class GCSService {
     this.storage = new Storage();
     this.bucketName = process.env.PHOTOS_BUCKET_NAME;
     this.photosBaseUrl = process.env.PHOTOS_BASE_URL;
+    // Receipt photos live in a separate, non-public bucket and are only served
+    // through the API to members of the expense's group
+    this.receiptsBucketName = process.env.RECEIPTS_BUCKET_NAME;
+  }
+
+  async uploadReceipt(buffer, groupId, contentType = 'image/jpeg') {
+    const randomString = crypto.randomBytes(8).toString('hex');
+    const key = `receipts/${groupId}/${Date.now()}-${randomString}.${this.getFileExtension(contentType)}`;
+    await this.storage.bucket(this.receiptsBucketName).file(key).save(buffer, {
+      contentType,
+      metadata: { metadata: { groupId, uploadedAt: new Date().toISOString() } }
+    });
+    return key;
+  }
+
+  // Returns a readable stream of the receipt image plus its content type
+  async openReceipt(key) {
+    const file = this.storage.bucket(this.receiptsBucketName).file(key);
+    const [metadata] = await file.getMetadata();
+    return { stream: file.createReadStream(), contentType: metadata.contentType || 'image/jpeg' };
   }
 
   async uploadGroupPhoto(base64Data, groupId, contentType = 'image/jpeg') {
