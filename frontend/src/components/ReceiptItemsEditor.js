@@ -97,6 +97,7 @@ const ReceiptItemsEditor = ({ members, value, total, currency, currentUserId, on
                 );
               })}
             </div>
+            {item.originalName && <div className="receipt-original">Printed: {item.originalName}</div>}
             {unassigned && <div className="receipt-item-warning">Choose at least one person</div>}
           </div>
         );
@@ -110,25 +111,28 @@ const ReceiptItemsEditor = ({ members, value, total, currency, currentUserId, on
         <span className="receipt-hint">Shared in proportion to each person's items · discounts are negative</span>
       </div>
       {adjustments.map((adj, index) => (
-        <div key={index} className="receipt-item-row adjustment">
-          <input
-            className="receipt-item-name"
-            value={adj.label}
-            onChange={(e) => updateAdjustment(index, { label: e.target.value })}
-            aria-label={`Adjustment ${index + 1} label`}
-          />
-          <input
-            className="receipt-item-amount"
-            type="number"
-            inputMode="decimal"
-            value={adj.amount}
-            onChange={(e) => updateAdjustment(index, { amount: e.target.value === '' ? '' : Number(e.target.value) })}
-            aria-label={`Adjustment ${index + 1} amount`}
-          />
-          <button type="button" className="receipt-remove" onClick={() => setAdjustments(adjustments.filter((_, i) => i !== index))} aria-label={`Remove ${adj.label}`}>
-            <i className="fi fi-rr-cross-small"></i>
-          </button>
-        </div>
+        <React.Fragment key={index}>
+          <div className="receipt-item-row adjustment">
+            <input
+              className="receipt-item-name"
+              value={adj.label}
+              onChange={(e) => updateAdjustment(index, { label: e.target.value })}
+              aria-label={`Adjustment ${index + 1} label`}
+            />
+            <input
+              className="receipt-item-amount"
+              type="number"
+              inputMode="decimal"
+              value={adj.amount}
+              onChange={(e) => updateAdjustment(index, { amount: e.target.value === '' ? '' : Number(e.target.value) })}
+              aria-label={`Adjustment ${index + 1} amount`}
+            />
+            <button type="button" className="receipt-remove" onClick={() => setAdjustments(adjustments.filter((_, i) => i !== index))} aria-label={`Remove ${adj.label}`}>
+              <i className="fi fi-rr-cross-small"></i>
+            </button>
+          </div>
+          {adj.originalLabel && <div className="receipt-original">Printed: {adj.originalLabel}</div>}
+        </React.Fragment>
       ))}
       <button type="button" className="receipt-add" onClick={() => setAdjustments([...adjustments, { type: 'other', label: '', amount: '' }])}>
         <i className="fi fi-rr-plus-small"></i> Add adjustment

@@ -291,6 +291,7 @@ const ExpenseDetails = () => {
                     <div key={index} className="receipt-details-item">
                       <div>
                         {item.name}
+                        {item.originalName && <span className="receipt-original-inline"> · {item.originalName}</span>}
                         <small>{everyone ? 'Everyone' : item.assignees.map(memberName).join(', ')}</small>
                       </div>
                       <span>{expense.currency} {Number(item.amount).toLocaleString()}</span>
@@ -301,6 +302,7 @@ const ExpenseDetails = () => {
                   <div key={`adj-${index}`} className="receipt-details-item">
                     <div>
                       {adj.label || 'Adjustment'}
+                      {adj.originalLabel && <span className="receipt-original-inline"> · {adj.originalLabel}</span>}
                       <small>Shared in proportion to items</small>
                     </div>
                     <span>{expense.currency} {Number(adj.amount).toLocaleString()}</span>

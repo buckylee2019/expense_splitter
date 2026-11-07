@@ -51,6 +51,22 @@ const AddExpense = () => {
   const [itemized, setItemized] = useState(null);
   const [scanning, setScanning] = useState(false);
   const receiptInputRef = useRef(null);
+  // Language for scanned item names; remembered in this browser only
+  const [itemLanguage, setItemLanguage] = useState(() => {
+    try {
+      return localStorage.getItem('receiptItemLanguage') || 'original';
+    } catch {
+      return 'original';
+    }
+  });
+  const changeItemLanguage = (value) => {
+    setItemLanguage(value);
+    try {
+      localStorage.setItem('receiptItemLanguage', value);
+    } catch {
+      // storage unavailable (e.g. private mode): keep the choice for this visit only
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -267,7 +283,7 @@ const AddExpense = () => {
     setError('');
     try {
       const image = await compressImage(file);
-      const { data } = await api.post('/api/receipts/scan', { groupId, image });
+      const { data } = await api.post('/api/receipts/scan', { groupId, image, itemLanguage });
       const everyone = group.members.map(member => member.user);
       setItemized({
         // Default: everyone shares everything; tap to change the exceptions
@@ -435,9 +451,19 @@ const AddExpense = () => {
             disabled={scanning}
             hidden
           />
-          <button type="button" disabled={scanning} onClick={() => receiptInputRef.current?.click()}>
-            <i className="fi fi-rr-camera"></i> {itemized ? 'Rescan' : 'Scan receipt'}
-          </button>
+          <div className="receipt-scan-actions">
+            <button type="button" disabled={scanning} onClick={() => receiptInputRef.current?.click()}>
+              <i className="fi fi-rr-camera"></i> {itemized ? 'Rescan' : 'Scan receipt'}
+            </button>
+            <label className="receipt-language">
+              Item names
+              <select value={itemLanguage} onChange={(e) => changeItemLanguage(e.target.value)} disabled={scanning}>
+                <option value="original">As printed</option>
+                <option value="zh-TW">繁體中文</option>
+                <option value="en">English</option>
+              </select>
+            </label>
+          </div>
         </div>
 
         <div className="form-group">

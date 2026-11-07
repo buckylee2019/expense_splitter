@@ -244,3 +244,43 @@
   border-radius: 8px;
   border: 1px solid var(--border-color);
 }
+
+.receipt-scan-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.receipt-language {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* Scoped to beat the global `input, select { width: 100%; min-height: 44px }` */
+.receipt-scan .receipt-language select {
+  width: auto;
+  min-height: 32px;
+  padding: 2px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 16px; /* keeps iOS from zooming in */
+  background: var(--card-background);
+  color: var(--text-primary);
+}
+
+.receipt-original {
+  margin-top: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.receipt-original-inline {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}

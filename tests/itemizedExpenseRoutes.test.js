@@ -19,7 +19,7 @@ jest.mock('../src/services/receiptService', () => {
   class ReceiptRecognitionError extends Error {
     constructor(code, message) { super(message); this.code = code; }
   }
-  return { recognizeReceipt: jest.fn(), ReceiptRecognitionError };
+  return { recognizeReceipt: jest.fn(), ReceiptRecognitionError, ITEM_LANGUAGES: { original: null, 'zh-TW': 'zh', en: 'en' } };
 });
 
 const Group = require('../src/models/Group');
@@ -173,5 +173,36 @@ describe('POST /api/receipts/scan', () => {
     expect(res.status).toBe(422);
     expect(res.body.code).toBe('NO_ITEMS');
     expect(gcs.uploadReceipt).not.toHaveBeenCalled();
+  });
+
+  test('item language defaults to original and is passed through', async () => {
+    gcs.validateImage.mockReturnValue({ isValid: true, contentType: 'image/jpeg' });
+    recognizeReceipt.mockResolvedValue(recognized);
+    gcs.uploadReceipt.mockResolvedValue('receipts/g1/1-x.jpg');
+    await request(app).post('/api/receipts/scan').send({ groupId: 'g1', image });
+    expect(recognizeReceipt).toHaveBeenLastCalledWith(expect.any(String), 'image/jpeg', { itemLanguage: 'original' });
+    await request(app).post('/api/receipts/scan').send({ groupId: 'g1', image, itemLanguage: 'en' });
+    expect(recognizeReceipt).toHaveBeenLastCalledWith(expect.any(String), 'image/jpeg', { itemLanguage: 'en' });
+  });
+
+  test('unsupported item language → 400 before calling the model', async () => {
+    const res = await request(app).post('/api/receipts/scan').send({ groupId: 'g1', image, itemLanguage: 'klingon' });
+    expect(res.status).toBe(400);
+    expect(recognizeReceipt).not.toHaveBeenCalled();
+  });
+});
+
+describe('original names from translated scans', () => {
+  test('are kept on save, and untranslated items get no originalName field', async () => {
+    const res = await request(app).post('/api/expenses').send({
+      ...baseBody,
+      items: [{ ...items[0], name: 'Fried rice', originalName: '炒飯' }, items[1]],
+      adjustments: [{ type: 'service_charge', label: 'Service charge', originalLabel: '服務費', amount: 100 }],
+    });
+    expect(res.status).toBe(201);
+    const saved = Expense.create.mock.calls[0][0];
+    expect(saved.items[0].originalName).toBe('炒飯');
+    expect('originalName' in saved.items[1]).toBe(false); // Firestore rejects undefined values
+    expect(saved.adjustments[0].originalLabel).toBe('服務費');
   });
 });

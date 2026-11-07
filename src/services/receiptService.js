@@ -13,6 +13,14 @@ const auth = new GoogleAuth({ scopes: ['https://www.googleapis.com/auth/cloud-pl
 
 const ADJUSTMENT_TYPES = ['service_charge', 'tax', 'discount', 'rounding', 'other'];
 
+// Language for item names and adjustment labels. 'original' keeps them as printed;
+// otherwise they are translated and the printed text is kept in originalName/originalLabel.
+const ITEM_LANGUAGES = {
+  original: null,
+  'zh-TW': 'Traditional Chinese as used in Taiwan',
+  en: 'English',
+};
+
 const RESPONSE_SCHEMA = {
   type: 'OBJECT',
   properties: {
@@ -24,7 +32,8 @@ const RESPONSE_SCHEMA = {
       items: {
         type: 'OBJECT',
         properties: {
-          name: { type: 'STRING', description: 'Item name as printed' },
+          name: { type: 'STRING', description: 'Item name, in the requested language' },
+          originalName: { type: 'STRING', nullable: true, description: 'Item name exactly as printed' },
           quantity: { type: 'NUMBER', description: 'Quantity, 1 if not shown' },
           amount: { type: 'NUMBER', description: 'Line total for this item (after quantity)' },
         },
@@ -37,7 +46,8 @@ const RESPONSE_SCHEMA = {
         type: 'OBJECT',
         properties: {
           type: { type: 'STRING', enum: ADJUSTMENT_TYPES },
-          label: { type: 'STRING', description: 'Label as printed, e.g. 服務費 10%' },
+          label: { type: 'STRING', description: 'Label in the requested language, e.g. 服務費 10%' },
+          originalLabel: { type: 'STRING', nullable: true, description: 'Label exactly as printed' },
           amount: { type: 'NUMBER', description: 'Amount; negative for discounts' },
         },
         required: ['type', 'label', 'amount'],
@@ -48,12 +58,12 @@ const RESPONSE_SCHEMA = {
   required: ['currency', 'items', 'adjustments', 'total'],
 };
 
-const PROMPT = `You are reading a photo of a shop or restaurant receipt (often Taiwanese, in Traditional Chinese).
+const PROMPT_TEMPLATE = `You are reading a photo of a shop or restaurant receipt (often Taiwanese, in Traditional Chinese).
 Extract it into the JSON schema.
 
 Rules:
 - items: every purchased line item. "amount" is the line total (quantity × unit price), as printed for that line.
-  Keep the item name exactly as printed (do not translate). Do not include subtotal, total, payment, change,
+  {{NAMES}} Do not include subtotal, total, payment, change,
   card, invoice-number or tax-ID lines as items.
 - adjustments: lines that change the bill after the items — service charge (服務費), discounts (折扣, 折價, 優惠,
   會員折扣) as NEGATIVE amounts, separately added tax, rounding. Do not add a tax adjustment when prices already
@@ -63,6 +73,17 @@ Rules:
 - date: YYYY-MM-DD; convert ROC years (e.g. 115年) to Gregorian (2026). null if not shown.
 - Read amounts carefully: in a tilted photo, match each amount to the item on the same printed line.
 - If the image is not a receipt, return empty items and adjustments and total 0.`;
+
+const buildPrompt = (itemLanguage) => {
+  const language = ITEM_LANGUAGES[itemLanguage];
+  const names = language
+    ? `Write each item "name" and adjustment "label" in ${language}: a short, natural name people would recognise
+  (keep brand names, sizes and counts such as 1857ml or x2 as they are). Put the text exactly as printed in
+  "originalName" / "originalLabel". If the printed text is already in ${language}, use it unchanged for both.`
+    : `Keep each item name and adjustment label exactly as printed (do not translate); set originalName and
+  originalLabel to null.`;
+  return PROMPT_TEMPLATE.replace('{{NAMES}}', names);
+};
 
 class ReceiptRecognitionError extends Error {
   constructor(code, message) {
@@ -76,9 +97,10 @@ const round2 = (n) => Math.round(Number(n) * 100) / 100;
 /**
  * @param {string} imageBase64  image bytes, base64 (no data: prefix)
  * @param {string} mimeType     e.g. image/jpeg
+ * @param {{itemLanguage?: keyof ITEM_LANGUAGES}} [options]
  * @returns {Promise<{merchant, date, currency, items, adjustments, total, itemsTotal, difference, model}>}
  */
-async function recognizeReceipt(imageBase64, mimeType = 'image/jpeg') {
+async function recognizeReceipt(imageBase64, mimeType = 'image/jpeg', { itemLanguage = 'original' } = {}) {
   const projectId = process.env.GCP_PROJECT_ID || (await auth.getProjectId());
   const host = LOCATION === 'global' ? 'aiplatform.googleapis.com' : `${LOCATION}-aiplatform.googleapis.com`;
   const url = `https://${host}/v1/projects/${projectId}/locations/${LOCATION}/publishers/google/models/${MODEL}:generateContent`;
@@ -94,7 +116,7 @@ async function recognizeReceipt(imageBase64, mimeType = 'image/jpeg') {
         role: 'user',
         parts: [
           { inlineData: { mimeType, data: imageBase64 } },
-          { text: PROMPT },
+          { text: buildPrompt(itemLanguage) },
         ],
       }],
       generationConfig: {
@@ -117,16 +139,33 @@ async function recognizeReceipt(imageBase64, mimeType = 'image/jpeg') {
     throw new ReceiptRecognitionError('BAD_RESPONSE', 'Could not read the recognition result');
   }
 
+  // Keep the printed text only when it was translated into something different
+  const original = (translated, printed) => {
+    const text = ITEM_LANGUAGES[itemLanguage] && printed ? String(printed).trim() : '';
+    return text && text !== translated ? text : undefined;
+  };
   const items = (parsed.items || [])
     .filter(item => item && item.name)
-    .map(item => ({ name: String(item.name).trim(), quantity: Number(item.quantity) || 1, amount: round2(item.amount) }));
+    .map(item => {
+      const name = String(item.name).trim();
+      return {
+        name,
+        originalName: original(name, item.originalName),
+        quantity: Number(item.quantity) || 1,
+        amount: round2(item.amount),
+      };
+    });
   const adjustments = (parsed.adjustments || [])
     .filter(adj => adj && Number.isFinite(Number(adj.amount)) && Number(adj.amount) !== 0)
-    .map(adj => ({
-      type: ADJUSTMENT_TYPES.includes(adj.type) ? adj.type : 'other',
-      label: String(adj.label || '').trim(),
-      amount: round2(adj.amount),
-    }));
+    .map(adj => {
+      const label = String(adj.label || '').trim();
+      return {
+        type: ADJUSTMENT_TYPES.includes(adj.type) ? adj.type : 'other',
+        label,
+        originalLabel: original(label, adj.originalLabel),
+        amount: round2(adj.amount),
+      };
+    });
   const total = round2(parsed.total);
   const itemsTotal = round2(items.reduce((sum, item) => sum + item.amount, 0));
   const adjustmentsTotal = round2(adjustments.reduce((sum, adj) => sum + adj.amount, 0));
@@ -149,4 +188,4 @@ async function recognizeReceipt(imageBase64, mimeType = 'image/jpeg') {
   };
 }
 
-module.exports = { recognizeReceipt, ReceiptRecognitionError };
+module.exports = { recognizeReceipt, ReceiptRecognitionError, ITEM_LANGUAGES };

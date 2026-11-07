@@ -13,8 +13,11 @@ const router = express.Router();
 // splits are ignored). Throws ItemizedSplitError on invalid input.
 const buildItemizedSplit = (group, { items, adjustments, amount, currency }) => {
   const memberIds = new Set(group.members.map(member => member.user));
+  // Printed text kept when the scan translated a name
+  const originalText = (text) => (text ? String(text).trim().slice(0, 100) : undefined);
   const cleanItems = (Array.isArray(items) ? items : []).map(item => ({
     name: String(item.name || '').trim().slice(0, 100),
+    ...(item.originalName ? { originalName: originalText(item.originalName) } : {}),
     quantity: Number(item.quantity) || 1,
     amount: Number(item.amount),
     assignees: [...new Set(Array.isArray(item.assignees) ? item.assignees : [])]
@@ -28,6 +31,7 @@ const buildItemizedSplit = (group, { items, adjustments, amount, currency }) => 
   const cleanAdjustments = (Array.isArray(adjustments) ? adjustments : []).map(adj => ({
     type: String(adj.type || 'other'),
     label: String(adj.label || '').trim().slice(0, 100),
+    ...(adj.originalLabel ? { originalLabel: originalText(adj.originalLabel) } : {}),
     amount: Number(adj.amount)
   }));
   const { splits } = computeItemizedSplits({ items: cleanItems, adjustments: cleanAdjustments, total: amount, currency });
