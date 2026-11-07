@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import CategoryPopup from '../components/CategoryPopup';
@@ -8,6 +8,9 @@ import PaidByPopup from '../components/PaidByPopup';
 import MultiplePaidByPopup from '../components/MultiplePaidByPopup';
 import { parseCategoryString } from '../data/expenseCategories';
 import { toDatetimeLocal } from '../utils/dateUtils';
+import ReceiptItemsEditor from '../components/ReceiptItemsEditor';
+import { compressImage } from '../utils/imageUtils';
+import { computeItemizedSplits } from '../utils/itemizedSplit';
 
 const AddExpense = () => {
   const { groupId } = useParams();
@@ -43,6 +46,11 @@ const AddExpense = () => {
   // Multiple payers state
   const [isMultiplePayers, setIsMultiplePayers] = useState(false);
   const [multiplePayers, setMultiplePayers] = useState([]);
+
+  // Receipt scan / itemized split: { items, adjustments, receipt } once scanned
+  const [itemized, setItemized] = useState(null);
+  const [scanning, setScanning] = useState(false);
+  const receiptInputRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -251,7 +259,53 @@ const AddExpense = () => {
     setFormData(prev => ({ ...prev, paidBy: null }));
   };
 
+  const handleReceiptFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same photo
+    if (!file) return;
+    setScanning(true);
+    setError('');
+    try {
+      const image = await compressImage(file);
+      const { data } = await api.post('/api/receipts/scan', { groupId, image });
+      const everyone = group.members.map(member => member.user);
+      setItemized({
+        // Default: everyone shares everything; tap to change the exceptions
+        items: data.items.map(item => ({ ...item, assignees: [...everyone] })),
+        adjustments: data.adjustments,
+        receipt: data.receipt
+      });
+      setFormData(prev => ({
+        ...prev,
+        description: prev.description || data.merchant || '',
+        amount: String(data.total),
+        currency: data.currency || prev.currency,
+        date: data.date ? toDatetimeLocal(data.date) : prev.date,
+        splitType: 'itemized'
+      }));
+    } catch (err) {
+      setError(err.response?.data?.error || err.message || 'Could not read this receipt');
+    } finally {
+      setScanning(false);
+    }
+  };
+
+  const leaveItemized = () => {
+    setItemized(null);
+    setFormData(prev => ({ ...prev, splitType: 'equal' }));
+    calculateEqualSplits(parseFloat(formData.amount) || 0);
+  };
+
   const validateSplits = () => {
+    if (formData.splitType === 'itemized') {
+      try {
+        computeItemizedSplits({ ...itemized, total: parseFloat(formData.amount) || 0, currency: formData.currency });
+        return true;
+      } catch (err) {
+        setError(err.message);
+        return false;
+      }
+    }
     const totalAmount = parseFloat(formData.amount) || 0;
     const totalSplits = splits.reduce((sum, split) => sum + split.amount, 0);
     
@@ -288,7 +342,9 @@ const AddExpense = () => {
     }
     
     if (!validateSplits()) {
-      setError('Split amounts must equal the total amount');
+      if (formData.splitType !== 'itemized') {
+        setError('Split amounts must equal the total amount');
+      }
       return;
     }
 
@@ -305,6 +361,15 @@ const AddExpense = () => {
         groupId,
         splits: activeSplits
       };
+      if (formData.splitType === 'itemized') {
+        // The API derives the splits from the items; send the preview anyway
+        expenseData.items = itemized.items;
+        expenseData.adjustments = itemized.adjustments;
+        expenseData.receipt = itemized.receipt;
+        expenseData.splits = computeItemizedSplits({
+          ...itemized, total: expenseData.amount, currency: formData.currency
+        }).splits;
+      }
 
       // Handle multiple payers vs single payer
       if (isMultiplePayers) {
@@ -335,13 +400,46 @@ const AddExpense = () => {
 
   const totalSplits = splits.reduce((sum, split) => sum + split.amount, 0);
   const totalAmount = parseFloat(formData.amount) || 0;
-  const isValid = Math.abs(totalAmount - totalSplits) < 0.01;
+  const isItemizedValid = () => {
+    try {
+      computeItemizedSplits({ ...itemized, total: totalAmount, currency: formData.currency });
+      return true;
+    } catch {
+      return false;
+    }
+  };
+  const isValid = formData.splitType === 'itemized' && itemized
+    ? isItemizedValid()
+    : Math.abs(totalAmount - totalSplits) < 0.01;
 
   return (
     <div className="add-expense mobile-optimized">
       {error && <div className="error-message">{error}</div>}
 
       <form onSubmit={handleSubmit} className="expense-form">
+        <div className="receipt-scan">
+          <div className="receipt-scan-text">
+            {scanning ? 'Reading your receipt…' : itemized ? 'Receipt scanned' : 'Have a receipt?'}
+            <small>
+              {scanning ? 'This usually takes 5–10 seconds' :
+               itemized ? 'Check the items below and choose who shares each one' :
+               'Scan it to fill in the items, then choose who shares what'}
+            </small>
+          </div>
+          <input
+            ref={receiptInputRef}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={handleReceiptFile}
+            disabled={scanning}
+            hidden
+          />
+          <button type="button" disabled={scanning} onClick={() => receiptInputRef.current?.click()}>
+            <i className="fi fi-rr-camera"></i> {itemized ? 'Rescan' : 'Scan receipt'}
+          </button>
+        </div>
+
         <div className="form-group">
           <label htmlFor="description">Name</label>
           <input
@@ -477,6 +575,22 @@ const AddExpense = () => {
         </div>
 
         {/* Split Configuration */}
+        {formData.splitType === 'itemized' && itemized ? (
+          <div className="form-group">
+            <label>Split by Item</label>
+            <ReceiptItemsEditor
+              members={group.members}
+              value={itemized}
+              total={parseFloat(formData.amount) || 0}
+              currency={formData.currency}
+              currentUserId={currentUser?.id}
+              onChange={(next) => setItemized(prev => ({ ...prev, ...next }))}
+            />
+            <button type="button" className="receipt-switch" onClick={leaveItemized}>
+              Split normally instead
+            </button>
+          </div>
+        ) : (
         <div className="form-group">
           <label>Split Configuration</label>
           <div 
@@ -513,6 +627,7 @@ const AddExpense = () => {
             <i className="fi fi-rr-angle-right"></i>
           </div>
         </div>
+        )}
 
         <div className="form-actions">
           <button

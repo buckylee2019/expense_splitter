@@ -8,6 +8,8 @@ import PaidByPopup from '../components/PaidByPopup';
 import MultiplePaidByPopup from '../components/MultiplePaidByPopup';
 import { parseCategoryString } from '../data/expenseCategories';
 import { toDatetimeLocal } from '../utils/dateUtils';
+import ReceiptItemsEditor from '../components/ReceiptItemsEditor';
+import { computeItemizedSplits } from '../utils/itemizedSplit';
 
 const EditExpense = () => {
   const { groupId, expenseId } = useParams();
@@ -43,6 +45,9 @@ const EditExpense = () => {
   // Multiple payers state
   const [isMultiplePayers, setIsMultiplePayers] = useState(false);
   const [multiplePayers, setMultiplePayers] = useState([]);
+
+  // Itemized (receipt) split: { items, adjustments } when splitType is 'itemized'
+  const [itemized, setItemized] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -89,6 +94,9 @@ const EditExpense = () => {
           splitType: expense.splitType || 'equal',
           notes: expense.notes || ''
         });
+        if (expense.splitType === 'itemized') {
+          setItemized({ items: expense.items || [], adjustments: expense.adjustments || [] });
+        }
         
         // Create splits for all group members
         const allMemberSplits = groupRes.data.members.map(member => {
@@ -207,7 +215,22 @@ const EditExpense = () => {
     ));
   };
 
+  const leaveItemized = () => {
+    setItemized(null);
+    setFormData(prev => ({ ...prev, splitType: 'equal' }));
+    calculateEqualSplits(parseFloat(formData.amount) || 0);
+  };
+
   const validateSplits = () => {
+    if (formData.splitType === 'itemized') {
+      try {
+        computeItemizedSplits({ ...itemized, total: parseFloat(formData.amount) || 0, currency: formData.currency });
+        return true;
+      } catch (err) {
+        setError(err.message);
+        return false;
+      }
+    }
     const totalSplits = splits.reduce((sum, split) => sum + split.amount, 0);
     const totalAmount = parseFloat(formData.amount) || 0;
     return Math.abs(totalAmount - totalSplits) < 0.01;
@@ -229,7 +252,9 @@ const EditExpense = () => {
     }
     
     if (!validateSplits()) {
-      setError('Split amounts must equal the total amount');
+      if (formData.splitType !== 'itemized') {
+        setError('Split amounts must equal the total amount');
+      }
       return;
     }
 
@@ -245,6 +270,14 @@ const EditExpense = () => {
         amount: parseFloat(formData.amount),
         splits: activeSplits
       };
+      if (formData.splitType === 'itemized') {
+        // The API derives the splits from the items; send the preview anyway
+        expenseData.items = itemized.items;
+        expenseData.adjustments = itemized.adjustments;
+        expenseData.splits = computeItemizedSplits({
+          ...itemized, total: expenseData.amount, currency: formData.currency
+        }).splits;
+      }
 
       // Handle multiple payers vs single payer
       if (isMultiplePayers) {
@@ -418,6 +451,22 @@ const EditExpense = () => {
         </div>
 
         {/* Split Configuration */}
+        {formData.splitType === 'itemized' && itemized ? (
+          <div className="form-group">
+            <label>Split by Item</label>
+            <ReceiptItemsEditor
+              members={group.members}
+              value={itemized}
+              total={parseFloat(formData.amount) || 0}
+              currency={formData.currency}
+              currentUserId={currentUser?.id}
+              onChange={(next) => setItemized(prev => ({ ...prev, ...next }))}
+            />
+            <button type="button" className="receipt-switch" onClick={leaveItemized}>
+              Split normally instead
+            </button>
+          </div>
+        ) : (
         <div className="form-group">
           <label>Split Configuration</label>
           <div 
@@ -451,6 +500,7 @@ const EditExpense = () => {
             <i className="fi fi-rr-angle-down"></i>
           </div>
         </div>
+        )}
 
         {/* Description */}
         <div className="form-group">

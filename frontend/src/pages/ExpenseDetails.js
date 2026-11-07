@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import UserPhoto from '../components/UserPhoto';
 import { parseCategoryString, getCategoryIcon, getCategoryColor } from '../data/expenseCategories';
+import '../styles/receipt.css';
 
 const ExpenseDetails = () => {
   const { groupId, expenseId } = useParams();
@@ -12,6 +13,8 @@ const ExpenseDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentUser, setCurrentUser] = useState(null);
+  const [receiptPhotoUrl, setReceiptPhotoUrl] = useState(null);
+  const [receiptPhotoError, setReceiptPhotoError] = useState('');
 
   useEffect(() => {
     const fetchExpenseDetails = async () => {
@@ -38,6 +41,28 @@ const ExpenseDetails = () => {
 
     fetchExpenseDetails();
   }, [groupId, expenseId]);
+
+  // Release the photo's object URL when it changes or the page closes
+  useEffect(() => () => {
+    if (receiptPhotoUrl) URL.revokeObjectURL(receiptPhotoUrl);
+  }, [receiptPhotoUrl]);
+
+  // The receipt endpoint needs the auth header, so fetch it as a blob
+  const showReceiptPhoto = async () => {
+    try {
+      setReceiptPhotoError('');
+      const res = await api.get(`/api/expenses/${expenseId}/receipt`, { responseType: 'blob' });
+      setReceiptPhotoUrl(URL.createObjectURL(res.data));
+    } catch (err) {
+      setReceiptPhotoError('Could not load the receipt photo');
+    }
+  };
+
+  const memberName = (userId) => {
+    const member = group?.members?.find(m => m.user === userId);
+    const name = member?.userName || 'Former member';
+    return userId === currentUser?.id ? `${name} (You)` : name;
+  };
 
   const handleDeleteExpense = async () => {
     if (!window.confirm('Are you sure you want to delete this expense?')) {
@@ -148,7 +173,7 @@ const ExpenseDetails = () => {
               <strong>Date:</strong> {new Date(expense.date).toLocaleDateString()}
             </div>
             <div className="meta-item">
-              <strong>Split type:</strong> {expense.splitType || 'Equal'}
+              <strong>Split type:</strong> {expense.splitType === 'itemized' ? 'By item' : (expense.splitType || 'Equal')}
             </div>
             <div className="meta-item">
               <strong>Created:</strong> {new Date(expense.createdAt).toLocaleString()}
@@ -253,6 +278,48 @@ const ExpenseDetails = () => {
             </div>
           </div>
         </div>
+
+        {(expense.items?.length > 0 || expense.receipt) && (
+          <div className="expense-notes card">
+            <h3>Receipt Items</h3>
+            {expense.items?.length > 0 && (
+              <div className="receipt-details-items">
+                {expense.items.map((item, index) => {
+                  const everyone = group?.members?.length > 0 &&
+                    group.members.every(m => item.assignees.includes(m.user));
+                  return (
+                    <div key={index} className="receipt-details-item">
+                      <div>
+                        {item.name}
+                        <small>{everyone ? 'Everyone' : item.assignees.map(memberName).join(', ')}</small>
+                      </div>
+                      <span>{expense.currency} {Number(item.amount).toLocaleString()}</span>
+                    </div>
+                  );
+                })}
+                {(expense.adjustments || []).map((adj, index) => (
+                  <div key={`adj-${index}`} className="receipt-details-item">
+                    <div>
+                      {adj.label || 'Adjustment'}
+                      <small>Shared in proportion to items</small>
+                    </div>
+                    <span>{expense.currency} {Number(adj.amount).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {expense.receipt && (
+              receiptPhotoUrl ? (
+                <img className="receipt-photo" src={receiptPhotoUrl} alt="Receipt" />
+              ) : (
+                <button type="button" className="receipt-switch" onClick={showReceiptPhoto}>
+                  Show receipt photo
+                </button>
+              )
+            )}
+            {receiptPhotoError && <p className="receipt-item-warning">{receiptPhotoError}</p>}
+          </div>
+        )}
 
         {expense.notes && (
           <div className="expense-notes card">

@@ -1,0 +1,246 @@
+/* Receipt scan + itemized split */
+
+.receipt-scan {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  border: 1px dashed var(--primary-color);
+  border-radius: 12px;
+  background: var(--primary-light);
+  color: var(--text-primary);
+}
+
+.receipt-scan button {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary-color);
+  color: var(--text-white);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.receipt-scan button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.receipt-scan-text {
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+
+.receipt-scan-text small {
+  display: block;
+  color: var(--text-secondary);
+}
+
+.receipt-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.receipt-section-title {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.receipt-hint {
+  font-size: 0.78rem;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.receipt-item {
+  padding: 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  background: var(--card-background);
+}
+
+.receipt-item.unassigned {
+  border-color: var(--warning-color);
+  background: var(--warning-light);
+}
+
+.receipt-item-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Scoped under .receipt-editor to beat the global `.form-group input { width: 100% }` */
+.receipt-editor .receipt-item-row input {
+  min-height: 38px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 16px; /* 16px keeps iOS from zooming in on focus */
+  background: var(--card-background);
+  color: var(--text-primary);
+}
+
+.receipt-editor .receipt-item-row input.receipt-item-name {
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.receipt-editor .receipt-item-row input.receipt-item-amount {
+  flex: 0 0 92px;
+  width: 92px;
+  text-align: right;
+}
+
+.receipt-remove {
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.receipt-assignees {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.assignee-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px 3px 3px;
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  background: var(--background-secondary);
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.assignee-chip.everyone {
+  padding: 3px 10px;
+}
+
+.assignee-chip .user-photo {
+  width: 22px;
+  height: 22px;
+}
+
+.assignee-chip.selected {
+  border-color: var(--primary-color);
+  background: var(--primary-color);
+  color: var(--text-white);
+}
+
+.receipt-item-warning {
+  margin-top: 6px;
+  font-size: 0.78rem;
+  color: var(--warning-color);
+}
+
+.receipt-add {
+  align-self: flex-start;
+  border: none;
+  background: none;
+  color: var(--primary-color);
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.receipt-totals {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--background-secondary);
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+}
+
+.receipt-totals.mismatch {
+  background: var(--warning-light);
+  color: var(--text-primary);
+}
+
+.receipt-mismatch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.receipt-mismatch button {
+  border: none;
+  background: none;
+  color: var(--primary-color);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+}
+
+.receipt-summary {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+}
+
+.receipt-summary-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+  font-size: 0.92rem;
+}
+
+.receipt-summary-pending {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.receipt-switch {
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 4px;
+}
+
+.receipt-details-items {
+  margin-top: 8px;
+}
+
+.receipt-details-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 0.9rem;
+}
+
+.receipt-details-item small {
+  display: block;
+  color: var(--text-secondary);
+}
+
+.receipt-photo {
+  max-width: 100%;
+  max-height: 420px;
+  margin-top: 10px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
