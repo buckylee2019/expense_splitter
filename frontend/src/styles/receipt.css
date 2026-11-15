@@ -284,3 +284,70 @@
   font-size: 0.8rem;
   color: var(--text-muted);
 }
+
+/* Tax refund */
+.receipt-refund-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.receipt-refund-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+/* Scoped to beat the global `input, select { width: 100%; min-height: 44px }` */
+.receipt-editor .receipt-refund-row select,
+.receipt-editor .receipt-refund-meta select,
+.receipt-editor .receipt-refund-row input {
+  width: auto;
+  min-height: 32px;
+  padding: 2px 6px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 16px; /* keeps iOS from zooming in */
+  background: var(--card-background);
+  color: var(--text-primary);
+}
+
+.receipt-editor .receipt-refund-row input {
+  width: 64px;
+  text-align: right;
+}
+
+.receipt-refund-amount {
+  margin-left: auto;
+  font-weight: 600;
+  color: var(--primary-hover);
+}
+
+.receipt-refund-label {
+  flex: 1 1 auto;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.receipt-refund-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.receipt-details-amount {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.receipt-details-item .receipt-details-amount small {
+  color: var(--primary-hover);
+}

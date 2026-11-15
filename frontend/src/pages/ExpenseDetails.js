@@ -1,9 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import UserPhoto from '../components/UserPhoto';
 import { parseCategoryString, getCategoryIcon, getCategoryColor } from '../data/expenseCategories';
+import { computeItemizedSplits } from '../utils/itemizedSplit';
 import '../styles/receipt.css';
+
+// Each item's share of the tax refund, for display ([] when there's no refund)
+const itemRefunds = (expense) => {
+  if (!(expense?.taxRefund?.received > 0)) return [];
+  try {
+    return computeItemizedSplits({
+      items: expense.items,
+      adjustments: expense.adjustments || [],
+      taxRefund: expense.taxRefund,
+      total: expense.amount,
+      currency: expense.currency
+    }).refund.items;
+  } catch {
+    return [];
+  }
+};
 
 const ExpenseDetails = () => {
   const { groupId, expenseId } = useParams();
@@ -15,6 +32,7 @@ const ExpenseDetails = () => {
   const [currentUser, setCurrentUser] = useState(null);
   const [receiptPhotoUrl, setReceiptPhotoUrl] = useState(null);
   const [receiptPhotoError, setReceiptPhotoError] = useState('');
+  const refunds = useMemo(() => itemRefunds(expense), [expense]);
 
   useEffect(() => {
     const fetchExpenseDetails = async () => {
@@ -294,7 +312,10 @@ const ExpenseDetails = () => {
                         {item.originalName && <span className="receipt-original-inline"> · {item.originalName}</span>}
                         <small>{everyone ? 'Everyone' : item.assignees.map(memberName).join(', ')}</small>
                       </div>
-                      <span>{expense.currency} {Number(item.amount).toLocaleString()}</span>
+                      <div className="receipt-details-amount">
+                        {expense.currency} {Number(item.amount).toLocaleString()}
+                        {refunds[index] > 0 && <small>Refund −{Number(refunds[index]).toLocaleString()}</small>}
+                      </div>
                     </div>
                   );
                 })}
@@ -308,6 +329,15 @@ const ExpenseDetails = () => {
                     <span>{expense.currency} {Number(adj.amount).toLocaleString()}</span>
                   </div>
                 ))}
+                {expense.taxRefund?.received > 0 && (
+                  <div className="receipt-details-item">
+                    <div>
+                      Tax refund
+                      <small>Comes off the items it was paid on</small>
+                    </div>
+                    <span>{expense.currency} −{Number(expense.taxRefund.received).toLocaleString()}</span>
+                  </div>
+                )}
               </div>
             )}
             {expense.receipt && (

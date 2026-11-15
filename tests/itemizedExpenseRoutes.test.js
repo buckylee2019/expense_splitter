@@ -206,3 +206,56 @@ describe('original names from translated scans', () => {
     expect(saved.adjustments[0].originalLabel).toBe('服務費');
   });
 });
+
+describe('tax refunds', () => {
+  const refundItems = [
+    { name: '面膜', quantity: 1, amount: 1100, refundRate: 10, assignees: ['amy'] },
+    { name: '行李箱', quantity: 1, amount: 8800, assignees: ['ben'] },
+  ];
+
+  test('POST stores the refund and takes it off the item sharer only', async () => {
+    const res = await request(app).post('/api/expenses').send({
+      ...baseBody, currency: 'JPY', amount: 9800, items: refundItems, adjustments: [], taxRefund: { received: 100 },
+    });
+    expect(res.status).toBe(201);
+    const saved = Expense.create.mock.calls[0][0];
+    expect(byUser(saved.splits)).toEqual({ amy: 1000, ben: 8800 });
+    expect(saved.taxRefund).toEqual({ received: 100 });
+    expect(saved.items[0].refundRate).toBe(10);
+    expect('refundRate' in saved.items[1]).toBe(false);
+  });
+
+  test('POST rejects an amount that is not net of the refund', async () => {
+    const res = await request(app).post('/api/expenses').send({
+      ...baseBody, currency: 'JPY', amount: 9900, items: refundItems, adjustments: [], taxRefund: { received: 100 },
+    });
+    expect(res.status).toBe(400);
+    expect(res.body.code).toBe('TOTAL_MISMATCH');
+  });
+
+  test('PUT adds a refund to an existing itemized expense', async () => {
+    Expense.findByUserIdAndExpenseId.mockResolvedValue({
+      id: 'e1', group: 'g1', amount: 9900, currency: 'JPY', splitType: 'itemized',
+      items: refundItems, adjustments: [], taxRefund: null,
+      splits: [{ userId: 'amy', amount: 1100 }, { userId: 'ben', amount: 8800 }],
+    });
+    const res = await request(app).put('/api/expenses/e1').send({ amount: 9810, taxRefund: { received: 90 } });
+    expect(res.status).toBe(200);
+    const update = Expense.update.mock.calls[0][1];
+    expect(update.taxRefund).toEqual({ received: 90 });
+    expect(byUser(update.splits)).toEqual({ amy: 1010, ben: 8800 });
+  });
+
+  test('PUT with an empty refund removes it', async () => {
+    Expense.findByUserIdAndExpenseId.mockResolvedValue({
+      id: 'e1', group: 'g1', amount: 9800, currency: 'JPY', splitType: 'itemized',
+      items: refundItems, adjustments: [], taxRefund: { received: 100 },
+      splits: [{ userId: 'amy', amount: 1000 }, { userId: 'ben', amount: 8800 }],
+    });
+    const res = await request(app).put('/api/expenses/e1').send({ amount: 9900, taxRefund: null });
+    expect(res.status).toBe(200);
+    const update = Expense.update.mock.calls[0][1];
+    expect(update.taxRefund).toBeNull();
+    expect(byUser(update.splits)).toEqual({ amy: 1100, ben: 8800 });
+  });
+});

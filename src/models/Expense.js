@@ -21,6 +21,9 @@ class Expense {
     // derived from these by the API.
     this.items = data.items || [];
     this.adjustments = data.adjustments || [];
+    // Tax refund received for an itemized expense: { received }. `amount` is net of it;
+    // items carry `refundRate` to decide whose share it comes off.
+    this.taxRefund = data.taxRefund || null;
     this.receipt = data.receipt || null; // { key, merchant, model, scannedAt }
     this.date = data.date || new Date().toISOString();
     this.notes = data.notes;

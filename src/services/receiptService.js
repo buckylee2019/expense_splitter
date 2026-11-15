@@ -36,6 +36,7 @@ const RESPONSE_SCHEMA = {
           originalName: { type: 'STRING', nullable: true, description: 'Item name exactly as printed' },
           quantity: { type: 'NUMBER', description: 'Quantity, 1 if not shown' },
           amount: { type: 'NUMBER', description: 'Line total for this item (after quantity)' },
+          taxRate: { type: 'NUMBER', nullable: true, description: 'Consumption tax / VAT rate of this item in percent, if the receipt shows it' },
         },
         required: ['name', 'quantity', 'amount'],
       },
@@ -53,6 +54,7 @@ const RESPONSE_SCHEMA = {
         required: ['type', 'label', 'amount'],
       },
     },
+    taxRefund: { type: 'NUMBER', nullable: true, description: 'Tax taken off on this receipt as a tax-free refund, as a positive number' },
     total: { type: 'NUMBER', description: 'Final amount paid' },
   },
   required: ['currency', 'items', 'adjustments', 'total'],
@@ -68,6 +70,11 @@ Rules:
 - adjustments: lines that change the bill after the items — service charge (服務費), discounts (折扣, 折價, 優惠,
   會員折扣) as NEGATIVE amounts, separately added tax, rounding. Do not add a tax adjustment when prices already
   include tax (Taiwanese receipts usually say 含稅 / 內含).
+- taxRate: the consumption tax / VAT rate (percent) that applies to each item, when the receipt shows it. Japanese
+  receipts mark reduced-rate (8%) items with ※ or * and list 8%対象 / 10%対象 totals: unmarked items are 10%.
+  European receipts print a VAT code or rate per line. Use null when the receipt does not show tax rates.
+- taxRefund: if the shop took tax off at the till as a tax-free sale (免税 / 免稅 / Tax Free / Tax Refund line with
+  a deduction), put that amount here as a positive number and do NOT also list it as an adjustment. Otherwise null.
 - total: the final amount actually due (總計 / 合計 / 應付 / Total), not the amount tendered.
 - currency: TWD for NT$, 元, 新台幣 or a Taiwanese receipt with no currency shown.
 - date: YYYY-MM-DD; convert ROC years (e.g. 115年) to Gregorian (2026). null if not shown.
@@ -98,7 +105,7 @@ const round2 = (n) => Math.round(Number(n) * 100) / 100;
  * @param {string} imageBase64  image bytes, base64 (no data: prefix)
  * @param {string} mimeType     e.g. image/jpeg
  * @param {{itemLanguage?: keyof ITEM_LANGUAGES}} [options]
- * @returns {Promise<{merchant, date, currency, items, adjustments, total, itemsTotal, difference, model}>}
+ * @returns {Promise<{merchant, date, currency, items, adjustments, taxRefund, total, itemsTotal, difference, model}>}
  */
 async function recognizeReceipt(imageBase64, mimeType = 'image/jpeg', { itemLanguage = 'original' } = {}) {
   const projectId = process.env.GCP_PROJECT_ID || (await auth.getProjectId());
@@ -153,6 +160,8 @@ async function recognizeReceipt(imageBase64, mimeType = 'image/jpeg', { itemLang
         originalName: original(name, item.originalName),
         quantity: Number(item.quantity) || 1,
         amount: round2(item.amount),
+        // Tax rate printed for the item; the app uses it to share a tax refund
+        refundRate: Number(item.taxRate) > 0 && Number(item.taxRate) <= 100 ? Number(item.taxRate) : undefined,
       };
     });
   const adjustments = (parsed.adjustments || [])
@@ -169,6 +178,8 @@ async function recognizeReceipt(imageBase64, mimeType = 'image/jpeg', { itemLang
   const total = round2(parsed.total);
   const itemsTotal = round2(items.reduce((sum, item) => sum + item.amount, 0));
   const adjustmentsTotal = round2(adjustments.reduce((sum, adj) => sum + adj.amount, 0));
+  // Tax taken off at the till (tax-free sale); the total is already net of it
+  const taxRefund = Number(parsed.taxRefund) > 0 ? round2(parsed.taxRefund) : 0;
 
   if (items.length === 0) {
     throw new ReceiptRecognitionError('NO_ITEMS', 'No items found on this image');
@@ -180,10 +191,12 @@ async function recognizeReceipt(imageBase64, mimeType = 'image/jpeg', { itemLang
     currency: (parsed.currency || 'TWD').toUpperCase(),
     items,
     adjustments,
+    taxRefund,
     total,
     itemsTotal,
-    // Non-zero means the items and adjustments don't add up to the total (misread or missing line)
-    difference: round2(total - itemsTotal - adjustmentsTotal),
+    // Non-zero means the items and adjustments (less any tax refund) don't add up to the total
+    // (misread or missing line)
+    difference: round2(total - itemsTotal - adjustmentsTotal + taxRefund),
     model: body.modelVersion || MODEL,
   };
 }

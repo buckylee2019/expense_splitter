@@ -11,13 +11,15 @@ const router = express.Router();
 // For splitType 'itemized': clean the receipt items/adjustments, check every
 // assignee is a group member, and derive the splits from them (the client's
 // splits are ignored). Throws ItemizedSplitError on invalid input.
-const buildItemizedSplit = (group, { items, adjustments, amount, currency }) => {
+const buildItemizedSplit = (group, { items, adjustments, taxRefund, amount, currency }) => {
   const memberIds = new Set(group.members.map(member => member.user));
   // Printed text kept when the scan translated a name
   const originalText = (text) => (text ? String(text).trim().slice(0, 100) : undefined);
   const cleanItems = (Array.isArray(items) ? items : []).map(item => ({
     name: String(item.name || '').trim().slice(0, 100),
     ...(item.originalName ? { originalName: originalText(item.originalName) } : {}),
+    // Tax rate (percent) used to share a tax refund; left out when the item isn't refundable
+    ...(Number(item.refundRate) > 0 ? { refundRate: Number(item.refundRate) } : {}),
     quantity: Number(item.quantity) || 1,
     amount: Number(item.amount),
     assignees: [...new Set(Array.isArray(item.assignees) ? item.assignees : [])]
@@ -34,8 +36,13 @@ const buildItemizedSplit = (group, { items, adjustments, amount, currency }) => 
     ...(adj.originalLabel ? { originalLabel: originalText(adj.originalLabel) } : {}),
     amount: Number(adj.amount)
   }));
-  const { splits } = computeItemizedSplits({ items: cleanItems, adjustments: cleanAdjustments, total: amount, currency });
-  return { items: cleanItems, adjustments: cleanAdjustments, splits };
+  // Refund actually received; `amount` is the net cost after it
+  const received = Number(taxRefund?.received) || 0;
+  const cleanTaxRefund = received > 0 ? { received } : null;
+  const { splits } = computeItemizedSplits({
+    items: cleanItems, adjustments: cleanAdjustments, taxRefund: cleanTaxRefund, total: amount, currency
+  });
+  return { items: cleanItems, adjustments: cleanAdjustments, taxRefund: cleanTaxRefund, splits };
 };
 
 // A receipt reference is only accepted if it points at this group's uploads
@@ -288,6 +295,7 @@ router.post('/', authMiddleware, async (req, res) => {
       notes,
       items,
       adjustments,
+      taxRefund,
       receipt
     } = req.body;
 
@@ -326,7 +334,7 @@ router.post('/', authMiddleware, async (req, res) => {
       }
 
       if (splitType === 'itemized') {
-        itemized = buildItemizedSplit(group, { items, adjustments, amount, currency });
+        itemized = buildItemizedSplit(group, { items, adjustments, taxRefund, amount, currency });
       }
     }
 
@@ -358,6 +366,7 @@ router.post('/', authMiddleware, async (req, res) => {
       splits: expenseSplits,
       items: itemized ? itemized.items : [],
       adjustments: itemized ? itemized.adjustments : [],
+      taxRefund: itemized ? itemized.taxRefund : null,
       receipt: expenseGroupId ? cleanReceipt(receipt, expenseGroupId) : null,
       date: date || new Date().toISOString(),
       notes
@@ -424,6 +433,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       splitType,
       items,
       adjustments,
+      taxRefund,
       receipt
     } = req.body;
 
@@ -477,6 +487,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       itemized = buildItemizedSplit(group, {
         items: items !== undefined ? items : existingExpense.items,
         adjustments: adjustments !== undefined ? adjustments : existingExpense.adjustments,
+        taxRefund: taxRefund !== undefined ? taxRefund : existingExpense.taxRefund,
         amount: amount !== undefined ? parseFloat(amount) : existingExpense.amount,
         currency: currency || existingExpense.currency
       });
@@ -504,6 +515,7 @@ router.put('/:id', authMiddleware, async (req, res) => {
       // Switching away from itemized drops the item assignments (the receipt photo stays)
       items: itemized ? itemized.items : [],
       adjustments: itemized ? itemized.adjustments : [],
+      taxRefund: itemized ? itemized.taxRefund : null,
       receipt: receipt !== undefined && existingExpense.group
         ? cleanReceipt(receipt, existingExpense.group)
         : (existingExpense.receipt || null),

@@ -10,6 +10,7 @@ import { parseCategoryString } from '../data/expenseCategories';
 import { toDatetimeLocal } from '../utils/dateUtils';
 import ReceiptItemsEditor from '../components/ReceiptItemsEditor';
 import { computeItemizedSplits } from '../utils/itemizedSplit';
+import { netOfRefund, beforeRefund, cleanTaxRefund } from '../utils/taxRefund';
 
 const EditExpense = () => {
   const { groupId, expenseId } = useParams();
@@ -46,7 +47,7 @@ const EditExpense = () => {
   const [isMultiplePayers, setIsMultiplePayers] = useState(false);
   const [multiplePayers, setMultiplePayers] = useState([]);
 
-  // Itemized (receipt) split: { items, adjustments } when splitType is 'itemized'
+  // Itemized (receipt) split: { items, adjustments, taxRefund } when splitType is 'itemized'
   const [itemized, setItemized] = useState(null);
 
   useEffect(() => {
@@ -85,7 +86,10 @@ const EditExpense = () => {
         
         setFormData({
           description: expense.description,
-          amount: expense.amount.toString(),
+          // For itemized expenses the form shows the bill before any tax refund (see netOfRefund)
+          amount: (expense.splitType === 'itemized'
+            ? beforeRefund(expense.amount, expense.taxRefund, expense.currency || 'TWD')
+            : expense.amount).toString(),
           currency: expense.currency || 'TWD',
           category: expense.category || '',
           project: expense.project || '',
@@ -95,7 +99,11 @@ const EditExpense = () => {
           notes: expense.notes || ''
         });
         if (expense.splitType === 'itemized') {
-          setItemized({ items: expense.items || [], adjustments: expense.adjustments || [] });
+          setItemized({
+            items: expense.items || [],
+            adjustments: expense.adjustments || [],
+            taxRefund: expense.taxRefund || null
+          });
         }
         
         // Create splits for all group members
@@ -224,7 +232,9 @@ const EditExpense = () => {
   const validateSplits = () => {
     if (formData.splitType === 'itemized') {
       try {
-        computeItemizedSplits({ ...itemized, total: parseFloat(formData.amount) || 0, currency: formData.currency });
+        computeItemizedSplits({
+          ...itemized, total: netOfRefund(formData.amount, itemized.taxRefund, formData.currency), currency: formData.currency
+        });
         return true;
       } catch (err) {
         setError(err.message);
@@ -274,6 +284,9 @@ const EditExpense = () => {
         // The API derives the splits from the items; send the preview anyway
         expenseData.items = itemized.items;
         expenseData.adjustments = itemized.adjustments;
+        // Amount in the form is before the tax refund; the expense is saved net of it
+        expenseData.taxRefund = cleanTaxRefund(itemized.taxRefund);
+        expenseData.amount = netOfRefund(formData.amount, itemized.taxRefund, formData.currency);
         expenseData.splits = computeItemizedSplits({
           ...itemized, total: expenseData.amount, currency: formData.currency
         }).splits;

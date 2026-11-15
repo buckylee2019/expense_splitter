@@ -11,6 +11,7 @@ import { toDatetimeLocal } from '../utils/dateUtils';
 import ReceiptItemsEditor from '../components/ReceiptItemsEditor';
 import { compressImage } from '../utils/imageUtils';
 import { computeItemizedSplits } from '../utils/itemizedSplit';
+import { netOfRefund, cleanTaxRefund } from '../utils/taxRefund';
 
 const AddExpense = () => {
   const { groupId } = useParams();
@@ -47,7 +48,7 @@ const AddExpense = () => {
   const [isMultiplePayers, setIsMultiplePayers] = useState(false);
   const [multiplePayers, setMultiplePayers] = useState([]);
 
-  // Receipt scan / itemized split: { items, adjustments, receipt } once scanned
+  // Receipt scan / itemized split: { items, adjustments, taxRefund, receipt } once scanned
   const [itemized, setItemized] = useState(null);
   const [scanning, setScanning] = useState(false);
   const receiptInputRef = useRef(null);
@@ -289,12 +290,15 @@ const AddExpense = () => {
         // Default: everyone shares everything; tap to change the exceptions
         items: data.items.map(item => ({ ...item, assignees: [...everyone] })),
         adjustments: data.adjustments,
+        // Tax already taken off at the till (tax-free sale), if the receipt shows one
+        taxRefund: data.taxRefund > 0 ? { received: data.taxRefund } : null,
         receipt: data.receipt
       });
       setFormData(prev => ({
         ...prev,
         description: prev.description || data.merchant || '',
-        amount: String(data.total),
+        // Amount is the bill before any tax refund (see netOfRefund)
+        amount: String(Math.round((data.total + (data.taxRefund || 0)) * 100) / 100),
         currency: data.currency || prev.currency,
         date: data.date ? toDatetimeLocal(data.date) : prev.date,
         splitType: 'itemized'
@@ -315,7 +319,9 @@ const AddExpense = () => {
   const validateSplits = () => {
     if (formData.splitType === 'itemized') {
       try {
-        computeItemizedSplits({ ...itemized, total: parseFloat(formData.amount) || 0, currency: formData.currency });
+        computeItemizedSplits({
+          ...itemized, total: netOfRefund(formData.amount, itemized.taxRefund, formData.currency), currency: formData.currency
+        });
         return true;
       } catch (err) {
         setError(err.message);
@@ -382,6 +388,9 @@ const AddExpense = () => {
         expenseData.items = itemized.items;
         expenseData.adjustments = itemized.adjustments;
         expenseData.receipt = itemized.receipt;
+        // Amount in the form is before the tax refund; the expense is saved net of it
+        expenseData.taxRefund = cleanTaxRefund(itemized.taxRefund);
+        expenseData.amount = netOfRefund(formData.amount, itemized.taxRefund, formData.currency);
         expenseData.splits = computeItemizedSplits({
           ...itemized, total: expenseData.amount, currency: formData.currency
         }).splits;
@@ -418,7 +427,9 @@ const AddExpense = () => {
   const totalAmount = parseFloat(formData.amount) || 0;
   const isItemizedValid = () => {
     try {
-      computeItemizedSplits({ ...itemized, total: totalAmount, currency: formData.currency });
+      computeItemizedSplits({
+        ...itemized, total: netOfRefund(totalAmount, itemized.taxRefund, formData.currency), currency: formData.currency
+      });
       return true;
     } catch {
       return false;
